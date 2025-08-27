@@ -1,10 +1,17 @@
-- 👋 Hi, I’m @Vhzin121212
-- 👀 I’m interested in ...
-- 🌱 I’m currently learning ...
-- 💞️ I’m looking to collaborate on ...
-- 📫 How to reach me ...
+# 👋 Olá, eu sou Victor Hugo.
 
-<!---
-Vhzin121212/Vhzin121212 is a ✨ special ✨ repository because its `README.md` (this file) appears on your GitHub profile.
-You can click the Preview link to take a look at your changes.
---->
+💻 Desenvolvedor [Java]  
+🚀 Apaixonado por tecnologia, inovação e resolver problemas com código  
+📚 Sempre aprendendo novas ferramentas e boas práticas  
+
+---
+
+## 🚀 Tecnologias que uso:
+- **Back-End:** Node.js, SQL. 
+- **Outros:** Git, GitHub.  
+
+---
+
+## 🌎 Onde me encontrar:
+- [LinkedIn](https://www.linkedin.com/in/victor-hugo-baptista-066b85380/))  
+- 📧 Email: baptistavictorhugo939@gmail.com 
