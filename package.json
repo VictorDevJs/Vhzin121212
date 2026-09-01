@@ -1,0 +1,20 @@
+{
+  "name": "academia-de-lutas",
+  "version": "1.0.0",
+  "description": "Sistema de gestao para academia de lutas: matriculas, turmas, horarios, planos, avisos, presenca e controle financeiro.",
+  "type": "module",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node --disable-warning=ExperimentalWarning server/index.js",
+    "dev": "node --disable-warning=ExperimentalWarning --watch server/index.js",
+    "seed": "node --disable-warning=ExperimentalWarning server/seed.js",
+    "test": "node --disable-warning=ExperimentalWarning --test testes/*.test.js"
+  },
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "dependencies": {
+    "express": "^4.22.2"
+  },
+  "license": "MIT"
+}

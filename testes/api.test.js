@@ -1,0 +1,280 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+
+process.env.DB_ARQUIVO = ':memory:';
+process.env.DONO_EMAIL = 'dono@teste.com';
+process.env.DONO_SENHA = 'admin123';
+
+const { criarApp } = await import('../server/index.js');
+
+const servidor = criarApp().listen(0);
+const base = `http://localhost:${servidor.address().port}`;
+test.after(() => servidor.close());
+
+async function chamar(metodo, caminho, { token, corpo } = {}) {
+  const resposta = await fetch(`${base}${caminho}`, {
+    method: metodo,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: corpo ? JSON.stringify(corpo) : undefined,
+  });
+  const dados = await resposta.json().catch(() => null);
+  return { status: resposta.status, dados };
+}
+
+const estado = {};
+
+test('login do dono criado na primeira execucao', async () => {
+  const { status, dados } = await chamar('POST', '/api/auth/login', {
+    corpo: { email: 'dono@teste.com', senha: 'admin123' },
+  });
+  assert.equal(status, 200);
+  assert.equal(dados.usuario.papel, 'dono');
+  assert.ok(dados.token);
+  estado.tokenDono = dados.token;
+});
+
+test('login recusa senha errada', async () => {
+  const { status } = await chamar('POST', '/api/auth/login', {
+    corpo: { email: 'dono@teste.com', senha: 'errada' },
+  });
+  assert.equal(status, 401);
+});
+
+test('rota protegida exige token', async () => {
+  const { status } = await chamar('GET', '/api/alunos');
+  assert.equal(status, 401);
+});
+
+test('pagina publica da academia funciona sem login', async () => {
+  const { status, dados } = await chamar('GET', '/api/publico/academia');
+  assert.equal(status, 200);
+  assert.ok(dados.modalidades.length >= 5, 'modalidades iniciais criadas');
+  assert.ok(dados.grade.length > 0, 'grade de horarios inicial');
+  assert.ok(dados.planos.length > 0, 'planos iniciais');
+});
+
+test('aluno se cadastra sozinho e entra como pendente', async () => {
+  const { status, dados } = await chamar('POST', '/api/auth/registrar', {
+    corpo: { nome: 'Aluno Teste', email: 'aluno@teste.com', senha: 'aluno123', data_nascimento: '2000-05-10' },
+  });
+  assert.equal(status, 201);
+  assert.equal(dados.usuario.aluno.status, 'pendente');
+  assert.equal(dados.usuario.aluno.categoria, 'adulto');
+  estado.tokenAluno = dados.token;
+  estado.alunoId = dados.usuario.aluno.id;
+});
+
+test('cadastro nao aceita e-mail repetido', async () => {
+  const { status } = await chamar('POST', '/api/auth/registrar', {
+    corpo: { nome: 'Outro', email: 'aluno@teste.com', senha: 'aluno123' },
+  });
+  assert.equal(status, 409);
+});
+
+test('dono cadastra modalidade, turma e horario', async () => {
+  const modalidade = await chamar('POST', '/api/modalidades', {
+    token: estado.tokenDono, corpo: { nome: 'Boxe', descricao: 'Trocacao de maos', cor: '#000000' },
+  });
+  assert.equal(modalidade.status, 201);
+  estado.modalidadeId = modalidade.dados.id;
+
+  const turma = await chamar('POST', '/api/turmas', {
+    token: estado.tokenDono,
+    corpo: {
+      nome: 'Boxe Noite', modalidade_id: estado.modalidadeId, categoria: 'adulto', capacidade: 2,
+      horarios: [{ dia_semana: 2, hora_inicio: '19:00', hora_fim: '20:00' }],
+    },
+  });
+  assert.equal(turma.status, 201);
+  assert.equal(turma.dados.horarios.length, 1);
+  estado.turmaId = turma.dados.id;
+
+  const horario = await chamar('POST', `/api/turmas/${estado.turmaId}/horarios`, {
+    token: estado.tokenDono, corpo: { dia_semana: 4, hora_inicio: '19:00', hora_fim: '20:00' },
+  });
+  assert.equal(horario.status, 201);
+});
+
+test('horario invalido e recusado', async () => {
+  const { status } = await chamar('POST', `/api/turmas/${estado.turmaId}/horarios`, {
+    token: estado.tokenDono, corpo: { dia_semana: 5, hora_inicio: '20:00', hora_fim: '19:00' },
+  });
+  assert.equal(status, 400);
+});
+
+test('aluno nao pode criar turma', async () => {
+  const { status } = await chamar('POST', '/api/turmas', {
+    token: estado.tokenAluno, corpo: { nome: 'Turma do aluno', modalidade_id: estado.modalidadeId },
+  });
+  assert.equal(status, 403);
+});
+
+test('dono cria plano e matricula o aluno', async () => {
+  const plano = await chamar('POST', '/api/planos', {
+    token: estado.tokenDono,
+    corpo: { nome: 'Plano Teste', valor: 200, periodicidade: 'mensal', modalidades: [estado.modalidadeId] },
+  });
+  assert.equal(plano.status, 201);
+  assert.equal(plano.dados.modalidades.length, 1);
+  estado.planoId = plano.dados.id;
+
+  const matricula = await chamar('POST', '/api/matriculas', {
+    token: estado.tokenDono, corpo: { aluno_id: estado.alunoId, plano_id: estado.planoId, dia_vencimento: 10 },
+  });
+  assert.equal(matricula.status, 201);
+  assert.equal(matricula.dados.status, 'ativa');
+
+  const aluno = await chamar('GET', `/api/alunos/${estado.alunoId}`, { token: estado.tokenDono });
+  assert.equal(aluno.dados.status, 'ativo', 'matricula ativa o aluno');
+  assert.equal(aluno.dados.mensalidades.length, 1, 'primeira mensalidade gerada');
+  estado.mensalidadeId = aluno.dados.mensalidades[0].id;
+});
+
+test('pagamento da mensalidade vira receita no financeiro', async () => {
+  const pagamento = await chamar('POST', `/api/financeiro/mensalidades/${estado.mensalidadeId}/pagar`, {
+    token: estado.tokenDono, corpo: { forma_pagamento: 'pix' },
+  });
+  assert.equal(pagamento.status, 200);
+  assert.equal(pagamento.dados.status, 'pago');
+
+  const resumo = await chamar('GET', '/api/financeiro/resumo', { token: estado.tokenDono });
+  assert.equal(resumo.status, 200);
+  assert.equal(resumo.dados.receitas, 200);
+
+  const repetido = await chamar('POST', `/api/financeiro/mensalidades/${estado.mensalidadeId}/pagar`, {
+    token: estado.tokenDono, corpo: {},
+  });
+  assert.equal(repetido.status, 409, 'nao deixa pagar duas vezes');
+});
+
+test('geracao de mensalidades do mes nao duplica', async () => {
+  const primeira = await chamar('POST', '/api/financeiro/mensalidades/gerar', {
+    token: estado.tokenDono, corpo: {},
+  });
+  assert.equal(primeira.status, 200);
+  const segunda = await chamar('POST', '/api/financeiro/mensalidades/gerar', {
+    token: estado.tokenDono, corpo: {},
+  });
+  assert.equal(segunda.dados.criadas, 0);
+});
+
+test('despesa e restrita ao dono', async () => {
+  const equipe = await chamar('POST', '/api/usuarios', {
+    token: estado.tokenDono,
+    corpo: { nome: 'Recepcao Teste', email: 'recepcao@teste.com', senha: 'recep123', papel: 'recepcao' },
+  });
+  assert.equal(equipe.status, 201);
+  const login = await chamar('POST', '/api/auth/login', {
+    corpo: { email: 'recepcao@teste.com', senha: 'recep123' },
+  });
+  estado.tokenRecepcao = login.dados.token;
+
+  const despesa = await chamar('POST', '/api/financeiro/lancamentos', {
+    token: estado.tokenRecepcao,
+    corpo: { tipo: 'despesa', categoria: 'aluguel', descricao: 'Aluguel', valor: 1000 },
+  });
+  assert.equal(despesa.status, 403);
+
+  const receita = await chamar('POST', '/api/financeiro/lancamentos', {
+    token: estado.tokenRecepcao,
+    corpo: { tipo: 'receita', categoria: 'produtos', descricao: 'Camiseta', valor: 80 },
+  });
+  assert.equal(receita.status, 201);
+
+  const resumo = await chamar('GET', '/api/financeiro/resumo', { token: estado.tokenRecepcao });
+  assert.equal(resumo.status, 403, 'resumo consolidado e so do dono');
+});
+
+test('capacidade da turma e respeitada', async () => {
+  await chamar('POST', `/api/turmas/${estado.turmaId}/alunos`, {
+    token: estado.tokenDono, corpo: { aluno_id: estado.alunoId },
+  });
+  const outros = [];
+  for (const nome of ['Aluno 2', 'Aluno 3']) {
+    const criado = await chamar('POST', '/api/alunos', { token: estado.tokenDono, corpo: { nome } });
+    outros.push(criado.dados.id);
+  }
+  const segundo = await chamar('POST', `/api/turmas/${estado.turmaId}/alunos`, {
+    token: estado.tokenDono, corpo: { aluno_id: outros[0] },
+  });
+  assert.equal(segundo.status, 201);
+  const terceiro = await chamar('POST', `/api/turmas/${estado.turmaId}/alunos`, {
+    token: estado.tokenDono, corpo: { aluno_id: outros[1] },
+  });
+  assert.equal(terceiro.status, 409, 'turma com 2 vagas nao aceita o terceiro');
+});
+
+test('chamada salva e atualiza a presenca', async () => {
+  const salvar = await chamar('POST', '/api/presencas', {
+    token: estado.tokenDono,
+    corpo: { turma_id: estado.turmaId, data: '2026-03-10', presencas: [{ aluno_id: estado.alunoId, presente: 1 }] },
+  });
+  assert.equal(salvar.status, 200);
+
+  const lista = await chamar('GET', `/api/presencas?turma_id=${estado.turmaId}&data=2026-03-10`, {
+    token: estado.tokenDono,
+  });
+  const marcado = lista.dados.alunos.find((a) => a.id === estado.alunoId);
+  assert.equal(marcado.presente, 1);
+
+  await chamar('POST', '/api/presencas', {
+    token: estado.tokenDono,
+    corpo: { turma_id: estado.turmaId, data: '2026-03-10', presencas: [{ aluno_id: estado.alunoId, presente: 0 }] },
+  });
+  const relista = await chamar('GET', `/api/presencas?turma_id=${estado.turmaId}&data=2026-03-10`, {
+    token: estado.tokenDono,
+  });
+  assert.equal(relista.dados.alunos.find((a) => a.id === estado.alunoId).presente, 0);
+});
+
+test('aviso por turma so aparece para quem esta na turma', async () => {
+  const aviso = await chamar('POST', '/api/avisos', {
+    token: estado.tokenDono,
+    corpo: { titulo: 'Treino extra de Boxe', mensagem: 'Sabado as 10h', tipo: 'evento', publico: 'turma', turma_id: estado.turmaId },
+  });
+  assert.equal(aviso.status, 201);
+
+  const doAluno = await chamar('GET', '/api/avisos', { token: estado.tokenAluno });
+  assert.ok(doAluno.dados.some((a) => a.titulo === 'Treino extra de Boxe'));
+
+  const outro = await chamar('POST', '/api/auth/registrar', {
+    corpo: { nome: 'Fora da turma', email: 'fora@teste.com', senha: 'aluno123' },
+  });
+  const deFora = await chamar('GET', '/api/avisos', { token: outro.dados.token });
+  assert.ok(!deFora.dados.some((a) => a.titulo === 'Treino extra de Boxe'));
+});
+
+test('area do aluno mostra plano, horarios e mensalidades', async () => {
+  const { status, dados } = await chamar('GET', '/api/minha-area', { token: estado.tokenAluno });
+  assert.equal(status, 200);
+  assert.equal(dados.matricula.plano, 'Plano Teste');
+  assert.ok(dados.horarios.length >= 1);
+  assert.ok(dados.mensalidades.length >= 1);
+});
+
+test('grade de horarios lista as aulas da semana', async () => {
+  const { status, dados } = await chamar('GET', '/api/turmas/grade', { token: estado.tokenAluno });
+  assert.equal(status, 200);
+  assert.equal(dados.dias.length, 7);
+  assert.ok(dados.aulas.length > 0);
+});
+
+test('painel do dono traz numeros da academia', async () => {
+  const { status, dados } = await chamar('GET', '/api/painel', { token: estado.tokenDono });
+  assert.equal(status, 200);
+  assert.ok(dados.alunos.total >= 1);
+  assert.ok(dados.financeiro.receitas >= 200);
+  assert.ok(Array.isArray(dados.por_modalidade));
+});
+
+test('sistema mantem ao menos um dono ativo', async () => {
+  const donos = await chamar('GET', '/api/usuarios?papel=dono', { token: estado.tokenDono });
+  const dono = donos.dados[0];
+  const { status } = await chamar('PUT', `/api/usuarios/${dono.id}`, {
+    token: estado.tokenDono, corpo: { ativo: 0 },
+  });
+  assert.equal(status, 409);
+});

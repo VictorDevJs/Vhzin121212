@@ -1,0 +1,280 @@
+import { api, sessao, consulta } from '../api.js';
+import {
+  el, cartao, tabela, celula, botao, indicador, etiqueta, etiquetaStatus, moeda, dataBr, competenciaBr,
+  abrirFormulario, aviso, confirmar, vazio, hojeISO, competenciaAtual,
+} from '../ui.js';
+import { topo } from '../app.js';
+
+const FORMAS = ['dinheiro', 'pix', 'debito', 'credito', 'transferencia', 'boleto'];
+
+/** Controle financeiro: mensalidades, entradas, saidas e resultado do mes. */
+export default async function paginaFinanceiro() {
+  const ehDono = sessao.papel === 'dono';
+  const estado = { competencia: competenciaAtual(), statusMensalidade: '' };
+
+  const areaIndicadores = el('div');
+  const areaGrafico = el('div');
+  const areaMensalidades = el('div');
+  const areaLancamentos = el('div');
+  const alunos = await api.obter('/alunos?status=ativo');
+
+  async function carregarResumo() {
+    if (!ehDono) {
+      areaIndicadores.replaceChildren(el('p', { classe: 'dica', texto: 'O resultado consolidado da academia fica visivel apenas para o dono.' }));
+      return;
+    }
+    const resumo = await api.obter(`/financeiro/resumo${consulta({ competencia: estado.competencia })}`);
+    areaIndicadores.replaceChildren(el('div', { classe: 'grade col-4' }, [
+      indicador({ rotulo: 'Receitas', valor: moeda(resumo.receitas), detalhe: competenciaBr(resumo.competencia), tipo: 'ok' }),
+      indicador({ rotulo: 'Despesas', valor: moeda(resumo.despesas), detalhe: competenciaBr(resumo.competencia), tipo: 'erro' }),
+      indicador({
+        rotulo: 'Saldo do mes', valor: moeda(resumo.saldo),
+        detalhe: resumo.saldo >= 0 ? 'Resultado positivo' : 'Resultado negativo',
+        tipo: resumo.saldo >= 0 ? 'ok' : 'erro',
+      }),
+      indicador({ rotulo: 'A receber', valor: moeda(resumo.a_receber.total), detalhe: `${resumo.a_receber.quantidade} mensalidade(s)`, tipo: 'alerta' }),
+      indicador({
+        rotulo: 'Inadimplencia', valor: moeda(resumo.inadimplencia.total),
+        detalhe: `${resumo.inadimplencia.quantidade} em atraso`,
+        tipo: resumo.inadimplencia.quantidade ? 'erro' : '',
+      }),
+    ]));
+
+    const maior = Math.max(1, ...resumo.evolucao.flatMap((m) => [m.receitas, m.despesas]));
+    areaGrafico.replaceChildren(el('div', {}, [
+      el('div', { classe: 'legenda', estilo: 'margin-bottom:.5rem' }, [
+        el('span', {}, [el('i', { estilo: 'background:var(--ok)' }), 'Receitas']),
+        el('span', {}, [el('i', { estilo: 'background:var(--erro)' }), 'Despesas']),
+      ]),
+      resumo.evolucao.length
+        ? el('div', { classe: 'grafico-colunas' }, resumo.evolucao.map((mes) => el('div', { classe: 'mes' }, [
+          el('div', { classe: 'par' }, [
+            el('span', { classe: 'receita', estilo: `height:${(mes.receitas / maior) * 100}%`, title: moeda(mes.receitas) }),
+            el('span', { classe: 'despesa', estilo: `height:${(mes.despesas / maior) * 100}%`, title: moeda(mes.despesas) }),
+          ]),
+          el('div', { classe: 'rotulo', texto: competenciaBr(mes.competencia) }),
+        ])))
+        : vazio('Ainda nao ha movimentacao registrada.'),
+      el('div', { classe: 'grade col-2', estilo: 'margin-top:1rem' }, [
+        listaCategorias('Entradas por categoria', resumo.por_categoria.filter((c) => c.tipo === 'receita'), 'var(--ok)'),
+        listaCategorias('Saidas por categoria', resumo.por_categoria.filter((c) => c.tipo === 'despesa'), 'var(--erro)'),
+      ]),
+    ]));
+  }
+
+  function listaCategorias(titulo, itens, cor) {
+    const total = itens.reduce((soma, item) => soma + item.total, 0) || 1;
+    return el('div', {}, [
+      el('h4', { texto: titulo }),
+      itens.length
+        ? el('div', {}, itens.map((item) => el('div', { estilo: 'margin-bottom:.6rem' }, [
+          el('div', { estilo: 'display:flex;justify-content:space-between;font-size:.86rem' }, [
+            el('span', { texto: item.categoria }),
+            el('strong', { texto: moeda(item.total) }),
+          ]),
+          el('div', { classe: 'barra-fundo' }, [
+            el('span', { estilo: `width:${(item.total / total) * 100}%;background:${cor}` }),
+          ]),
+        ])))
+        : vazio('Sem lancamentos.'),
+    ]);
+  }
+
+  // ---------- Mensalidades ----------
+
+  async function carregarMensalidades() {
+    const { totais, mensalidades } = await api.obter(`/financeiro/mensalidades${consulta({
+      competencia: estado.statusMensalidade === 'atrasadas' ? '' : estado.competencia,
+      status: ['pendente', 'pago', 'cancelado'].includes(estado.statusMensalidade) ? estado.statusMensalidade : '',
+      atrasadas: estado.statusMensalidade === 'atrasadas' ? '1' : '',
+    })}`);
+
+    areaMensalidades.replaceChildren(el('div', {}, [
+      el('div', { classe: 'grade col-3', estilo: 'margin-bottom:1rem' }, [
+        indicador({ rotulo: 'Recebido', valor: moeda(totais.recebido), tipo: 'ok' }),
+        indicador({ rotulo: 'Em aberto', valor: moeda(totais.a_receber), tipo: 'alerta' }),
+        indicador({ rotulo: 'Atrasado', valor: moeda(totais.atrasado), tipo: totais.atrasado ? 'erro' : '' }),
+      ]),
+      tabela(
+        ['Aluno', 'Competencia', 'Vencimento', 'Valor', 'Situacao', 'Pagamento', 'Acoes'],
+        mensalidades.map((mensalidade) => [
+          celula([
+            el('strong', { texto: mensalidade.aluno }),
+            mensalidade.telefone ? el('div', { classe: 'dica', texto: mensalidade.telefone }) : null,
+          ]),
+          competenciaBr(mensalidade.competencia),
+          dataBr(mensalidade.vencimento),
+          moeda(mensalidade.valor),
+          celula([mensalidade.atrasada ? etiqueta('atrasada', 'erro') : etiquetaStatus(mensalidade.status)]),
+          mensalidade.pago_em ? `${dataBr(mensalidade.pago_em)} (${mensalidade.forma_pagamento || '-'})` : '-',
+          celula([
+            mensalidade.status === 'pendente' ? botao('Receber', () => receber(mensalidade), 'botao pequeno') : null,
+            ehDono && mensalidade.status === 'pendente'
+              ? botao('Cancelar', async () => {
+                if (!confirmar('Cancelar esta mensalidade?')) return;
+                await api.remover(`/financeiro/mensalidades/${mensalidade.id}`);
+                await atualizarTudo();
+              }, 'botao pequeno perigo')
+              : null,
+          ].filter(Boolean), 'acoes-celula'),
+        ]),
+        'Nenhuma mensalidade nesse filtro.',
+      ),
+    ]));
+  }
+
+  function receber(mensalidade) {
+    abrirFormulario({
+      titulo: `Receber de ${mensalidade.aluno}`,
+      aviso: 'O pagamento entra automaticamente como receita no caixa da academia.',
+      campos: [
+        { nome: 'valor', rotulo: 'Valor recebido', tipo: 'number', passo: '0.01', valor: mensalidade.valor, obrigatorio: true },
+        { nome: 'forma_pagamento', rotulo: 'Forma de pagamento', tipo: 'select',
+          opcoes: FORMAS.map((forma) => ({ valor: forma, rotulo: forma })) },
+        { nome: 'pago_em', rotulo: 'Data do pagamento', tipo: 'date', valor: hojeISO() },
+      ],
+      aoSalvar: async (dados) => {
+        await api.criar(`/financeiro/mensalidades/${mensalidade.id}/pagar`, dados);
+        aviso('Pagamento registrado.');
+        await atualizarTudo();
+      },
+    });
+  }
+
+  function gerarMensalidades() {
+    abrirFormulario({
+      titulo: 'Gerar mensalidades do mes',
+      aviso: 'Cria a cobranca de todos os alunos com matricula ativa. Quem ja tem mensalidade no mes e ignorado.',
+      campos: [{ nome: 'competencia', rotulo: 'Competencia', tipo: 'month', valor: estado.competencia, obrigatorio: true }],
+      textoConfirmar: 'Gerar',
+      aoSalvar: async (dados) => {
+        const resposta = await api.criar('/financeiro/mensalidades/gerar', dados);
+        aviso(resposta.mensagem);
+        await atualizarTudo();
+      },
+    });
+  }
+
+  function mensalidadeAvulsa() {
+    abrirFormulario({
+      titulo: 'Nova mensalidade avulsa',
+      campos: [
+        { nome: 'aluno_id', rotulo: 'Aluno', tipo: 'select', obrigatorio: true,
+          opcoes: alunos.map((a) => ({ valor: a.id, rotulo: a.nome })) },
+        { nome: 'competencia', rotulo: 'Competencia', tipo: 'month', valor: estado.competencia, obrigatorio: true },
+        { nome: 'vencimento', rotulo: 'Vencimento', tipo: 'date', valor: `${estado.competencia}-10` },
+        { nome: 'valor', rotulo: 'Valor', tipo: 'number', passo: '0.01', obrigatorio: true },
+        { nome: 'observacao', rotulo: 'Observacao' },
+      ],
+      aoSalvar: async (dados) => {
+        await api.criar('/financeiro/mensalidades', dados);
+        aviso('Mensalidade criada.');
+        await atualizarTudo();
+      },
+    });
+  }
+
+  // ---------- Lancamentos ----------
+
+  async function carregarLancamentos() {
+    const { totais, lancamentos } = await api.obter(`/financeiro/lancamentos${consulta({
+      de: `${estado.competencia}-01`, ate: `${estado.competencia}-31`,
+    })}`);
+
+    areaLancamentos.replaceChildren(el('div', {}, [
+      el('div', { classe: 'grade col-3', estilo: 'margin-bottom:1rem' }, [
+        indicador({ rotulo: 'Entradas', valor: moeda(totais.receitas), tipo: 'ok' }),
+        ehDono ? indicador({ rotulo: 'Saidas', valor: moeda(totais.despesas), tipo: 'erro' }) : null,
+        ehDono ? indicador({ rotulo: 'Saldo', valor: moeda(totais.saldo), tipo: totais.saldo >= 0 ? 'ok' : 'erro' }) : null,
+      ].filter(Boolean)),
+      tabela(
+        ['Data', 'Tipo', 'Categoria', 'Descricao', 'Aluno', 'Forma', 'Valor', ''],
+        lancamentos.map((lancamento) => [
+          dataBr(lancamento.data),
+          celula([etiqueta(lancamento.tipo, lancamento.tipo === 'receita' ? 'ok' : 'erro')]),
+          lancamento.categoria,
+          lancamento.descricao,
+          lancamento.aluno || '-',
+          lancamento.forma_pagamento || '-',
+          moeda(lancamento.valor),
+          celula([ehDono
+            ? botao('Estornar', async () => {
+              if (!confirmar('Remover este lancamento? Se for um pagamento de mensalidade, ela volta para pendente.')) return;
+              await api.remover(`/financeiro/lancamentos/${lancamento.id}`);
+              aviso('Lancamento estornado.');
+              await atualizarTudo();
+            }, 'botao pequeno perigo')
+            : null]),
+        ]),
+        'Nenhuma movimentacao neste mes.',
+      ),
+    ]));
+  }
+
+  function novoLancamento(tipo) {
+    const categorias = tipo === 'receita'
+      ? ['mensalidade', 'matricula', 'exame de faixa', 'produtos', 'evento', 'aula avulsa', 'outros']
+      : ['aluguel', 'salarios', 'agua/luz/internet', 'equipamentos', 'manutencao', 'marketing', 'impostos', 'outros'];
+
+    abrirFormulario({
+      titulo: tipo === 'receita' ? 'Nova entrada' : 'Nova saida',
+      campos: [
+        { nome: 'categoria', rotulo: 'Categoria', tipo: 'select', opcoes: categorias.map((c) => ({ valor: c, rotulo: c })) },
+        { nome: 'descricao', rotulo: 'Descricao', obrigatorio: true },
+        { nome: 'valor', rotulo: 'Valor (R$)', tipo: 'number', passo: '0.01', obrigatorio: true },
+        { nome: 'data', rotulo: 'Data', tipo: 'date', valor: hojeISO() },
+        { nome: 'forma_pagamento', rotulo: 'Forma', tipo: 'select', opcoes: FORMAS.map((f) => ({ valor: f, rotulo: f })) },
+        ...(tipo === 'receita'
+          ? [{ nome: 'aluno_id', rotulo: 'Aluno (opcional)', tipo: 'select',
+            opcoes: [{ valor: '', rotulo: '-' }, ...alunos.map((a) => ({ valor: a.id, rotulo: a.nome }))] }]
+          : []),
+      ],
+      aoSalvar: async (dados) => {
+        await api.criar('/financeiro/lancamentos', { ...dados, tipo });
+        aviso('Lancamento registrado.');
+        await atualizarTudo();
+      },
+    });
+  }
+
+  async function atualizarTudo() {
+    await Promise.all([carregarResumo(), carregarMensalidades(), carregarLancamentos()]);
+  }
+
+  const seletorCompetencia = el('input', {
+    type: 'month', value: estado.competencia,
+    aoMudar: (evento) => { estado.competencia = evento.target.value || competenciaAtual(); atualizarTudo(); },
+  });
+
+  const seletorStatus = el('select', {
+    aoMudar: (evento) => { estado.statusMensalidade = evento.target.value; carregarMensalidades(); },
+  }, [
+    el('option', { value: '', texto: 'Todas do mes' }),
+    el('option', { value: 'pendente', texto: 'Em aberto' }),
+    el('option', { value: 'pago', texto: 'Pagas' }),
+    el('option', { value: 'atrasadas', texto: 'Atrasadas (todos os meses)' }),
+  ]);
+
+  await atualizarTudo();
+
+  return el('div', {}, [
+    topo('Financeiro', 'Mensalidades, entradas, saidas e resultado da academia', [
+      botao('Gerar mensalidades', gerarMensalidades, 'botao secundario'),
+      botao('+ Entrada', () => novoLancamento('receita'), 'botao secundario'),
+      ehDono ? botao('+ Saida', () => novoLancamento('despesa'), 'botao secundario') : null,
+    ].filter(Boolean)),
+    el('div', { classe: 'filtros' }, [
+      el('div', { classe: 'campo' }, [el('label', { texto: 'Mes de referencia' }), seletorCompetencia]),
+    ]),
+    areaIndicadores,
+    ehDono ? cartao('Evolucao dos ultimos meses', areaGrafico) : null,
+    cartao('Mensalidades', [
+      el('div', { classe: 'filtros' }, [
+        el('div', { classe: 'campo' }, [el('label', { texto: 'Filtrar' }), seletorStatus]),
+        botao('+ Mensalidade avulsa', mensalidadeAvulsa, 'botao secundario pequeno'),
+      ]),
+      areaMensalidades,
+    ]),
+    cartao('Movimentacoes do mes', areaLancamentos),
+  ]);
+}
