@@ -92,9 +92,27 @@ roteador.get('/', exigirPapel(...EQUIPE, 'aluno'), rota((req, res) => {
     WHERE m.ativo = 1 GROUP BY m.id ORDER BY alunos DESC
   `);
 
+  // Series dos ultimos 6 meses para os mini-graficos do painel.
+  const serieMatriculas = todos(`
+    SELECT substr(criado_em, 1, 7) AS competencia, COUNT(*) AS total
+    FROM matriculas
+    WHERE criado_em >= date('now','localtime','-5 months','start of month')
+    GROUP BY competencia ORDER BY competencia
+  `);
+  const serieCaixa = todos(`
+    SELECT substr(data, 1, 7) AS competencia,
+           COALESCE(SUM(CASE WHEN tipo = 'receita' THEN valor END), 0) AS receitas,
+           COALESCE(SUM(CASE WHEN tipo = 'despesa' THEN valor END), 0) AS despesas
+    FROM lancamentos
+    WHERE data >= date('now','localtime','-5 months','start of month')
+    GROUP BY competencia ORDER BY competencia
+  `);
+
   res.json({
     ...base,
     alunos,
+    serie_matriculas: serieMatriculas,
+    serie_caixa: papel === 'dono' ? serieCaixa : [],
     financeiro: papel === 'dono'
       ? { ...caixaMes, saldo: caixaMes.receitas - caixaMes.despesas, a_receber: aReceber.total, inadimplencia }
       : { a_receber: aReceber.total, inadimplencia },

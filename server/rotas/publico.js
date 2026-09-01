@@ -50,11 +50,14 @@ roteador.get('/academia', rota((_req, res) => {
 
   res.json({
     academia: {
-      nome: configuracoes.nome_academia || 'Academia de Lutas',
+      nome: configuracoes.nome_academia || 'Atak',
       telefone: configuracoes.telefone || '',
+      whatsapp: configuracoes.whatsapp || '',
       endereco: configuracoes.endereco || '',
       instagram: configuracoes.instagram || '',
       sobre: configuracoes.sobre || '',
+      chamada: configuracoes.chamada || '',
+      cor_primaria: configuracoes.cor_primaria || '',
     },
     dias: DIAS_SEMANA,
     modalidades,

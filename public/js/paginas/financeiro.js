@@ -3,6 +3,7 @@ import {
   el, cartao, tabela, celula, botao, indicador, etiqueta, etiquetaStatus, moeda, dataBr, competenciaBr,
   abrirFormulario, aviso, confirmar, vazio, hojeISO, competenciaAtual,
 } from '../ui.js';
+import { barrasHorizontais, evolucao } from '../graficos.js';
 import { topo } from '../app.js';
 
 const FORMAS = ['dinheiro', 'pix', 'debito', 'credito', 'transferencia', 'boleto'];
@@ -14,6 +15,7 @@ export default async function paginaFinanceiro() {
 
   const areaIndicadores = el('div');
   const areaGrafico = el('div');
+  const areaCategorias = el('div');
   const areaMensalidades = el('div');
   const areaLancamentos = el('div');
   const alunos = await api.obter('/alunos?status=ativo');
@@ -40,43 +42,28 @@ export default async function paginaFinanceiro() {
       }),
     ]));
 
-    const maior = Math.max(1, ...resumo.evolucao.flatMap((m) => [m.receitas, m.despesas]));
-    areaGrafico.replaceChildren(el('div', {}, [
-      el('div', { classe: 'legenda', estilo: 'margin-bottom:.5rem' }, [
-        el('span', {}, [el('i', { estilo: 'background:var(--ok)' }), 'Receitas']),
-        el('span', {}, [el('i', { estilo: 'background:var(--erro)' }), 'Despesas']),
-      ]),
-      resumo.evolucao.length
-        ? el('div', { classe: 'grafico-colunas' }, resumo.evolucao.map((mes) => el('div', { classe: 'mes' }, [
-          el('div', { classe: 'par' }, [
-            el('span', { classe: 'receita', estilo: `height:${(mes.receitas / maior) * 100}%`, title: moeda(mes.receitas) }),
-            el('span', { classe: 'despesa', estilo: `height:${(mes.despesas / maior) * 100}%`, title: moeda(mes.despesas) }),
-          ]),
-          el('div', { classe: 'rotulo', texto: competenciaBr(mes.competencia) }),
-        ])))
-        : vazio('Ainda nao ha movimentacao registrada.'),
-      el('div', { classe: 'grade col-2', estilo: 'margin-top:1rem' }, [
-        listaCategorias('Entradas por categoria', resumo.por_categoria.filter((c) => c.tipo === 'receita'), 'var(--ok)'),
-        listaCategorias('Saidas por categoria', resumo.por_categoria.filter((c) => c.tipo === 'despesa'), 'var(--erro)'),
-      ]),
+    areaGrafico.replaceChildren(resumo.evolucao.length
+      ? evolucao({
+        pontos: resumo.evolucao.map((mes) => ({ x: competenciaBr(mes.competencia), valores: [mes.receitas, mes.despesas] })),
+        series: [{ nome: 'Entradas', cor: 'var(--serie-1)' }, { nome: 'Saidas', cor: 'var(--serie-2)' }],
+      })
+      : vazio('Ainda nao ha movimentacao registrada.', '\u{1F4C8}'));
+
+    areaCategorias.replaceChildren(el('div', { classe: 'grade col-2' }, [
+      blocoCategorias('Entradas por categoria', resumo.por_categoria.filter((c) => c.tipo === 'receita'), 'var(--serie-1)'),
+      blocoCategorias('Saidas por categoria', resumo.por_categoria.filter((c) => c.tipo === 'despesa'), 'var(--serie-2)'),
     ]));
   }
 
-  function listaCategorias(titulo, itens, cor) {
-    const total = itens.reduce((soma, item) => soma + item.total, 0) || 1;
+  function blocoCategorias(titulo, itens, cor) {
     return el('div', {}, [
       el('h4', { texto: titulo }),
       itens.length
-        ? el('div', {}, itens.map((item) => el('div', { estilo: 'margin-bottom:.6rem' }, [
-          el('div', { estilo: 'display:flex;justify-content:space-between;font-size:.86rem' }, [
-            el('span', { texto: item.categoria }),
-            el('strong', { texto: moeda(item.total) }),
-          ]),
-          el('div', { classe: 'barra-fundo' }, [
-            el('span', { estilo: `width:${(item.total / total) * 100}%;background:${cor}` }),
-          ]),
-        ])))
-        : vazio('Sem lancamentos.'),
+        ? barrasHorizontais({
+          dados: itens.map((item) => ({ rotulo: item.categoria, valor: item.total, cor, legenda: 'total no mes' })),
+          formatar: moeda,
+        })
+        : vazio('Sem lancamentos neste mes.', '\u{1F4B8}'),
     ]);
   }
 
@@ -267,7 +254,8 @@ export default async function paginaFinanceiro() {
       el('div', { classe: 'campo' }, [el('label', { texto: 'Mes de referencia' }), seletorCompetencia]),
     ]),
     areaIndicadores,
-    ehDono ? cartao('Evolucao dos ultimos meses', areaGrafico) : null,
+    ehDono ? cartao('Entradas e saidas dos ultimos meses', areaGrafico) : null,
+    ehDono ? cartao('Para onde o dinheiro vai', areaCategorias) : null,
     cartao('Mensalidades', [
       el('div', { classe: 'filtros' }, [
         el('div', { classe: 'campo' }, [el('label', { texto: 'Filtrar' }), seletorStatus]),

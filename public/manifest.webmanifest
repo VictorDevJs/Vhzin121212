@@ -1,0 +1,21 @@
+{
+  "name": "Atak · Sistema de gestao",
+  "short_name": "Atak",
+  "description": "Gestao da academia Atak: alunos, turmas, horarios, planos, avisos e financeiro.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0a0c0e",
+  "theme_color": "#e11d2e",
+  "lang": "pt-BR",
+  "icons": [
+    { "src": "/marca/simbolo.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/marca/simbolo.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Chamada", "url": "/#/chamada" },
+    { "name": "Avisos", "url": "/#/avisos" },
+    { "name": "Financeiro", "url": "/#/financeiro" }
+  ]
+}

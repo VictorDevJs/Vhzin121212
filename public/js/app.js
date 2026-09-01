@@ -1,5 +1,8 @@
 import { api, sessao } from './api.js';
-import { el, limpar, aviso, abrirFormulario } from './ui.js';
+import { el, limpar, aviso, abrirFormulario, esqueleto } from './ui.js';
+import { aplicarMarca, marca, logotipo, iniciais } from './marca.js';
+import { icone } from './icones.js';
+import { alternarTema, ehEscuro } from './tema.js';
 
 import paginaPublica from './paginas/publico.js';
 import paginaPainel from './paginas/painel.js';
@@ -15,21 +18,22 @@ import paginaMinhaArea from './paginas/minha-area.js';
 
 const EQUIPE = ['dono', 'mestre', 'recepcao'];
 
-/** Cada rota declara quem pode acessar e como aparece no menu. */
+/** Cada rota diz quem entra, em que grupo do menu aparece e o que desenha. */
 const ROTAS = [
-  { caminho: 'painel', titulo: 'Painel', icone: '📊', papeis: [...EQUIPE, 'aluno'], render: paginaPainel },
-  { caminho: 'minha-area', titulo: 'Minha area', icone: '🥋', papeis: ['aluno'], render: paginaMinhaArea },
-  { caminho: 'grade', titulo: 'Horarios', icone: '🗓️', papeis: [...EQUIPE, 'aluno'], render: paginaGrade },
-  { caminho: 'avisos', titulo: 'Avisos', icone: '📢', papeis: [...EQUIPE, 'aluno'], render: paginaAvisos },
-  { caminho: 'alunos', titulo: 'Alunos', icone: '👥', papeis: EQUIPE, render: paginaAlunos },
-  { caminho: 'chamada', titulo: 'Chamada', icone: '✅', papeis: EQUIPE, render: paginaChamada },
-  { caminho: 'turmas', titulo: 'Turmas e modalidades', icone: '🥊', papeis: EQUIPE, render: paginaTurmas },
-  { caminho: 'planos', titulo: 'Planos', icone: '💳', papeis: EQUIPE, render: paginaPlanos },
-  { caminho: 'financeiro', titulo: 'Financeiro', icone: '💰', papeis: ['dono', 'recepcao'], render: paginaFinanceiro },
-  { caminho: 'equipe', titulo: 'Equipe e academia', icone: '⚙️', papeis: ['dono'], render: paginaEquipe },
+  { caminho: 'painel', titulo: 'Painel', curto: 'Painel', icone: 'painel', grupo: 'Visao geral', papeis: [...EQUIPE, 'aluno'], render: paginaPainel, principal: true },
+  { caminho: 'minha-area', titulo: 'Minha area', curto: 'Meu treino', icone: 'aluno', grupo: 'Visao geral', papeis: ['aluno'], render: paginaMinhaArea, principal: true },
+  { caminho: 'grade', titulo: 'Horarios', curto: 'Horarios', icone: 'calendario', grupo: 'Rotina', papeis: [...EQUIPE, 'aluno'], render: paginaGrade, principal: true },
+  { caminho: 'chamada', titulo: 'Chamada', curto: 'Chamada', icone: 'chamada', grupo: 'Rotina', papeis: EQUIPE, render: paginaChamada, principal: true },
+  { caminho: 'avisos', titulo: 'Avisos', curto: 'Avisos', icone: 'megafone', grupo: 'Rotina', papeis: [...EQUIPE, 'aluno'], render: paginaAvisos, principal: true },
+  { caminho: 'alunos', titulo: 'Alunos', curto: 'Alunos', icone: 'alunos', grupo: 'Gestao', papeis: EQUIPE, render: paginaAlunos, principal: true },
+  { caminho: 'turmas', titulo: 'Turmas e modalidades', curto: 'Turmas', icone: 'luva', grupo: 'Gestao', papeis: EQUIPE, render: paginaTurmas },
+  { caminho: 'planos', titulo: 'Planos', curto: 'Planos', icone: 'cartao', grupo: 'Gestao', papeis: EQUIPE, render: paginaPlanos },
+  { caminho: 'financeiro', titulo: 'Financeiro', curto: 'Caixa', icone: 'dinheiro', grupo: 'Financeiro', papeis: ['dono', 'recepcao'], render: paginaFinanceiro, principal: true },
+  { caminho: 'equipe', titulo: 'Equipe e academia', curto: 'Equipe', icone: 'engrenagem', grupo: 'Sistema', papeis: ['dono'], render: paginaEquipe },
 ];
 
 const raiz = document.getElementById('app');
+let avisosNaoLidos = 0;
 
 function rotaAtual() {
   return (window.location.hash.replace(/^#\/?/, '').split('?')[0] || '').trim();
@@ -43,38 +47,163 @@ function rotaInicial() {
   return sessao.papel === 'aluno' ? 'minha-area' : 'painel';
 }
 
-/** Monta a barra lateral com os itens permitidos para o papel do usuario. */
-function barraLateral(caminhoAtivo) {
-  const permitidas = ROTAS.filter((rota) => rota.papeis.includes(sessao.papel));
-  const barra = el('nav', { classe: 'barra-lateral', id: 'barra-lateral' }, [
-    el('div', { classe: 'marca' }, [
-      el('span', { classe: 'logo', texto: '🥋' }),
-      el('div', {}, [
-        el('span', { texto: 'Academia de Lutas' }),
-        el('small', { texto: 'Sistema de gestao' }),
-      ]),
-    ]),
-    ...permitidas.map((rota) => el('button', {
-      classe: `menu-item ${rota.caminho === caminhoAtivo ? 'ativo' : ''}`,
-      aoClicar: () => { irPara(rota.caminho); document.getElementById('barra-lateral')?.classList.remove('aberta'); },
-    }, [el('span', { classe: 'icone', texto: rota.icone }), rota.titulo])),
-    el('div', { classe: 'rodape-lateral' }, [
-      el('div', { classe: 'usuario-atual' }, [
-        el('strong', { texto: sessao.usuario?.nome || '' }),
-        traduzirPapel(sessao.papel),
-      ]),
-      el('button', { classe: 'menu-item', aoClicar: trocarSenha }, [el('span', { classe: 'icone', texto: '🔑' }), 'Trocar senha']),
-      el('button', {
-        classe: 'menu-item',
-        aoClicar: () => { sessao.encerrar(); irPara('entrar'); },
-      }, [el('span', { classe: 'icone', texto: '🚪' }), 'Sair']),
-    ]),
-  ]);
-  return barra;
+function rotasPermitidas() {
+  return ROTAS.filter((rota) => rota.papeis.includes(sessao.papel));
 }
 
 export function traduzirPapel(papel) {
   return { dono: 'Dono da academia', mestre: 'Mestre / professor', recepcao: 'Recepcao', aluno: 'Aluno' }[papel] || papel;
+}
+
+/* ------------------------------------------------------------------ menu */
+
+function barraLateral(caminhoAtivo) {
+  const permitidas = rotasPermitidas();
+  const grupos = [...new Set(permitidas.map((rota) => rota.grupo))];
+
+  return el('nav', { classe: 'lateral', id: 'lateral', 'aria-label': 'Menu principal' }, [
+    el('div', { classe: 'identidade' }, [logotipo(30)]),
+
+    ...grupos.flatMap((grupo) => [
+      el('div', { classe: 'grupo-menu', texto: grupo }),
+      ...permitidas.filter((rota) => rota.grupo === grupo).map((rota) => el('button', {
+        classe: `item-menu ${rota.caminho === caminhoAtivo ? 'ativo' : ''}`,
+        'aria-current': rota.caminho === caminhoAtivo ? 'page' : null,
+        aoClicar: () => { irPara(rota.caminho); fecharMenu(); },
+      }, [
+        el('span', { classe: 'icone' }, [icone(rota.icone)]),
+        rota.titulo,
+        rota.caminho === 'avisos' && avisosNaoLidos
+          ? el('span', { classe: 'contador', texto: String(avisosNaoLidos) })
+          : null,
+      ])),
+    ]),
+
+    el('div', { classe: 'rodape-lateral' }, [
+      el('div', { classe: 'cartao-usuario' }, [
+        el('span', { classe: 'avatar', texto: iniciais(sessao.usuario?.nome) }),
+        el('div', { classe: 'dados' }, [
+          el('strong', { texto: sessao.usuario?.nome || '' }),
+          el('span', { texto: traduzirPapel(sessao.papel) }),
+        ]),
+      ]),
+      el('button', { classe: 'item-menu', aoClicar: trocarSenha }, [el('span', { classe: 'icone' }, [icone('chave')]), 'Trocar senha']),
+      el('button', {
+        classe: 'item-menu',
+        aoClicar: () => { sessao.encerrar(); window.location.hash = ''; window.location.reload(); },
+      }, [el('span', { classe: 'icone' }, [icone('sair')]), 'Sair']),
+    ]),
+  ]);
+}
+
+function navegacaoInferior(caminhoAtivo) {
+  const principais = rotasPermitidas().filter((rota) => rota.principal).slice(0, 5);
+  return el('nav', { classe: 'nav-inferior', 'aria-label': 'Navegacao rapida' }, principais.map((rota) => el('button', {
+    classe: `item ${rota.caminho === caminhoAtivo ? 'ativo' : ''}`,
+    aoClicar: () => irPara(rota.caminho),
+  }, [
+    el('span', { classe: 'icone' }, [icone(rota.icone, 20)]),
+    el('span', { texto: rota.curto }),
+  ])));
+}
+
+function barraSuperior() {
+  return el('header', { classe: 'topo-app' }, [
+    el('button', {
+      classe: 'botao-icone menu-mobile', 'aria-label': 'Abrir menu',
+      aoClicar: () => document.getElementById('lateral')?.classList.toggle('aberta'),
+    }, [icone('menu', 20)]),
+    el('button', {
+      classe: 'busca-global', 'aria-label': 'Buscar e navegar', aoClicar: abrirPaleta,
+    }, [
+      icone('busca', 16),
+      el('span', { texto: 'Buscar telas e acoes' }),
+      el('kbd', { texto: atalhoDoSistema() }),
+    ]),
+    el('div', { estilo: 'margin-left:auto;display:flex;gap:.5rem' }, [
+      el('button', {
+        classe: 'botao-icone', id: 'botao-tema',
+        'aria-label': 'Alternar tema claro e escuro',
+        aoClicar: (evento) => {
+          alternarTema();
+          evento.currentTarget.replaceChildren(icone(ehEscuro() ? 'sol' : 'lua', 18));
+        },
+      }, [icone(ehEscuro() ? 'sol' : 'lua', 18)]),
+    ]),
+  ]);
+}
+
+function fecharMenu() {
+  document.getElementById('lateral')?.classList.remove('aberta');
+}
+
+function atalhoDoSistema() {
+  return navigator.platform?.toLowerCase().includes('mac') ? '⌘K' : 'Ctrl K';
+}
+
+/* ------------------------------------------------- paleta de comandos */
+
+function comandosDisponiveis() {
+  const comandos = rotasPermitidas().map((rota) => ({
+    icone: rota.icone, titulo: rota.titulo, atalho: rota.grupo, acao: () => irPara(rota.caminho),
+  }));
+  comandos.push(
+    { icone: 'lua', titulo: 'Alternar tema claro / escuro', atalho: 'Aparencia', acao: () => { alternarTema(); desenhar(); } },
+    { icone: 'chave', titulo: 'Trocar senha', atalho: 'Conta', acao: trocarSenha },
+    { icone: 'sair', titulo: 'Sair do sistema', atalho: 'Conta', acao: () => { sessao.encerrar(); window.location.hash = ''; window.location.reload(); } },
+  );
+  return comandos;
+}
+
+export function abrirPaleta() {
+  const todos = comandosDisponiveis();
+  let filtrados = todos;
+  let marcado = 0;
+
+  const lista = el('div', { classe: 'lista' });
+  const campo = el('input', {
+    type: 'text', placeholder: 'Para onde voce quer ir?', 'aria-label': 'Buscar comando',
+    aoDigitar: (evento) => {
+      const termo = evento.target.value.toLowerCase().trim();
+      filtrados = todos.filter((c) => c.titulo.toLowerCase().includes(termo) || c.atalho.toLowerCase().includes(termo));
+      marcado = 0;
+      desenharLista();
+    },
+  });
+
+  function desenharLista() {
+    lista.replaceChildren(...(filtrados.length
+      ? filtrados.map((comando, indice) => el('button', {
+        classe: `opcao ${indice === marcado ? 'marcada' : ''}`, type: 'button',
+        aoClicar: () => { fechar(); comando.acao(); },
+      }, [
+        icone(comando.icone, 17),
+        el('span', { texto: comando.titulo }),
+        el('small', { texto: comando.atalho }),
+      ]))
+      : [el('div', { classe: 'vazio', texto: 'Nada encontrado.' })]));
+  }
+
+  const fundo = el('div', { classe: 'fundo-modal paleta' }, [
+    el('div', { classe: 'caixa' }, [campo, lista]),
+  ]);
+
+  function fechar() {
+    fundo.remove();
+    document.removeEventListener('keydown', aoTeclar, true);
+  }
+  function aoTeclar(evento) {
+    if (evento.key === 'Escape') { evento.preventDefault(); fechar(); }
+    if (evento.key === 'ArrowDown') { evento.preventDefault(); marcado = (marcado + 1) % Math.max(1, filtrados.length); desenharLista(); }
+    if (evento.key === 'ArrowUp') { evento.preventDefault(); marcado = (marcado - 1 + filtrados.length) % Math.max(1, filtrados.length); desenharLista(); }
+    if (evento.key === 'Enter' && filtrados[marcado]) { evento.preventDefault(); const acao = filtrados[marcado].acao; fechar(); acao(); }
+  }
+
+  fundo.addEventListener('click', (evento) => { if (evento.target === fundo) fechar(); });
+  document.addEventListener('keydown', aoTeclar, true);
+  document.body.append(fundo);
+  desenharLista();
+  campo.focus();
 }
 
 function trocarSenha() {
@@ -91,28 +220,23 @@ function trocarSenha() {
   });
 }
 
-/** Cabecalho padrao das telas internas. */
+/* ------------------------------------------------------- cabecalho de tela */
+
 export function topo(titulo, subtitulo, acoes = []) {
-  return el('header', { classe: 'topo' }, [
+  return el('header', { classe: 'cabecalho-pagina' }, [
     el('div', {}, [
-      el('div', { estilo: 'display:flex;align-items:center;gap:.6rem' }, [
-        el('button', {
-          classe: 'botao secundario pequeno abrir-menu',
-          texto: '☰',
-          aoClicar: () => document.getElementById('barra-lateral')?.classList.toggle('aberta'),
-        }),
-        el('h1', { texto: titulo, estilo: 'margin:0' }),
-      ]),
-      subtitulo ? el('p', { classe: 'subtitulo', texto: subtitulo }) : null,
+      el('h1', { texto: titulo }),
+      subtitulo ? el('p', { classe: 'legenda', texto: subtitulo }) : null,
     ]),
-    el('div', { classe: 'acoes' }, acoes),
+    acoes.length ? el('div', { classe: 'acoes' }, acoes) : null,
   ]);
 }
+
+/* --------------------------------------------------------------- desenho */
 
 async function desenhar() {
   const caminho = rotaAtual();
 
-  // Visitante: apenas a vitrine da academia com login e cadastro.
   if (!sessao.usuario) {
     limpar(raiz).append(await paginaPublica());
     return;
@@ -127,24 +251,66 @@ async function desenhar() {
     return irPara(rotaInicial());
   }
 
-  const conteudo = el('main', { classe: 'conteudo' }, [el('div', { classe: 'carregando', texto: 'Carregando...' })]);
-  limpar(raiz).append(el('div', { classe: 'app' }, [barraLateral(caminho), conteudo]));
+  const pagina = el('main', { classe: 'pagina' }, [
+    topo(rota.titulo, ''),
+    el('div', { classe: 'grade col-4', estilo: 'margin-bottom:1rem' }, [
+      esqueleto(1, 92), esqueleto(1, 92), esqueleto(1, 92), esqueleto(1, 92),
+    ]),
+    esqueleto(3, 120),
+  ]);
+
+  limpar(raiz).append(el('div', { classe: 'app' }, [
+    barraLateral(caminho),
+    el('div', { classe: 'conteudo' }, [barraSuperior(), pagina]),
+    navegacaoInferior(caminho),
+  ]));
 
   try {
-    limpar(conteudo).append(await rota.render());
+    const conteudo = await rota.render();
+    trocarConteudo(pagina, conteudo);
   } catch (erro) {
-    limpar(conteudo).append(
+    limpar(pagina).append(
       topo(rota.titulo, ''),
-      el('div', { classe: 'mensagem-erro', texto: erro.message }),
+      el('div', { classe: 'mensagem-erro' }, [el('span', { texto: '⚠' }), erro.message]),
     );
   }
 }
 
+/** Usa a View Transitions API quando o navegador tem suporte. */
+function trocarConteudo(container, conteudo) {
+  const aplicar = () => limpar(container).append(conteudo);
+  if (document.startViewTransition) document.startViewTransition(aplicar);
+  else aplicar();
+}
+
+async function carregarContadores() {
+  if (!sessao.usuario) return;
+  try {
+    const avisos = await api.obter('/avisos?ativo=1');
+    const marcoDeLeitura = Number(localStorage.getItem('atak.avisos.lidos') || 0);
+    avisosNaoLidos = avisos.filter((item) => new Date(item.criado_em).getTime() > marcoDeLeitura).length;
+  } catch {
+    avisosNaoLidos = 0;
+  }
+}
+
+export function marcarAvisosComoLidos() {
+  localStorage.setItem('atak.avisos.lidos', String(Date.now()));
+  avisosNaoLidos = 0;
+  document.querySelectorAll('.item-menu .contador').forEach((no) => no.remove());
+}
+
 export async function iniciar() {
+  try {
+    const { academia } = await api.obter('/publico/academia');
+    aplicarMarca(academia);
+  } catch { /* a marca padrao continua valendo */ }
+
   if (sessao.token) {
     try {
       const { usuario } = await api.obter('/auth/eu');
       sessao.usuario = usuario;
+      await carregarContadores();
     } catch {
       sessao.encerrar();
     }
@@ -152,7 +318,22 @@ export async function iniciar() {
   await desenhar();
 }
 
+/* ------------------------------------------------------------ atalhos */
+
+window.addEventListener('keydown', (evento) => {
+  if ((evento.ctrlKey || evento.metaKey) && evento.key.toLowerCase() === 'k') {
+    if (!sessao.usuario) return;
+    evento.preventDefault();
+    abrirPaleta();
+  }
+});
+
 window.addEventListener('hashchange', desenhar);
-export { desenhar as recarregarTela };
+export { desenhar as recarregarTela, marca };
+
+// Aplicativo instalavel (PWA) com cache da casca da interface.
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
+}
 
 iniciar();

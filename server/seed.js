@@ -5,27 +5,27 @@ import { hoje, competenciaAtual, somarMeses } from './util.js';
 /** Modalidades e faixas que ja vem prontas na primeira execucao. */
 const MODALIDADES = [
   {
-    nome: 'Jiu-Jitsu', cor: '#1565c0',
+    nome: 'Jiu-Jitsu', cor: '#2a78d6',
     descricao: 'Arte suave focada em luta de solo, quedas, raspagens e finalizacoes.',
     faixas: ['Branca', 'Cinza', 'Amarela', 'Laranja', 'Verde', 'Azul', 'Roxa', 'Marrom', 'Preta'],
   },
   {
-    nome: 'Muay Thai', cor: '#c62828',
+    nome: 'Muay Thai', cor: '#eb6834',
     descricao: 'Boxe tailandes: socos, chutes, joelhadas, cotoveladas e clinch.',
     faixas: ['Branca', 'Vermelha', 'Rosa', 'Amarela', 'Laranja', 'Verde', 'Azul', 'Marrom', 'Preta'],
   },
   {
-    nome: 'Karate', cor: '#6a1b9a',
+    nome: 'Karate', cor: '#1baf7a',
     descricao: 'Arte marcial japonesa com katas, golpes tradicionais e disciplina.',
     faixas: ['Branca', 'Amarela', 'Vermelha', 'Laranja', 'Verde', 'Roxa', 'Marrom', 'Preta'],
   },
   {
-    nome: 'Kickboxing', cor: '#ef6c00',
+    nome: 'Kickboxing', cor: '#eda100',
     descricao: 'Combinacao de boxe e chutes, muito condicionamento e ritmo.',
     faixas: ['Branca', 'Amarela', 'Laranja', 'Verde', 'Azul', 'Marrom', 'Preta'],
   },
   {
-    nome: 'MMA', cor: '#2e7d32',
+    nome: 'MMA', cor: '#e87ba4',
     descricao: 'Artes marciais mistas: trocacao, quedas e solo em um so treino.',
     faixas: ['Iniciante', 'Intermediario', 'Avancado', 'Competicao'],
   },
@@ -55,11 +55,14 @@ const TURMAS = [
 ];
 
 const CONFIGURACOES = {
-  nome_academia: 'Academia de Lutas',
+  nome_academia: 'Atak',
   telefone: '(00) 00000-0000',
+  whatsapp: '',
   endereco: 'Rua das Artes Marciais, 100 - Centro',
-  instagram: '@academiadelutas',
-  sobre: 'Treinos de Jiu-Jitsu, Muay Thai, Karate, Kickboxing e MMA para todas as idades, do kids ao competidor.',
+  instagram: '@atak',
+  chamada: 'Treine forte. Evolua sempre.',
+  sobre: 'A Atak forma lutadores de Jiu-Jitsu, Muay Thai, Karate, Kickboxing e MMA - do primeiro dia no tatame ate o podio, com turmas kids, adulto e feminino.',
+  cor_primaria: '#e11d2e',
 };
 
 /**
@@ -70,9 +73,9 @@ export function garantirDadosIniciais() {
   const existeUsuario = um('SELECT COUNT(*) AS total FROM usuarios');
   if (existeUsuario.total > 0) return { criado: false };
 
-  const email = process.env.DONO_EMAIL || 'dono@academia.com';
+  const email = process.env.DONO_EMAIL || 'dono@atak.com';
   const senha = process.env.DONO_SENHA || 'admin123';
-  const nome = process.env.DONO_NOME || 'Dono da Academia';
+  const nome = process.env.DONO_NOME || 'Dono da Atak';
 
   transacao(() => {
     executar(`INSERT INTO usuarios (nome, email, senha_hash, papel) VALUES (:nome, :email, :hash, 'dono')`,
@@ -120,7 +123,7 @@ export function garantirDadosIniciais() {
       VALUES (:titulo, :mensagem, 'geral', 'todos', 1,
               (SELECT id FROM usuarios WHERE papel = 'dono' LIMIT 1))
     `, {
-      titulo: 'Bem-vindo ao sistema da academia',
+      titulo: 'Bem-vindo ao sistema da Atak',
       mensagem: 'Aqui voce acompanha os horarios das aulas, avisos de campeonatos, cancelamentos e a sua mensalidade.',
     });
   });
@@ -130,16 +133,30 @@ export function garantirDadosIniciais() {
 
 /** Dados de demonstracao: alunos, matriculas, mensalidades, caixa, avisos e chamada. */
 export function carregarDemonstracao() {
-  const alunosDemo = [
-    ['Lucas Ferreira', 'adulto', '2001-04-12', 'Jiu-Jitsu Adulto Noite'],
-    ['Mariana Costa', 'adulto', '1996-09-30', 'Muay Thai Feminino'],
-    ['Pedro Henrique Alves', 'kids', '2015-02-08', 'Jiu-Jitsu Kids'],
-    ['Ana Beatriz Souza', 'kids', '2014-11-21', 'Karate Kids'],
-    ['Rafael Mendes', 'adulto', '1993-07-03', 'MMA Competicao'],
-    ['Juliana Rocha', 'adulto', '1999-01-17', 'Kickboxing Adulto'],
-    ['Carlos Eduardo Lima', 'adulto', '1988-05-25', 'Muay Thai Adulto'],
-    ['Sofia Martins', 'kids', '2016-08-14', 'Muay Thai Kids'],
+  // Turma de cada aluno define a categoria (kids ou adulto) e onde ele aparece na chamada.
+  const TURMAS_KIDS = ['Jiu-Jitsu Kids', 'Muay Thai Kids', 'Karate Kids'];
+  const TURMAS_ADULTO = [
+    'Jiu-Jitsu Adulto Manha', 'Jiu-Jitsu Adulto Noite', 'Muay Thai Adulto', 'Muay Thai Feminino',
+    'Karate Adulto', 'Kickboxing Adulto', 'MMA Iniciante', 'MMA Competicao',
   ];
+  const NOMES = [
+    'Lucas Ferreira', 'Mariana Costa', 'Rafael Mendes', 'Juliana Rocha', 'Carlos Eduardo Lima',
+    'Beatriz Almeida', 'Thiago Barros', 'Camila Duarte', 'Bruno Antunes', 'Larissa Pires',
+    'Diego Nascimento', 'Patricia Gomes', 'Felipe Cardoso', 'Amanda Ribeiro', 'Vinicius Teixeira',
+    'Gabriela Moraes', 'Rodrigo Farias', 'Aline Fontes', 'Pedro Henrique Alves', 'Ana Beatriz Souza',
+    'Sofia Martins', 'Miguel Andrade', 'Helena Vasques', 'Davi Lucca Ramos',
+  ];
+  // Os 5 ultimos sao kids; o ultimo da lista fica pendente, esperando a recepcao.
+  const alunosDemo = NOMES.map((nome, indice) => {
+    const ehKids = indice >= NOMES.length - 5;
+    const anoNascimento = ehKids ? 2013 + (indice % 5) : 1985 + (indice % 18);
+    return [
+      nome,
+      ehKids ? 'kids' : 'adulto',
+      `${anoNascimento}-${String((indice % 12) + 1).padStart(2, '0')}-${String((indice % 27) + 1).padStart(2, '0')}`,
+      ehKids ? TURMAS_KIDS[indice % TURMAS_KIDS.length] : TURMAS_ADULTO[indice % TURMAS_ADULTO.length],
+    ];
+  });
 
   if (um('SELECT COUNT(*) AS total FROM alunos').total > 0) {
     return { mensagem: 'O banco ja tem alunos cadastrados; a demonstracao nao foi aplicada.' };
@@ -147,8 +164,8 @@ export function carregarDemonstracao() {
 
   transacao(() => {
     const mestres = [
-      ['Mestre Ricardo Barbosa', 'ricardo@academia.com'],
-      ['Mestra Camila Nogueira', 'camila@academia.com'],
+      ['Mestre Ricardo Barbosa', 'ricardo@atak.com'],
+      ['Mestra Camila Nogueira', 'camila@atak.com'],
     ];
     const idsMestres = mestres.map(([nomeMestre, emailMestre]) => {
       const criado = executar(`INSERT INTO usuarios (nome, email, senha_hash, papel, telefone)
@@ -158,7 +175,7 @@ export function carregarDemonstracao() {
     });
 
     executar(`INSERT INTO usuarios (nome, email, senha_hash, papel) VALUES (:nome, :email, :hash, 'recepcao')`,
-      { nome: 'Recepcao', email: 'recepcao@academia.com', hash: gerarHashSenha('recepcao123') });
+      { nome: 'Recepcao', email: 'recepcao@atak.com', hash: gerarHashSenha('recepcao123') });
 
     const turmas = todos('SELECT id, nome FROM turmas');
     turmas.forEach((turma, indice) => {
@@ -166,23 +183,30 @@ export function carregarDemonstracao() {
         { m: idsMestres[indice % idsMestres.length], id: turma.id });
     });
 
-    const planos = todos('SELECT * FROM planos WHERE ativo = 1 ORDER BY valor');
+    // A demonstracao usa apenas planos mensais, para o caixa do mes fazer sentido.
+    const planos = todos(`SELECT * FROM planos WHERE ativo = 1 AND periodicidade = 'mensal' ORDER BY valor`);
     const competencia = competenciaAtual();
 
     alunosDemo.forEach(([nomeAluno, categoria, nascimento, nomeTurma], indice) => {
       const emailAluno = `${nomeAluno.split(' ')[0].toLowerCase()}${indice}@email.com`;
       const usuario = executar(`INSERT INTO usuarios (nome, email, senha_hash, papel, telefone)
-                                VALUES (:nome, :email, :hash, 'aluno', '(11) 98888-0000')`,
-        { nome: nomeAluno, email: emailAluno, hash: gerarHashSenha('aluno123') });
+                                VALUES (:nome, :email, :hash, 'aluno', :telefone)`,
+        {
+          nome: nomeAluno,
+          email: emailAluno,
+          hash: gerarHashSenha('aluno123'),
+          telefone: `(11) 9${String(8000 + indice).slice(0, 4)}-${String(1000 + indice * 7).slice(0, 4)}`,
+        });
       const aluno = executar(`
         INSERT INTO alunos (usuario_id, nome, email, telefone, data_nascimento, categoria, status, matriculado_em,
                             responsavel_nome, responsavel_telefone)
-        VALUES (:usuario_id, :nome, :email, '(11) 98888-0000', :nascimento, :categoria, :status, :matriculado_em,
+        VALUES (:usuario_id, :nome, :email, :telefone, :nascimento, :categoria, :status, :matriculado_em,
                 :responsavel, :tel_responsavel)
       `, {
         usuario_id: Number(usuario.lastInsertRowid),
         nome: nomeAluno,
         email: emailAluno,
+        telefone: `(11) 9${String(8000 + indice).slice(0, 4)}-${String(1000 + indice * 7).slice(0, 4)}`,
         nascimento,
         categoria,
         status: indice === alunosDemo.length - 1 ? 'pendente' : 'ativo',
@@ -198,48 +222,75 @@ export function carregarDemonstracao() {
       if (indice === alunosDemo.length - 1) return; // aluno pendente fica sem matricula
 
       const plano = categoria === 'kids' ? planos[0] : planos[(indice % (planos.length - 1)) + 1];
-      const matricula = executar(`
-        INSERT INTO matriculas (aluno_id, plano_id, inicio, fim, valor, dia_vencimento, status)
-        VALUES (:a, :p, :inicio, :fim, :valor, 10, 'ativa')
-      `, {
-        a: alunoId, p: plano.id, inicio: somarMeses(hoje(), -3), fim: somarMeses(hoje(), 9), valor: plano.valor,
-      });
 
-      const pago = indice % 3 !== 0; // deixa alguns inadimplentes para o painel financeiro
-      executar(`
-        INSERT INTO mensalidades (matricula_id, aluno_id, competencia, vencimento, valor, status, pago_em, forma_pagamento)
-        VALUES (:mt, :a, :competencia, :vencimento, :valor, :status, :pago_em, :forma)
+      // O aluno entrou em algum momento dos ultimos 6 meses.
+      const mesesDeCasa = Math.min(5, indice);
+      const entrada = somarMeses(hoje(), -mesesDeCasa);
+      const matricula = executar(`
+        INSERT INTO matriculas (aluno_id, plano_id, inicio, fim, valor, dia_vencimento, status, criado_em)
+        VALUES (:a, :p, :inicio, :fim, :valor, 10, 'ativa', :criado_em)
       `, {
-        mt: Number(matricula.lastInsertRowid),
-        a: alunoId,
-        competencia,
-        vencimento: `${competencia}-10`,
-        valor: plano.valor,
-        status: pago ? 'pago' : 'pendente',
-        pago_em: pago ? hoje() : null,
-        forma: pago ? 'pix' : null,
+        a: alunoId, p: plano.id, inicio: entrada, fim: somarMeses(entrada, 12), valor: plano.valor,
+        criado_em: `${entrada} 09:00:00`,
       });
-      if (pago) {
+      const matriculaId = Number(matricula.lastInsertRowid);
+
+      // Historico de mensalidades desde a entrada ate o mes atual.
+      for (let atras = mesesDeCasa; atras >= 0; atras -= 1) {
+        const mes = somarMeses(hoje(), -atras).slice(0, 7);
+        const mesAtual = mes === competencia;
+        // No mes corrente parte dos alunos ainda esta em aberto; o passado esta pago.
+        const pago = !mesAtual || indice % 3 !== 0;
+        const pagoEm = mesAtual ? hoje() : `${mes}-08`;
         executar(`
-          INSERT INTO lancamentos (tipo, categoria, descricao, valor, data, forma_pagamento, aluno_id, registrado_por)
-          VALUES ('receita', 'mensalidade', :descricao, :valor, :data, 'pix', :a,
-                  (SELECT id FROM usuarios WHERE papel = 'dono' LIMIT 1))
-        `, { descricao: `Mensalidade ${competencia} - ${nomeAluno}`, valor: plano.valor, data: hoje(), a: alunoId });
+          INSERT INTO mensalidades (matricula_id, aluno_id, competencia, vencimento, valor, status, pago_em, forma_pagamento)
+          VALUES (:mt, :a, :competencia, :vencimento, :valor, :status, :pago_em, :forma)
+        `, {
+          mt: matriculaId,
+          a: alunoId,
+          competencia: mes,
+          vencimento: `${mes}-10`,
+          valor: plano.valor,
+          status: pago ? 'pago' : 'pendente',
+          pago_em: pago ? pagoEm : null,
+          forma: pago ? 'pix' : null,
+        });
+        if (pago) {
+          executar(`
+            INSERT INTO lancamentos (tipo, categoria, descricao, valor, data, forma_pagamento, aluno_id, registrado_por)
+            VALUES ('receita', 'mensalidade', :descricao, :valor, :data, 'pix', :a,
+                    (SELECT id FROM usuarios WHERE papel = 'dono' LIMIT 1))
+          `, { descricao: `Mensalidade ${mes} - ${nomeAluno}`, valor: plano.valor, data: pagoEm, a: alunoId });
+        }
       }
     });
 
-    const despesas = [
-      ['aluguel', 'Aluguel do galpao', 3500],
-      ['salarios', 'Pagamento dos professores', 4200],
-      ['agua/luz/internet', 'Contas do mes', 780],
-      ['equipamentos', 'Reposicao de luvas e aparadores', 950],
+    const despesasFixas = [
+      ['aluguel', 'Aluguel do galpao', 1500],
+      ['salarios', 'Pagamento dos professores', 1600],
+      ['agua/luz/internet', 'Contas do mes', 320],
     ];
-    for (const [categoria, descricao, valor] of despesas) {
+    for (let atras = 5; atras >= 0; atras -= 1) {
+      const mes = somarMeses(hoje(), -atras).slice(0, 7);
+      for (const [categoria, descricao, valor] of despesasFixas) {
+        executar(`
+          INSERT INTO lancamentos (tipo, categoria, descricao, valor, data, forma_pagamento, registrado_por)
+          VALUES ('despesa', :categoria, :descricao, :valor, :data, 'transferencia',
+                  (SELECT id FROM usuarios WHERE papel = 'dono' LIMIT 1))
+        `, { categoria, descricao, valor, data: `${mes}-05` });
+      }
+      if (atras % 2 === 0) {
+        executar(`
+          INSERT INTO lancamentos (tipo, categoria, descricao, valor, data, forma_pagamento, registrado_por)
+          VALUES ('despesa', 'equipamentos', 'Reposicao de material de treino', :valor, :data, 'credito',
+                  (SELECT id FROM usuarios WHERE papel = 'dono' LIMIT 1))
+        `, { valor: 420 + atras * 30, data: `${mes}-18` });
+      }
       executar(`
         INSERT INTO lancamentos (tipo, categoria, descricao, valor, data, forma_pagamento, registrado_por)
-        VALUES ('despesa', :categoria, :descricao, :valor, :data, 'transferencia',
+        VALUES ('receita', 'produtos', 'Venda de kimonos e camisetas', :valor, :data, 'pix',
                 (SELECT id FROM usuarios WHERE papel = 'dono' LIMIT 1))
-      `, { categoria, descricao, valor, data: `${competenciaAtual()}-05` });
+      `, { valor: 260 + atras * 45, data: `${mes}-20` });
     }
 
     const avisos = [
@@ -271,6 +322,6 @@ if (executadoDireto) {
   }
   if (process.argv.includes('--demo')) {
     console.log(carregarDemonstracao().mensagem);
-    console.log('Logins de demonstracao: ricardo@academia.com / mestre123 | recepcao@academia.com / recepcao123');
+    console.log('Logins de demonstracao: ricardo@atak.com / mestre123 | recepcao@atak.com / recepcao123');
   }
 }

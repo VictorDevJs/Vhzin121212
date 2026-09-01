@@ -1,18 +1,30 @@
-# 🥋 Sistema de Gestão para Academia de Lutas
+# 🥋 ATAK · Sistema de Gestão
 
-Sistema completo para administrar uma academia de artes marciais: **cadastro de alunos, planos,
-turmas, horários, avisos, chamada e controle financeiro**, com áreas separadas para o **dono**,
-os **mestres**, a **recepção** e os **alunos**.
+Sistema completo para administrar a academia: **cadastro de alunos, planos, turmas, horários,
+avisos, chamada e controle financeiro**, com áreas separadas para o **dono**, os **mestres**,
+a **recepção** e os **alunos**.
 
-Roda com **Node.js + SQLite** e não precisa de banco de dados externo nem de build do front-end.
+Roda com **Node.js + SQLite** — sem banco de dados externo, sem build, sem dependência de front-end.
+
+### O front-end
+
+- **Tema claro e escuro** — segue o sistema do usuário e pode ser trocado no botão do topo.
+- **Busca por comando (Ctrl/⌘ + K)** — vai para qualquer tela ou ação sem tirar a mão do teclado.
+- **Gráficos em SVG puro** (sem bibliotecas): barras, rosca, linha e sparklines, com leitura no
+  hover, no teclado e botão "ver tabela" — a paleta foi validada para daltonismo nos dois temas.
+- **Aplicativo instalável (PWA)** — dá para "adicionar à tela de início" no celular da recepção
+  ou dos mestres; a interface abre mesmo com internet ruim.
+- **Feito para celular** — barra de navegação inferior, menu deslizante e tabelas com rolagem.
+- **Acessibilidade** — navegação por teclado, foco visível, `prefers-reduced-motion` respeitado e
+  identidade nunca dependendo só da cor.
 
 ---
 
 ## O que o sistema faz
 
 ### Página pública (sem login)
-Vitrine da academia com as modalidades, a **grade completa de horários**, os planos e os avisos
-liberados para o site. É por ali que o aluno também **cria a própria conta**.
+Vitrine da Atak com as modalidades, a **grade completa de horários** (filtrável por modalidade),
+os planos e os avisos liberados para o site. É por ali que o aluno também **cria a própria conta**.
 
 ### Área de login com 4 perfis
 
@@ -64,7 +76,7 @@ as faixas, os planos de exemplo, as turmas com horários e o usuário do dono.
 **Login inicial do dono:**
 
 ```
-e-mail: dono@academia.com
+e-mail: dono@atak.com
 senha:  admin123
 ```
 
@@ -84,8 +96,8 @@ Logins criados pela demonstração:
 
 | Perfil | E-mail | Senha |
 |---|---|---|
-| Mestre | `ricardo@academia.com` | `mestre123` |
-| Recepção | `recepcao@academia.com` | `recepcao123` |
+| Mestre | `ricardo@atak.com` | `mestre123` |
+| Recepção | `recepcao@atak.com` | `recepcao123` |
 | Aluno | `lucas0@email.com` | `aluno123` |
 
 ### Outros comandos
@@ -104,9 +116,34 @@ Copie `.env.example` para `.env` (ou exporte as variáveis no ambiente):
 | `PORT` | Porta do servidor | `3000` |
 | `APP_SEGREDO` | Chave que assina os tokens de sessão — **troque em produção** | valor de desenvolvimento |
 | `DB_ARQUIVO` | Caminho do banco SQLite | `./dados/academia.db` |
-| `DONO_EMAIL` / `DONO_SENHA` / `DONO_NOME` | Primeiro usuário dono criado automaticamente | `dono@academia.com` / `admin123` |
+| `DONO_EMAIL` / `DONO_SENHA` / `DONO_NOME` | Primeiro usuário dono criado automaticamente | `dono@atak.com` / `admin123` |
 
 **Backup:** todo o sistema vive no arquivo `dados/academia.db`. Copiar esse arquivo é o backup completo.
+
+---
+
+## Identidade visual da Atak
+
+Tudo o que é marca fica em **dois lugares**:
+
+| O quê | Onde |
+|---|---|
+| Logo horizontal | `public/marca/logo.svg` (aparece no topo do site e do sistema) |
+| Símbolo quadrado | `public/marca/simbolo.svg` (ícone do app, favicon, avatar) |
+| Cores da marca | `public/css/tema.css` → `--marca-1`, `--marca-2`, `--marca-3` |
+| Nome, frase, contato e cor principal | dentro do sistema, em **Equipe e academia → Identidade visual** |
+
+Trocar a cor principal pelo sistema muda a interface inteira na hora (botões, menu, destaques) e
+vale para todo mundo. As **cores dos gráficos são independentes da marca** de propósito: elas
+seguem uma paleta validada para daltonismo, então continuam legíveis mesmo se a cor da academia
+for vermelha, azul ou verde.
+
+Se você preferir manter os arquivos originais com outro nome, é só apontar o caminho novo em
+`public/js/marca.js`. Se um dos arquivos não existir, o sistema mostra o nome da academia em texto.
+
+> As fontes (Inter e Barlow Condensed) vêm do Google Fonts. Se a academia tiver internet instável,
+> baixe os arquivos das fontes para `public/` e troque o `<link>` do `public/index.html` — o
+> sistema já funciona normalmente com a fonte do próprio aparelho como reserva.
 
 ---
 
@@ -122,10 +159,18 @@ server/
   rotas/                uma rota por assunto (alunos, turmas, financeiro, avisos...)
 public/
   index.html            casca da aplicação
-  css/estilo.css        tema visual
+  manifest.webmanifest  dados do app instalável
+  sw.js                 cache da interface (funciona com internet ruim)
+  marca/                logo, símbolo e instruções da marca
+  css/tema.css          TOKENS: cores da marca, tema claro/escuro, paleta dos gráficos
+  css/estilo.css        componentes visuais
+  js/app.js             menu, rotas, permissões, busca por comando
   js/api.js             cliente da API e sessão
-  js/ui.js              componentes de tela (tabelas, modais, formulários)
-  js/app.js             menu, rotas e permissões da interface
+  js/ui.js              componentes (tabelas, modais, formulários, indicadores)
+  js/graficos.js        gráficos em SVG (barras, rosca, linha, sparkline)
+  js/icones.js          ícones em SVG
+  js/marca.js           logo, nome e cor da academia
+  js/tema.js            tema claro/escuro
   js/paginas/           uma tela por arquivo
 testes/api.test.js      testes da API
 ```

@@ -1,5 +1,6 @@
 import { api } from '../api.js';
-import { el, cartao, tabela, celula, botao, etiqueta, abrirFormulario, aviso, confirmar, dataHoraBr } from '../ui.js';
+import { el, cartao, tabela, celula, botao, etiqueta, abrirFormulario, aviso, confirmar } from '../ui.js';
+import { definirCorPrincipal, aplicarMarca, logotipo, simbolo } from '../marca.js';
 import { topo, traduzirPapel } from '../app.js';
 
 const PAPEIS = [
@@ -71,28 +72,63 @@ export default async function paginaEquipe() {
 
   async function carregarConfiguracoes() {
     const config = await api.obter('/configuracoes');
+    const corInicial = config.cor_primaria || '#e11d2e';
+
+    const entradaCor = el('input', {
+      type: 'color', name: 'cor_primaria', value: corInicial,
+      aoDigitar: (evento) => definirCorPrincipal(evento.target.value),
+    });
+
     const form = el('form', {}, [
       el('div', { classe: 'linha' }, [
         campo('nome_academia', 'Nome da academia', config.nome_academia),
-        campo('telefone', 'Telefone / WhatsApp', config.telefone),
+        campo('chamada', 'Frase de efeito (aparece no topo do site)', config.chamada),
+      ]),
+      el('div', { classe: 'linha' }, [
+        campo('telefone', 'Telefone', config.telefone),
+        campo('whatsapp', 'WhatsApp', config.whatsapp),
       ]),
       el('div', { classe: 'linha' }, [
         campo('endereco', 'Endereco', config.endereco),
         campo('instagram', 'Instagram', config.instagram),
       ]),
       el('div', { classe: 'campo' }, [
-        el('label', { texto: 'Sobre a academia (aparece na pagina publica)' }),
+        el('label', { texto: 'Sobre a academia (texto da pagina publica)' }),
         el('textarea', { name: 'sobre', value: config.sobre || '' }),
       ]),
-      el('button', { classe: 'botao', type: 'submit', texto: 'Salvar dados da academia' }),
+      el('div', { classe: 'linha' }, [
+        el('div', { classe: 'campo' }, [
+          el('label', { texto: 'Cor principal da marca' }),
+          entradaCor,
+          el('div', { classe: 'dica', texto: 'A tela inteira muda junto enquanto voce escolhe.' }),
+        ]),
+        el('div', { classe: 'campo' }, [
+          el('label', { texto: 'Previa' }),
+          el('div', { classe: 'acoes', estilo: 'padding-top:.3rem' }, [
+            el('span', { classe: 'botao pequeno', texto: 'Botao' }),
+            etiqueta('destaque', 'marca'),
+            el('span', { classe: 'avatar', texto: 'A' }),
+          ]),
+        ]),
+      ]),
+      el('button', { classe: 'botao', type: 'submit', texto: 'Salvar identidade da academia' }),
     ]);
 
     form.addEventListener('submit', async (evento) => {
       evento.preventDefault();
-      await api.atualizar('/configuracoes', Object.fromEntries(new FormData(form).entries()));
-      aviso('Dados da academia atualizados.');
+      const valores = Object.fromEntries(new FormData(form).entries());
+      const salvo = await api.atualizar('/configuracoes', valores);
+      aplicarMarca({ nome: salvo.nome_academia, chamada: salvo.chamada, cor_primaria: salvo.cor_primaria });
+      aviso('Identidade da academia atualizada.');
     });
-    areaConfig.replaceChildren(form);
+
+    areaConfig.replaceChildren(
+      el('div', { classe: 'acoes', estilo: 'margin-bottom:1rem' }, [
+        simbolo(46), logotipo(30),
+        el('span', { classe: 'dica', texto: 'Troque os arquivos em public/marca/ (logo.svg e simbolo.svg) para usar a arte oficial.' }),
+      ]),
+      form,
+    );
   }
 
   function campo(nome, rotulo, valor) {
@@ -108,7 +144,6 @@ export default async function paginaEquipe() {
     topo('Equipe e academia', 'Acessos de mestres e recepcao, e os dados que aparecem na pagina publica',
       [botao('+ Novo acesso', () => formularioUsuario())]),
     cartao('Equipe', areaEquipe),
-    cartao('Dados da academia', areaConfig),
-    el('p', { classe: 'dica', texto: `Ultima atualizacao desta tela: ${dataHoraBr(new Date().toLocaleString('sv-SE'))}` }),
+    cartao('Identidade visual e dados da academia', areaConfig),
   ]);
 }

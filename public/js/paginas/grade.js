@@ -19,8 +19,8 @@ export default async function paginaGrade() {
     ));
     area.replaceChildren(
       filtradas.length
-        ? el('div', { classe: 'tabela-rolagem' }, [
-          el('div', { classe: 'grade-semana' }, DIAS_SEMANA.map((dia, indice) => colunaDoDia(dia, indice, filtradas))),
+        ? el('div', { classe: 'rolagem' }, [
+          el('div', { classe: 'semana' }, DIAS_SEMANA.map((dia, indice) => colunaDoDia(dia, indice, filtradas))),
         ])
         : vazio('Nenhuma aula com esses filtros.'),
     );
@@ -56,12 +56,12 @@ export default async function paginaGrade() {
 function colunaDoDia(dia, indice, aulas) {
   const hoje = new Date().getDay();
   const doDia = aulas.filter((aula) => aula.dia_semana === indice);
-  return el('div', { classe: `coluna-dia ${indice === hoje ? 'hoje' : ''}` }, [
+  return el('div', { classe: `dia ${indice === hoje ? 'hoje' : ''}` }, [
     el('h4', { texto: `${dia}${indice === hoje ? ' (hoje)' : ''}` }),
     doDia.length
       ? el('div', {}, doDia.map((aula) => el('div', {
         classe: 'aula',
-        estilo: `border-left-color:${aula.modalidade_cor || '#e03131'}`,
+        estilo: `border-left-color:${aula.modalidade_cor || 'var(--marca-1)'}`,
       }, [
         el('div', { classe: 'hora', texto: `${aula.hora_inicio} - ${aula.hora_fim}` }),
         el('div', { classe: 'turma', texto: aula.modalidade }),

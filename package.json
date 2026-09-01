@@ -1,7 +1,7 @@
 {
-  "name": "academia-de-lutas",
+  "name": "atak-sistema",
   "version": "1.0.0",
-  "description": "Sistema de gestao para academia de lutas: matriculas, turmas, horarios, planos, avisos, presenca e controle financeiro.",
+  "description": "Atak - sistema de gestao da academia: matriculas, turmas, horarios, planos, avisos, presenca e controle financeiro.",
   "type": "module",
   "main": "server/index.js",
   "scripts": {

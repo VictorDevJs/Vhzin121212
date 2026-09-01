@@ -30,7 +30,7 @@ export function criarApp() {
   app.use(express.json({ limit: '1mb' }));
   app.use(autenticacaoOpcional);
 
-  app.get('/api/saude', (_req, res) => res.json({ ok: true, servico: 'academia-de-lutas' }));
+  app.get('/api/saude', (_req, res) => res.json({ ok: true, servico: 'atak' }));
 
   app.use('/api/auth', rotasAuth);
   app.use('/api/publico', rotasPublico);
@@ -68,6 +68,6 @@ const executadoDireto = process.argv[1] && import.meta.url === `file://${process
 if (executadoDireto) {
   const porta = Number(process.env.PORT) || 3000;
   criarApp().listen(porta, () => {
-    console.log(`\n  Academia de Lutas rodando em http://localhost:${porta}\n`);
+    console.log(`\n  Atak - sistema de gestao rodando em http://localhost:${porta}\n`);
   });
 }

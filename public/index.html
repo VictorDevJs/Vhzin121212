@@ -2,15 +2,41 @@
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Academia de Lutas - Sistema de Gestao</title>
-  <meta name="description" content="Sistema de gestao para academia de lutas: alunos, turmas, horarios, planos, avisos e controle financeiro.">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#129354;</text></svg>">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Atak · Sistema de gestao</title>
+  <meta name="description" content="Atak - sistema de gestao da academia: alunos, turmas, horarios, planos, avisos, chamada e controle financeiro.">
+  <meta name="theme-color" content="#e11d2e">
+  <meta name="color-scheme" content="dark light">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Atak">
+
+  <link rel="icon" href="/marca/simbolo.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/marca/simbolo.svg">
+  <link rel="manifest" href="/manifest.webmanifest">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" media="print" onload="this.media='all'"
+        href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600;700&display=swap">
+
   <link rel="stylesheet" href="/css/estilo.css">
+
+  <script>
+    // Aplica o tema salvo antes do primeiro desenho, para nao piscar.
+    try {
+      var tema = localStorage.getItem('atak.tema');
+      if (tema && tema !== 'sistema') document.documentElement.setAttribute('data-tema', tema);
+    } catch (e) {}
+  </script>
 </head>
 <body>
-  <div id="app"><div class="carregando">Carregando...</div></div>
-  <div class="avisos-flutuantes" id="avisos-flutuantes"></div>
+  <div id="app">
+    <div style="display:grid;place-items:center;min-height:100vh;gap:1rem">
+      <img src="/marca/simbolo.svg" alt="" width="56" height="56" style="border-radius:16px">
+      <p style="color:#83888f;font:500 .9rem/1 system-ui">Carregando o sistema da Atak...</p>
+    </div>
+  </div>
+  <div class="avisos-flutuantes" id="avisos-flutuantes" role="status" aria-live="polite"></div>
   <script type="module" src="/js/app.js"></script>
 </body>
 </html>

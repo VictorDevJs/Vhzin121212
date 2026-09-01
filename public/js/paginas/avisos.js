@@ -1,6 +1,6 @@
 import { api, sessao } from '../api.js';
 import { el, cartao, botao, etiqueta, dataBr, dataHoraBr, abrirFormulario, aviso, confirmar, vazio } from '../ui.js';
-import { topo } from '../app.js';
+import { topo, marcarAvisosComoLidos } from '../app.js';
 
 const TIPOS = [
   { valor: 'geral', rotulo: 'Aviso geral' },
@@ -109,6 +109,7 @@ export default async function paginaAvisos() {
   }
 
   await carregar();
+  marcarAvisosComoLidos();
 
   return el('div', {}, [
     topo('Avisos', sessao.papel === 'aluno'

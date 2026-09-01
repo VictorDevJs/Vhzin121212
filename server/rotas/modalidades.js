@@ -28,7 +28,7 @@ roteador.post('/', exigirPapel('dono'), rota((req, res) => {
     {
       nome,
       descricao: texto(req.body.descricao),
-      cor: texto(req.body.cor, '#c62828'),
+      cor: texto(req.body.cor, '#2a78d6'),
       ativo: booleano(req.body.ativo, 1),
     },
   );

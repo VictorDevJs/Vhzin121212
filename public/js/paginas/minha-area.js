@@ -46,7 +46,7 @@ export default async function paginaMinhaArea() {
             el('strong', { texto: dia }),
             ...aulas.map((aula) => el('div', {
               classe: 'aula',
-              estilo: `border-left-color:${aula.modalidade_cor || '#e03131'}`,
+              estilo: `border-left-color:${aula.modalidade_cor || 'var(--marca-1)'}`,
             }, [
               el('div', { classe: 'hora', texto: `${aula.hora_inicio} - ${aula.hora_fim}` }),
               el('div', { classe: 'info', texto: `${aula.modalidade} · ${aula.turma}` }),

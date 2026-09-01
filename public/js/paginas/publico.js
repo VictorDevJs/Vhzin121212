@@ -1,112 +1,235 @@
 import { api, sessao } from '../api.js';
-import { el, moeda, dataBr, DIAS_SEMANA, hojeISO } from '../ui.js';
+import { el, moeda, dataBr, DIAS_SEMANA, hojeISO, etiqueta } from '../ui.js';
+import { logotipo, marca } from '../marca.js';
+import { icone } from '../icones.js';
+import { alternarTema, ehEscuro } from '../tema.js';
 import { iniciar, irPara } from '../app.js';
 
 const ROTULO_PERIODICIDADE = { mensal: 'por mes', trimestral: 'por trimestre', semestral: 'por semestre', anual: 'por ano' };
-const ROTULO_TIPO_AVISO = {
+const ROTULO_TIPO = {
   geral: 'Aviso', campeonato: 'Campeonato', evento: 'Evento',
-  cancelamento: 'Sem aula', manutencao: 'Manutencao', graduacao: 'Graduacao',
+  cancelamento: 'Sem aula', manutencao: 'Manutencao', graduacao: 'Exame de faixa',
 };
 
-/** Vitrine da academia + area de login e cadastro do aluno. */
+/** Vitrine da academia + acesso ao sistema. */
 export default async function paginaPublica() {
   const dados = await api.obter('/publico/academia');
   const { academia, modalidades, grade, planos, avisos, numeros } = dados;
 
-  return el('div', { classe: 'publico' }, [
-    el('section', { classe: 'heroi' }, [
-      el('div', {}, [
-        el('h1', {}, [academia.nome, ' ', el('span', { classe: 'destaque', texto: '🥋' })]),
-        el('p', { classe: 'chamada', texto: academia.sobre || 'Treine com a gente.' }),
-        el('div', { classe: 'numeros' }, [
-          bloco(numeros.alunos_ativos, 'alunos ativos'),
-          bloco(numeros.modalidades, 'modalidades'),
-          bloco(numeros.aulas_semana, 'aulas por semana'),
-        ]),
-        el('p', { classe: 'dica', estilo: 'margin-top:1rem' }, [
-          academia.endereco ? `📍 ${academia.endereco}` : null,
-          academia.telefone ? el('span', { texto: `  ☎️ ${academia.telefone}` }) : null,
-          academia.instagram ? el('span', { texto: `  📷 ${academia.instagram}` }) : null,
-        ]),
-      ]),
-      caixaAcesso(),
+  const pagina = el('div', { classe: 'site' }, [
+    cabecalho(),
+    el('div', { classe: 'envolucro' }, [
+      heroi(academia, numeros),
+      secaoModalidades(modalidades),
+      secaoHorarios(grade, modalidades),
+      secaoPlanos(planos),
+      avisos.length ? secaoAvisos(avisos) : null,
+      rodape(academia),
     ]),
+  ]);
 
-    secao('Modalidades', el('div', { classe: 'grade col-3' }, modalidades.map((modalidade) => el('article', {
-      classe: 'cartao-modalidade',
-      estilo: `border-top-color:${modalidade.cor || '#e03131'}`,
-    }, [
-      el('h3', { texto: modalidade.nome }),
-      el('p', { classe: 'dica', texto: modalidade.descricao || '' }),
-      el('span', { classe: 'etiqueta neutra', texto: `${modalidade.turmas} turma(s)` }),
-    ])))),
+  queueMicrotask(() => { revelarAoRolar(pagina); animarNumeros(pagina); });
+  return pagina;
+}
 
-    secao('Grade de horarios', gradeSemanal(grade)),
+/* ----------------------------------------------------------- cabecalho */
 
-    secao('Planos', el('div', { classe: 'grade col-3' }, planos.map((plano) => el('article', { classe: 'cartao-plano' }, [
-      el('h3', { texto: plano.nome }),
-      el('div', { classe: 'preco' }, [moeda(plano.valor), el('small', { texto: ` ${ROTULO_PERIODICIDADE[plano.periodicidade] || ''}` })]),
-      el('p', { classe: 'dica', texto: plano.descricao || '' }),
-      el('p', { classe: 'dica', texto: plano.aulas_semana ? `${plano.aulas_semana}x por semana` : 'Treinos livres' }),
-      plano.modalidades.length
-        ? el('div', { classe: 'acoes' }, plano.modalidades.map((nome) => el('span', { classe: 'etiqueta info', texto: nome })))
-        : el('span', { classe: 'etiqueta ok', texto: 'Todas as modalidades' }),
-    ])))),
+function cabecalho() {
+  const irParaSecao = (id) => (evento) => {
+    evento.preventDefault();
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
 
-    avisos.length
-      ? secao('Avisos e campeonatos', el('div', { classe: 'grade col-2' }, avisos.map((item) => el('article', { classe: 'cartao' }, [
-        el('div', { classe: 'acoes', estilo: 'margin-bottom:.4rem' }, [
-          el('span', { classe: 'etiqueta alerta', texto: ROTULO_TIPO_AVISO[item.tipo] || item.tipo }),
-          item.data_evento ? el('span', { classe: 'etiqueta neutra', texto: dataBr(item.data_evento) }) : null,
-        ]),
-        el('h3', { texto: item.titulo }),
-        el('p', { classe: 'dica', texto: item.mensagem }),
-        item.local_evento ? el('p', { classe: 'dica', texto: `Local: ${item.local_evento}` }) : null,
-      ]))))
-      : null,
-
-    el('footer', { classe: 'secao dica', estilo: 'text-align:center' }, [
-      `${academia.nome} - sistema de gestao da academia`,
+  return el('header', { classe: 'site-topo' }, [
+    el('div', { classe: 'identidade', estilo: 'padding:0' }, [logotipo(28)]),
+    el('nav', {}, [
+      el('a', { href: '#modalidades', texto: 'Modalidades', aoClicar: irParaSecao('modalidades') }),
+      el('a', { href: '#horarios', texto: 'Horarios', aoClicar: irParaSecao('horarios') }),
+      el('a', { href: '#planos', texto: 'Planos', aoClicar: irParaSecao('planos') }),
+      el('a', { href: '#avisos', texto: 'Avisos', aoClicar: irParaSecao('avisos') }),
+    ]),
+    el('div', { classe: 'acoes' }, [
+      el('button', {
+        classe: 'botao-icone', 'aria-label': 'Alternar tema',
+        aoClicar: (evento) => { alternarTema(); evento.currentTarget.replaceChildren(icone(ehEscuro() ? 'sol' : 'lua', 18)); },
+      }, [icone(ehEscuro() ? 'sol' : 'lua', 18)]),
+      el('button', {
+        classe: 'botao', texto: 'Entrar',
+        aoClicar: () => document.getElementById('acesso')?.scrollIntoView({ behavior: 'smooth', block: 'center' }),
+      }),
     ]),
   ]);
 }
 
-function bloco(valor, rotulo) {
-  return el('div', {}, [el('strong', { texto: String(valor) }), el('span', { texto: rotulo })]);
+/* ---------------------------------------------------------------- heroi */
+
+function heroi(academia, numeros) {
+  return el('section', { classe: 'heroi' }, [
+    el('div', { classe: 'heroi-grade' }, [
+      el('div', {}, [
+        el('span', { classe: 'selo' }, [el('span', { classe: 'ponto', estilo: 'background:var(--marca-1)' }), academia.chamada || 'Artes marciais de verdade']),
+        el('h1', {}, [
+          'Treine na ',
+          el('span', { classe: 'destaque', texto: academia.nome }),
+        ]),
+        el('p', { classe: 'chamada', texto: academia.sobre || 'Jiu-Jitsu, Muay Thai, Karate, Kickboxing e MMA para todas as idades.' }),
+        el('div', { classe: 'acoes', estilo: 'margin-top:1.5rem' }, [
+          el('button', {
+            classe: 'botao', texto: 'Criar minha conta',
+            aoClicar: () => { document.getElementById('acesso')?.scrollIntoView({ behavior: 'smooth', block: 'center' }); document.getElementById('aba-cadastro')?.click(); },
+          }),
+          el('button', {
+            classe: 'botao secundario', texto: 'Ver horarios',
+            aoClicar: () => document.getElementById('horarios')?.scrollIntoView({ behavior: 'smooth' }),
+          }),
+        ]),
+        el('div', { classe: 'numeros' }, [
+          numero(numeros.alunos_ativos, 'alunos ativos'),
+          numero(numeros.modalidades, 'modalidades'),
+          numero(numeros.aulas_semana, 'aulas por semana'),
+        ]),
+      ]),
+      el('div', { id: 'acesso' }, [caixaAcesso()]),
+    ]),
+  ]);
 }
 
-function secao(titulo, conteudo) {
-  return el('section', { classe: 'secao' }, [el('h2', { texto: titulo }), conteudo]);
+function numero(valor, rotulo) {
+  return el('div', {}, [
+    el('strong', { 'data-contar': String(valor), texto: '0' }),
+    el('span', { texto: rotulo }),
+  ]);
 }
 
-function gradeSemanal(grade) {
-  const hoje = new Date().getDay();
-  return el('div', { classe: 'tabela-rolagem' }, [
-    el('div', { classe: 'grade-semana' }, DIAS_SEMANA.map((dia, indice) => {
-      const aulas = grade.filter((aula) => aula.dia_semana === indice);
-      return el('div', { classe: `coluna-dia ${indice === hoje ? 'hoje' : ''}` }, [
+/* ------------------------------------------------------------- secoes */
+
+function tituloSecao(olho, titulo) {
+  return el('div', { classe: 'titulo-secao' }, [
+    el('div', { classe: 'olho', texto: olho }),
+    el('h2', { texto: titulo }),
+  ]);
+}
+
+function secaoModalidades(modalidades) {
+  return el('section', { classe: 'secao revelar', id: 'modalidades' }, [
+    tituloSecao('O que voce treina aqui', 'Modalidades'),
+    el('div', { classe: 'grade col-3' }, modalidades.map((modalidade) => el('article', {
+      classe: 'cartao-modalidade', estilo: `--cor-modalidade:${modalidade.cor || 'var(--marca-1)'}`,
+    }, [
+      el('h3', { texto: modalidade.nome }),
+      el('p', { classe: 'dica', estilo: 'font-size:.9rem', texto: modalidade.descricao || '' }),
+      el('div', { classe: 'acoes' }, [etiqueta(`${modalidade.turmas} turma(s)`, 'neutra')]),
+    ]))),
+  ]);
+}
+
+function secaoHorarios(grade, modalidades) {
+  const area = el('div', { classe: 'rolagem' });
+  let filtro = '';
+
+  function desenhar() {
+    const aulas = filtro ? grade.filter((a) => a.modalidade === filtro) : grade;
+    area.replaceChildren(el('div', { classe: 'semana' }, DIAS_SEMANA.map((dia, indice) => {
+      const doDia = aulas.filter((aula) => aula.dia_semana === indice);
+      return el('div', { classe: `dia ${indice === new Date().getDay() ? 'hoje' : ''}` }, [
         el('h4', { texto: dia }),
-        aulas.length
-          ? el('div', {}, aulas.map((aula) => el('div', {
-            classe: 'aula',
-            estilo: `border-left-color:${aula.modalidade_cor || '#e03131'}`,
+        doDia.length
+          ? el('div', {}, doDia.map((aula) => el('div', {
+            classe: 'aula', estilo: `border-left-color:${aula.modalidade_cor || 'var(--marca-1)'}`,
           }, [
             el('div', { classe: 'hora', texto: `${aula.hora_inicio} - ${aula.hora_fim}` }),
-            el('div', { classe: 'turma', texto: aula.modalidade }),
+            el('div', { texto: aula.modalidade }),
             el('div', { classe: 'info', texto: aula.turma }),
-            el('div', { classe: 'info', texto: `${aula.categoria}${aula.mestre ? ` · ${aula.mestre}` : ''}` }),
+            el('div', { classe: 'info', texto: [aula.categoria, aula.mestre].filter(Boolean).join(' · ') }),
           ])))
           : el('div', { classe: 'info dica', texto: 'Sem aulas' }),
       ]);
-    })),
+    })));
+  }
+
+  const filtros = el('div', { classe: 'acoes', estilo: 'margin-bottom:1rem' }, [
+    chip('Todas', true, () => { filtro = ''; marcarChip(filtros, 'Todas'); desenhar(); }),
+    ...modalidades.map((m) => chip(m.nome, false, () => { filtro = m.nome; marcarChip(filtros, m.nome); desenhar(); })),
+  ]);
+
+  desenhar();
+  return el('section', { classe: 'secao revelar', id: 'horarios' }, [
+    tituloSecao('Grade da semana', 'Horarios das aulas'),
+    filtros,
+    area,
   ]);
 }
 
-/** Caixa com as abas de login e de cadastro do aluno. */
+function chip(texto, ativo, aoClicar) {
+  return el('button', {
+    classe: `botao pequeno ${ativo ? '' : 'secundario'}`, texto, 'data-chip': texto, aoClicar,
+  });
+}
+
+function marcarChip(container, ativo) {
+  container.querySelectorAll('[data-chip]').forEach((botao) => {
+    botao.className = `botao pequeno ${botao.dataset.chip === ativo ? '' : 'secundario'}`;
+  });
+}
+
+function secaoPlanos(planos) {
+  const maisCaro = Math.max(...planos.map((p) => p.valor), 0);
+  return el('section', { classe: 'secao revelar', id: 'planos' }, [
+    tituloSecao('Escolha o seu', 'Planos'),
+    el('div', { classe: 'grade col-3' }, planos.map((plano) => el('article', {
+      classe: `cartao-plano ${plano.valor === maisCaro && planos.length > 1 ? 'destaque' : ''}`,
+    }, [
+      plano.valor === maisCaro && planos.length > 1 ? etiqueta('mais completo', 'marca') : null,
+      el('h3', { texto: plano.nome }),
+      el('div', { classe: 'preco' }, [moeda(plano.valor), el('small', { texto: ` ${ROTULO_PERIODICIDADE[plano.periodicidade] || ''}` })]),
+      el('p', { classe: 'dica', estilo: 'font-size:.88rem', texto: plano.descricao || '' }),
+      el('div', { classe: 'acoes' }, [
+        etiqueta(plano.aulas_semana ? `${plano.aulas_semana}x por semana` : 'treinos livres', 'neutra'),
+        ...(plano.modalidades.length
+          ? plano.modalidades.map((nome) => etiqueta(nome, 'info'))
+          : [etiqueta('todas as modalidades', 'bom')]),
+      ]),
+    ]))),
+  ]);
+}
+
+function secaoAvisos(avisos) {
+  return el('section', { classe: 'secao revelar', id: 'avisos' }, [
+    tituloSecao('Fique por dentro', 'Avisos e campeonatos'),
+    el('div', { classe: 'grade col-2' }, avisos.map((item) => el('article', { classe: 'cartao' }, [
+      el('div', { classe: 'acoes', estilo: 'margin-bottom:.5rem' }, [
+        etiqueta(ROTULO_TIPO[item.tipo] || item.tipo, item.tipo === 'cancelamento' ? 'critico' : 'atencao'),
+        item.data_evento ? etiqueta(dataBr(item.data_evento), 'neutra') : null,
+      ]),
+      el('h3', { texto: item.titulo }),
+      el('p', { classe: 'dica', estilo: 'font-size:.9rem', texto: item.mensagem }),
+      item.local_evento ? el('p', { classe: 'dica', texto: `Local: ${item.local_evento}` }) : null,
+    ]))),
+  ]);
+}
+
+function rodape(academia) {
+  const contatos = [
+    academia.endereco && `\u{1F4CD} ${academia.endereco}`,
+    academia.telefone && `\u{260E} ${academia.telefone}`,
+    academia.instagram && `\u{1F4F7} ${academia.instagram}`,
+  ].filter(Boolean);
+
+  return el('footer', { classe: 'rodape-site' }, [
+    el('div', { estilo: 'display:flex;gap:1rem;flex-wrap:wrap;align-items:center;justify-content:space-between' }, [
+      el('div', { classe: 'identidade', estilo: 'padding:0' }, [logotipo(26)]),
+      el('div', {}, contatos.map((linha) => el('div', { texto: linha }))),
+    ]),
+    el('p', { estilo: 'margin-top:1rem', texto: `© ${new Date().getFullYear()} ${academia.nome} · sistema de gestao da academia` }),
+  ]);
+}
+
+/* ------------------------------------------------------ login e cadastro */
+
 function caixaAcesso() {
-  const conteudo = el('div', {});
-  const abaEntrar = el('button', { classe: 'ativo', texto: 'Entrar', type: 'button' });
-  const abaCadastrar = el('button', { texto: 'Criar conta', type: 'button' });
+  const conteudo = el('div');
+  const abaEntrar = el('button', { classe: 'ativo', texto: 'Entrar', type: 'button', id: 'aba-entrar' });
+  const abaCadastrar = el('button', { texto: 'Criar conta', type: 'button', id: 'aba-cadastro' });
 
   function selecionar(aba) {
     abaEntrar.classList.toggle('ativo', aba === 'entrar');
@@ -117,44 +240,55 @@ function caixaAcesso() {
   abaCadastrar.addEventListener('click', () => selecionar('cadastrar'));
   selecionar('entrar');
 
-  return el('div', { classe: 'caixa-login' }, [
+  return el('div', { classe: 'painel-acesso' }, [
     el('div', { classe: 'abas' }, [abaEntrar, abaCadastrar]),
     conteudo,
   ]);
 }
 
-function mensagem(texto, tipo = 'erro') {
-  return el('div', { classe: tipo === 'erro' ? 'mensagem-erro' : 'mensagem-ok', texto });
+function campo(rotulo, atributos) {
+  return el('div', { classe: 'campo' }, [el('label', { texto: rotulo }), el('input', atributos)]);
+}
+
+async function entrarComResposta(dados) {
+  sessao.salvar(dados.token, dados.usuario);
+  irPara(dados.usuario.papel === 'aluno' ? 'minha-area' : 'painel');
+  await iniciar();
+}
+
+function envolverEnvio(form, erro, acao) {
+  form.addEventListener('submit', async (evento) => {
+    evento.preventDefault();
+    erro.replaceChildren();
+    const enviar = form.querySelector('button[type=submit]');
+    enviar.disabled = true;
+    enviar.textContent = 'Aguarde...';
+    try {
+      await acao();
+    } catch (falha) {
+      erro.replaceChildren(el('div', { classe: 'mensagem-erro' }, [el('span', { texto: '⚠' }), falha.message]));
+      enviar.disabled = false;
+      enviar.textContent = enviar.dataset.texto;
+    }
+  });
 }
 
 function formularioLogin() {
   const erro = el('div');
   const form = el('form', {}, [
     erro,
-    el('div', { classe: 'campo' }, [el('label', { texto: 'E-mail' }), el('input', { type: 'email', name: 'email', required: true, autocomplete: 'email' })]),
-    el('div', { classe: 'campo' }, [el('label', { texto: 'Senha' }), el('input', { type: 'password', name: 'senha', required: true, autocomplete: 'current-password' })]),
-    el('button', { classe: 'botao', type: 'submit', texto: 'Entrar no sistema', estilo: 'width:100%' }),
-    el('p', { classe: 'dica', estilo: 'margin-top:.75rem' , texto: 'Aluno, mestre, recepcao ou dono usam o mesmo login.' }),
+    campo('E-mail', { type: 'email', name: 'email', required: true, autocomplete: 'email', placeholder: 'voce@email.com' }),
+    campo('Senha', { type: 'password', name: 'senha', required: true, autocomplete: 'current-password' }),
+    el('button', { classe: 'botao', type: 'submit', texto: 'Entrar no sistema', estilo: 'width:100%', 'data-texto': 'Entrar no sistema' }),
+    el('p', { classe: 'dica', estilo: 'margin-top:.75rem', texto: 'Aluno, mestre, recepcao e dono usam o mesmo login.' }),
   ]);
 
-  form.addEventListener('submit', async (evento) => {
-    evento.preventDefault();
-    erro.replaceChildren();
-    const botaoEnviar = form.querySelector('button[type=submit]');
-    botaoEnviar.disabled = true;
-    try {
-      const dados = await api.criar('/auth/login', {
-        email: form.elements.email.value.trim(),
-        senha: form.elements.senha.value,
-      });
-      sessao.salvar(dados.token, dados.usuario);
-      irPara(dados.usuario.papel === 'aluno' ? 'minha-area' : 'painel');
-      await iniciar();
-    } catch (falha) {
-      erro.replaceChildren(mensagem(falha.message));
-    } finally {
-      botaoEnviar.disabled = false;
-    }
+  envolverEnvio(form, erro, async () => {
+    const dados = await api.criar('/auth/login', {
+      email: form.elements.email.value.trim(),
+      senha: form.elements.senha.value,
+    });
+    await entrarComResposta(dados);
   });
   return form;
 }
@@ -163,40 +297,68 @@ function formularioCadastro() {
   const erro = el('div');
   const form = el('form', {}, [
     erro,
-    el('p', { classe: 'dica', texto: 'Crie sua conta para acompanhar horarios, avisos e mensalidades. A recepcao confirma sua matricula e libera o plano.' }),
-    el('div', { classe: 'campo' }, [el('label', { texto: 'Nome completo *' }), el('input', { name: 'nome', required: true })]),
+    el('p', { classe: 'dica', texto: `Crie sua conta na ${marca.nome} para acompanhar horarios, avisos e mensalidades. A recepcao confirma a matricula e libera o plano.` }),
+    campo('Nome completo *', { name: 'nome', required: true }),
     el('div', { classe: 'linha' }, [
-      el('div', { classe: 'campo' }, [el('label', { texto: 'E-mail *' }), el('input', { type: 'email', name: 'email', required: true })]),
-      el('div', { classe: 'campo' }, [el('label', { texto: 'Telefone / WhatsApp' }), el('input', { name: 'telefone' })]),
+      campo('E-mail *', { type: 'email', name: 'email', required: true }),
+      campo('Telefone / WhatsApp', { name: 'telefone', placeholder: '(00) 00000-0000' }),
     ]),
     el('div', { classe: 'linha' }, [
-      el('div', { classe: 'campo' }, [el('label', { texto: 'Data de nascimento' }), el('input', { type: 'date', name: 'data_nascimento', max: hojeISO() })]),
-      el('div', { classe: 'campo' }, [el('label', { texto: 'Senha *' }), el('input', { type: 'password', name: 'senha', required: true, minlength: 6 })]),
+      campo('Data de nascimento', { type: 'date', name: 'data_nascimento', max: hojeISO() }),
+      campo('Senha *', { type: 'password', name: 'senha', required: true, minlength: 6 }),
     ]),
     el('div', { classe: 'linha' }, [
-      el('div', { classe: 'campo' }, [el('label', { texto: 'Responsavel (menores de idade)' }), el('input', { name: 'responsavel_nome' })]),
-      el('div', { classe: 'campo' }, [el('label', { texto: 'Telefone do responsavel' }), el('input', { name: 'responsavel_telefone' })]),
+      campo('Responsavel (menor de idade)', { name: 'responsavel_nome' }),
+      campo('Telefone do responsavel', { name: 'responsavel_telefone' }),
     ]),
-    el('div', { classe: 'campo' }, [el('label', { texto: 'Observacoes (lesoes, experiencia, modalidade de interesse)' }), el('textarea', { name: 'observacoes' })]),
-    el('button', { classe: 'botao', type: 'submit', texto: 'Criar minha conta', estilo: 'width:100%' }),
+    el('div', { classe: 'campo' }, [
+      el('label', { texto: 'Ja treina? Tem alguma lesao? Qual modalidade quer fazer?' }),
+      el('textarea', { name: 'observacoes' }),
+    ]),
+    el('button', { classe: 'botao', type: 'submit', texto: 'Criar minha conta', estilo: 'width:100%', 'data-texto': 'Criar minha conta' }),
   ]);
 
-  form.addEventListener('submit', async (evento) => {
-    evento.preventDefault();
-    erro.replaceChildren();
-    const botaoEnviar = form.querySelector('button[type=submit]');
-    botaoEnviar.disabled = true;
-    try {
-      const corpo = Object.fromEntries(new FormData(form).entries());
-      const dados = await api.criar('/auth/registrar', corpo);
-      sessao.salvar(dados.token, dados.usuario);
-      irPara('minha-area');
-      await iniciar();
-    } catch (falha) {
-      erro.replaceChildren(mensagem(falha.message));
-    } finally {
-      botaoEnviar.disabled = false;
-    }
+  envolverEnvio(form, erro, async () => {
+    const corpo = Object.fromEntries(new FormData(form).entries());
+    const dados = await api.criar('/auth/registrar', corpo);
+    await entrarComResposta(dados);
   });
   return form;
+}
+
+/* --------------------------------------------------------- animacoes */
+
+function revelarAoRolar(raiz) {
+  const alvos = raiz.querySelectorAll('.revelar');
+  if (!('IntersectionObserver' in window)) {
+    alvos.forEach((alvo) => alvo.classList.add('visivel'));
+    return;
+  }
+  const observador = new IntersectionObserver((entradas) => {
+    for (const entrada of entradas) {
+      if (entrada.isIntersecting) {
+        entrada.target.classList.add('visivel');
+        observador.unobserve(entrada.target);
+      }
+    }
+  }, { rootMargin: '0px 0px -80px 0px' });
+  alvos.forEach((alvo) => observador.observe(alvo));
+  // Se por algum motivo o observador nao disparar, o conteudo aparece do mesmo jeito.
+  setTimeout(() => alvos.forEach((alvo) => alvo.classList.add('visivel')), 2500);
+}
+
+function animarNumeros(raiz) {
+  const reduzido = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  raiz.querySelectorAll('[data-contar]').forEach((no) => {
+    const alvo = Number(no.dataset.contar) || 0;
+    if (reduzido || alvo === 0) { no.textContent = String(alvo); return; }
+    const duracao = 900;
+    const inicio = performance.now();
+    const passo = (agora) => {
+      const progresso = Math.min(1, (agora - inicio) / duracao);
+      no.textContent = String(Math.round(alvo * (1 - (1 - progresso) ** 3)));
+      if (progresso < 1) requestAnimationFrame(passo);
+    };
+    requestAnimationFrame(passo);
+  });
 }

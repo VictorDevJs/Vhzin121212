@@ -27,7 +27,7 @@ export default async function paginaTurmas() {
       modalidades.length
         ? el('div', { classe: 'grade col-3' }, modalidades.map((modalidade) => el('article', {
           classe: 'cartao-modalidade',
-          estilo: `border-top-color:${modalidade.cor || '#e03131'}`,
+          estilo: `--cor-modalidade:${modalidade.cor || 'var(--marca-1)'}`,
         }, [
           el('h3', {}, [modalidade.nome, ' ', modalidade.ativo ? null : etiqueta('inativa', 'neutra')]),
           el('p', { classe: 'dica', texto: modalidade.descricao || 'Sem descricao.' }),

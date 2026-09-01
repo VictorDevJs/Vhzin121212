@@ -75,8 +75,18 @@ export function idade(dataNascimento) {
 
 // ---------- Componentes ----------
 
+const MAPA_TIPO = { ok: 'bom', erro: 'critico', alerta: 'atencao', info: 'info', neutra: 'neutra', bom: 'bom', critico: 'critico', atencao: 'atencao', marca: 'marca' };
+
 export function etiqueta(texto, tipo = 'neutra') {
-  return el('span', { classe: `etiqueta ${tipo}`, texto });
+  return el('span', { classe: `etiqueta ${MAPA_TIPO[tipo] || 'neutra'}`, texto });
+}
+
+/** Etiqueta com um ponto colorido - usada quando a cor vem do cadastro. */
+export function etiquetaCor(texto, cor) {
+  return el('span', { classe: 'etiqueta neutra' }, [
+    el('span', { classe: 'ponto', estilo: `background:${cor || 'var(--marca-1)'}` }),
+    texto,
+  ]);
 }
 
 const ESTILO_STATUS = { ativo: 'ok', pendente: 'alerta', inativo: 'neutra', trancado: 'erro', ativa: 'ok', pago: 'ok', cancelado: 'neutra', suspensa: 'alerta', encerrada: 'neutra' };
@@ -85,17 +95,32 @@ export function etiquetaStatus(status) {
 }
 
 export function cartao(titulo, filhos, acoes = null) {
-  const cabecalho = titulo
-    ? el('h3', {}, [titulo, acoes && el('span', { classe: 'acoes' }, [].concat(acoes))])
+  const cabecalho = (titulo || acoes)
+    ? el('div', { classe: 'titulo-cartao' }, [
+      titulo ? el('h3', { texto: titulo }) : el('span'),
+      acoes ? el('div', { classe: 'acoes' }, [].concat(acoes)) : null,
+    ])
     : null;
   return el('section', { classe: 'cartao' }, [cabecalho, ...[].concat(filhos)]);
 }
 
-export function indicador({ rotulo, valor, detalhe, tipo = '' }) {
-  return el('div', { classe: `indicador ${tipo}` }, [
+const MAPA_INDICADOR = { ok: 'bom', erro: 'critico', alerta: 'atencao', info: 'destaque', bom: 'bom', critico: 'critico', atencao: 'atencao', marca: 'destaque', destaque: 'destaque' };
+
+/**
+ * Cartao de numero. `delta` recebe { valor: '+12%', sobe: true } e vem sempre
+ * com seta + texto, para nunca depender so da cor.
+ */
+export function indicador({ rotulo, valor, detalhe, tipo = '', delta = null, extra = null }) {
+  return el('div', { classe: `indicador ${MAPA_INDICADOR[tipo] || ''}` }, [
+    el('span', { classe: 'faixa' }),
     el('div', { classe: 'rotulo', texto: rotulo }),
     el('div', { classe: 'valor', texto: valor }),
+    delta ? el('div', { classe: `delta ${delta.sobe ? 'sobe' : 'desce'}` }, [
+      el('span', { texto: delta.sobe ? '\u2191' : '\u2193' }),
+      delta.valor,
+    ]) : null,
     detalhe ? el('div', { classe: 'detalhe', texto: detalhe }) : null,
+    extra,
   ]);
 }
 
@@ -103,14 +128,25 @@ export function botao(texto, aoClicar, classe = 'botao') {
   return el('button', { classe, texto, aoClicar, type: 'button' });
 }
 
-export function vazio(mensagem) {
-  return el('div', { classe: 'vazio', texto: mensagem });
+export function vazio(mensagem, icone = '\u2014') {
+  return el('div', { classe: 'vazio' }, [
+    el('span', { classe: 'icone', texto: icone }),
+    el('div', { texto: mensagem }),
+  ]);
+}
+
+/** Placeholder animado enquanto os dados chegam. */
+export function esqueleto(linhas = 3, altura = 46) {
+  return el('div', {}, Array.from({ length: linhas }, (_, i) => el('div', {
+    classe: 'esqueleto',
+    estilo: `height:${altura}px;opacity:${1 - i * 0.12}`,
+  })));
 }
 
 /** Tabela simples: colunas de texto e linhas com strings ou elementos. */
 export function tabela(colunas, linhas, mensagemVazia = 'Nada por aqui ainda.') {
   if (!linhas.length) return vazio(mensagemVazia);
-  return el('div', { classe: 'tabela-rolagem' }, [
+  return el('div', { classe: 'rolagem' }, [
     el('table', {}, [
       el('thead', {}, [el('tr', {}, colunas.map((c) => el('th', { texto: c })))]),
       el('tbody', {}, linhas.map((celulas) => el('tr', {}, celulas.map((celula) => (

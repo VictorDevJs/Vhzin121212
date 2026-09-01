@@ -79,7 +79,7 @@ function criarEsquema(banco) {
       id         INTEGER PRIMARY KEY AUTOINCREMENT,
       nome       TEXT NOT NULL UNIQUE COLLATE NOCASE,
       descricao  TEXT,
-      cor        TEXT DEFAULT '#c62828',
+      cor        TEXT DEFAULT '#2a78d6',
       ativo      INTEGER NOT NULL DEFAULT 1,
       criado_em  TEXT NOT NULL DEFAULT (datetime('now','localtime'))
     );
