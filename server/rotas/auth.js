@@ -1,13 +1,13 @@
 import { Router } from 'express';
 import { um, executar, transacao } from '../db.js';
-import { gerarHashSenha, conferirSenha, gerarToken, exigirLogin } from '../auth.js';
+import { gerarHashSenha, conferirSenha, gerarToken, exigirLogin, cargosDe, registrar } from '../auth.js';
 import { rota, ErroApi, exigirCampos, texto, emailValido, hoje } from '../util.js';
 
 const roteador = Router();
 
 function perfilCompleto(usuario) {
   const aluno = um('SELECT * FROM alunos WHERE usuario_id = :id', { id: usuario.id });
-  return { ...usuario, aluno: aluno || null };
+  return { ...usuario, aluno: aluno || null, cargos: cargosDe(usuario.id) };
 }
 
 /** Calcula se o aluno entra na categoria kids (menor de 16 anos). */
@@ -80,6 +80,10 @@ roteador.post('/login', rota((req, res) => {
     throw new ErroApi('E-mail ou senha incorretos.', 401);
   }
   if (!usuario.ativo) throw new ErroApi('Sua conta esta desativada. Fale com a recepção.', 403);
+
+  // Guardar o ultimo acesso alimenta o painel de segurança do dono.
+  executar(`UPDATE usuarios SET ultimo_acesso = datetime('now','localtime') WHERE id = :id`, { id: usuario.id });
+  registrar({ usuario }, { acao: 'entrou no sistema', area: 'acesso', alvo: usuario.nome, alvoId: usuario.id });
 
   const { senha_hash, ...publico } = usuario;
   res.json({ token: gerarToken(usuario), usuario: perfilCompleto(publico) });

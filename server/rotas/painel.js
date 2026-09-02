@@ -137,4 +137,88 @@ roteador.get('/', exigirPapel(...EQUIPE, 'aluno'), rota((req, res) => {
   });
 }));
 
+/**
+ * Análise por modalidade: quanto cada arte marcial traz de aluno, de presença
+ * e de dinheiro. É a tela que responde "qual luta está crescendo?".
+ */
+roteador.get('/analises', exigirPapel('dono', 'recepcao'), rota((_req, res) => {
+  const modalidades = todos(`
+    SELECT m.id, m.nome, m.cor, m.sigla,
+           (SELECT COUNT(DISTINCT at.aluno_id) FROM aluno_turmas at
+             JOIN turmas t ON t.id = at.turma_id
+             JOIN alunos a ON a.id = at.aluno_id
+            WHERE t.modalidade_id = m.id AND a.status = 'ativo') AS alunos,
+           (SELECT COUNT(*) FROM turmas t WHERE t.modalidade_id = m.id AND t.ativo = 1) AS turmas,
+           (SELECT COUNT(*) FROM horarios h JOIN turmas t ON t.id = h.turma_id
+             WHERE t.modalidade_id = m.id AND h.ativo = 1 AND t.ativo = 1) AS aulas_semana,
+           (SELECT COUNT(*) FROM checkins c JOIN turmas t ON t.id = c.turma_id
+             WHERE t.modalidade_id = m.id AND c.data >= date('now','localtime','-30 day')) AS checkins_mes,
+           (SELECT COUNT(*) FROM checkins c JOIN turmas t ON t.id = c.turma_id
+             WHERE t.modalidade_id = m.id
+               AND c.data >= date('now','localtime','-60 day')
+               AND c.data < date('now','localtime','-30 day')) AS checkins_anterior,
+           (SELECT COUNT(*) FROM competicao_inscricoes i JOIN competicoes c ON c.id = i.competicao_id
+             WHERE c.modalidade_id = m.id AND i.status != 'desistiu') AS inscricoes,
+           (SELECT COUNT(*) FROM competicao_resultados r
+             JOIN competicao_inscricoes i ON i.id = r.inscricao_id
+             JOIN competicoes c ON c.id = i.competicao_id
+            WHERE c.modalidade_id = m.id AND r.medalha IN ('ouro','prata','bronze')) AS podios,
+           (SELECT COUNT(*) FROM aluno_graduacoes ag
+             WHERE ag.modalidade_id = m.id
+               AND ag.data >= date('now','localtime','-12 month')) AS graduacoes_ano
+    FROM modalidades m WHERE m.ativo = 1 ORDER BY m.ordem, m.nome
+  `);
+
+  // Vagas ocupadas: quantos lugares das turmas já estão preenchidos.
+  const ocupacao = todos(`
+    SELECT t.modalidade_id,
+           SUM(t.capacidade) AS capacidade,
+           (SELECT COUNT(*) FROM aluno_turmas at2 WHERE at2.turma_id IN
+             (SELECT id FROM turmas WHERE modalidade_id = t.modalidade_id AND ativo = 1)) AS ocupadas
+    FROM turmas t WHERE t.ativo = 1 GROUP BY t.modalidade_id
+  `);
+  const mapaOcupacao = new Map(ocupacao.map((o) => [o.modalidade_id, o]));
+
+  for (const modalidade of modalidades) {
+    const vagas = mapaOcupacao.get(modalidade.id);
+    modalidade.capacidade = vagas?.capacidade || 0;
+    modalidade.ocupacao = vagas?.capacidade
+      ? Math.round((vagas.ocupadas / vagas.capacidade) * 100)
+      : 0;
+    // Variação de presença entre os últimos 30 dias e os 30 anteriores.
+    modalidade.variacao_presenca = modalidade.checkins_anterior
+      ? Math.round(((modalidade.checkins_mes - modalidade.checkins_anterior) / modalidade.checkins_anterior) * 100)
+      : null;
+    modalidade.media_por_aula = modalidade.aulas_semana
+      ? Math.round(modalidade.checkins_mes / (modalidade.aulas_semana * 4.3))
+      : 0;
+  }
+
+  const retencao = um(`
+    SELECT
+      (SELECT COUNT(*) FROM alunos WHERE status = 'ativo') AS ativos,
+      (SELECT COUNT(*) FROM alunos WHERE status = 'inativo') AS inativos,
+      (SELECT COUNT(*) FROM alunos WHERE status = 'trancado') AS trancados,
+      (SELECT COUNT(*) FROM alunos WHERE status = 'pendente') AS pendentes,
+      (SELECT COUNT(*) FROM alunos
+        WHERE matriculado_em >= date('now','localtime','-30 day')) AS novos_mes,
+      (SELECT COUNT(DISTINCT c.aluno_id) FROM checkins c
+        WHERE c.data >= date('now','localtime','-14 day')) AS treinando,
+      (SELECT COUNT(*) FROM alunos a WHERE a.status = 'ativo'
+        AND NOT EXISTS (SELECT 1 FROM checkins c WHERE c.aluno_id = a.id
+                         AND c.data >= date('now','localtime','-21 day'))) AS sumidos
+  `);
+
+  const graduacoes = todos(`
+    SELECT m.nome AS modalidade, g.nome AS graduacao, g.cor, g.cor_ponta,
+           COUNT(DISTINCT ag.aluno_id) AS alunos
+    FROM aluno_graduacoes ag
+    JOIN graduacoes g ON g.id = ag.graduacao_id
+    JOIN modalidades m ON m.id = ag.modalidade_id
+    GROUP BY g.id ORDER BY m.ordem, g.ordem
+  `);
+
+  res.json({ modalidades, retencao, graduacoes });
+}));
+
 export default roteador;

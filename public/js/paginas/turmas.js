@@ -175,7 +175,7 @@ export default async function paginaTurmas() {
           { valor: 'adulto', rotulo: 'Adulto' }, { valor: 'kids', rotulo: 'Kids' },
           { valor: 'misto', rotulo: 'Misto' }, { valor: 'feminino', rotulo: 'Feminino' }] },
         { nome: 'nivel', rotulo: 'Nível', tipo: 'select', opcoes: [
-          { valor: 'todos', rotulo: 'Todos os niveis' }, { valor: 'iniciante', rotulo: 'Iniciante' },
+          { valor: 'todos', rotulo: 'Todos os níveis' }, { valor: 'iniciante', rotulo: 'Iniciante' },
           { valor: 'intermediário', rotulo: 'Intermediário' }, { valor: 'avançado', rotulo: 'Avançado' }] },
         { nome: 'mestre_id', rotulo: 'Mestre responsável', tipo: 'select',
           opcoes: [{ valor: '', rotulo: 'Sem mestre definido' }, ...mestres.map((m) => ({ valor: m.id, rotulo: m.nome }))] },

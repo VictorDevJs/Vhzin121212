@@ -1,38 +1,45 @@
 import { abrirBanco, todos, um, executar, transacao } from './db.js';
 import { gerarHashSenha } from './auth.js';
 import { hoje, competenciaAtual, somarMeses } from './util.js';
+import { aplicarGraduacoes, GRADUACOES_PADRAO } from './graduacoes-padrao.js';
 
 /** Modalidades e faixas que ja vem prontas na primeira execucao. */
 const MODALIDADES = [
   {
-    nome: 'Jiu-Jitsu', destaque: 'Kids, adulto e competição · No-Gi e Gi', cor: '#2a78d6',
+    nome: 'Jiu-Jitsu', sigla: 'JJ', destaque: 'Kids, adulto e competição · No-Gi e Gi', cor: '#2a78d6',
     descricao: 'Arte suave focada em luta de solo, quedas, raspagens e finalizações.',
-    faixas: ['Branca', 'Cinza', 'Amarela', 'Laranja', 'Verde', 'Azul', 'Roxa', 'Marrom', 'Preta'],
   },
   {
-    nome: 'Muay Thai', destaque: 'Turmas kids, adulto e feminino', cor: '#eb6834',
+    nome: 'Muay Thai', sigla: 'MT', destaque: 'Turmas kids, adulto e feminino', cor: '#eb6834',
     descricao: 'Boxe tailandês: socos, chutes, joelhadas, cotoveladas e clinch.',
-    faixas: ['Branca', 'Vermelha', 'Rosa', 'Amarela', 'Laranja', 'Verde', 'Azul', 'Marrom', 'Preta'],
   },
   {
-    nome: 'Karatê', destaque: 'Kids a partir de 5 anos e adulto', cor: '#1baf7a',
+    nome: 'Karatê', sigla: 'KA', destaque: 'Kids a partir de 5 anos e adulto', cor: '#1baf7a',
     descricao: 'Arte marcial japonesa com katas, golpes tradicionais e disciplina.',
-    faixas: ['Branca', 'Amarela', 'Vermelha', 'Laranja', 'Verde', 'Roxa', 'Marrom', 'Preta'],
   },
   {
-    nome: 'Kickboxing', destaque: 'Condicionamento e técnica, todos os níveis', cor: '#eda100',
+    nome: 'Judô', sigla: 'JU', destaque: 'Kids, adulto e equipe de competição', cor: '#3c6fd1',
+    descricao: 'Quedas, imobilizações e projeções: o caminho suave olímpico.',
+  },
+  {
+    nome: 'Capoeira', sigla: 'CP', destaque: 'Roda, música e movimento para todas as idades', cor: '#c98c1e',
+    descricao: 'Luta, dança e cultura brasileira na roda, com berimbau e ginga.',
+  },
+  {
+    nome: 'Kickboxing', sigla: 'KB', destaque: 'Condicionamento e técnica, todos os níveis', cor: '#eda100',
     descricao: 'Combinação de boxe e chutes, muito condicionamento e ritmo.',
-    faixas: ['Branca', 'Amarela', 'Laranja', 'Verde', 'Azul', 'Marrom', 'Preta'],
   },
   {
-    nome: 'Boxe', destaque: 'Base de mãos para iniciantes e avançados', cor: '#4a3aa7',
-    descricao: 'Jogo de maos, esquiva e ritmo: a base da trocação em qualquer luta.',
-    faixas: ['Iniciante', 'Intermediario', 'Avancado', 'Competicao'],
+    nome: 'Taekwondo', sigla: 'TK', destaque: 'Chutes altos, kids e adulto', cor: '#5b8def',
+    descricao: 'Arte marcial coreana de chutes rápidos, altos e precisos.',
   },
   {
-    nome: 'MMA', destaque: 'Iniciante e equipe de competição', cor: '#e87ba4',
+    nome: 'Boxe', sigla: 'BX', destaque: 'Base de mãos para iniciantes e avançados', cor: '#4a3aa7',
+    descricao: 'Jogo de mãos, esquiva e ritmo: a base da trocação em qualquer luta.',
+  },
+  {
+    nome: 'MMA', sigla: 'MMA', destaque: 'Iniciante e equipe de competição', cor: '#e87ba4',
     descricao: 'Artes marciais mistas: trocação, quedas e solo em um só treino.',
-    faixas: ['Iniciante', 'Intermediario', 'Avancado', 'Competicao'],
   },
 ];
 
@@ -62,6 +69,12 @@ const TURMAS = [
   ['Boxe', 'Boxe Adulto', 'adulto', 'todos', [[2, '19:00', '20:00'], [4, '19:00', '20:00']]],
   ['MMA', 'MMA Iniciante', 'adulto', 'iniciante', [[2, '21:00', '22:00'], [4, '21:00', '22:00']]],
   ['MMA', 'MMA Competição', 'adulto', 'avancado', [[3, '21:00', '22:30', 'Sparring'], [6, '10:00', '12:00', 'Treino aberto']]],
+  ['Judô', 'Judô Kids', 'kids', 'todos', [[2, '16:00', '17:00'], [4, '16:00', '17:00']]],
+  ['Judô', 'Judô Adulto', 'adulto', 'todos', [[2, '20:00', '21:30'], [4, '20:00', '21:30']]],
+  ['Capoeira', 'Capoeira Kids', 'kids', 'todos', [[3, '16:00', '17:00'], [5, '16:00', '17:00']]],
+  ['Capoeira', 'Capoeira Roda Aberta', 'misto', 'todos', [[6, '09:00', '11:00', 'Roda']]],
+  ['Taekwondo', 'Taekwondo Kids', 'kids', 'todos', [[1, '16:00', '17:00'], [3, '16:00', '17:00']]],
+  ['Taekwondo', 'Taekwondo Adulto', 'adulto', 'todos', [[1, '21:00', '22:00'], [3, '21:00', '22:00']]],
 ];
 
 const CONFIGURACOES = {
@@ -100,20 +113,18 @@ export function garantirDadosIniciais() {
 
     MODALIDADES.forEach((modalidade, ordem) => {
       const criada = executar(`
-        INSERT INTO modalidades (nome, descricao, cor, destaque, ordem)
-        VALUES (:nome, :descricao, :cor, :destaque, :ordem)
+        INSERT INTO modalidades (nome, descricao, cor, destaque, sigla, ordem)
+        VALUES (:nome, :descricao, :cor, :destaque, :sigla, :ordem)
       `, {
         nome: modalidade.nome,
         descricao: modalidade.descricao,
         cor: modalidade.cor,
         destaque: modalidade.destaque || null,
+        sigla: modalidade.sigla || null,
         ordem,
       });
-      const modalidadeId = Number(criada.lastInsertRowid);
-      modalidade.faixas.forEach((faixa, indice) => {
-        executar('INSERT INTO graduacoes (modalidade_id, nome, ordem) VALUES (:m, :nome, :ordem)',
-          { m: modalidadeId, nome: faixa, ordem: indice });
-      });
+      // A escala de faixas vem do catalogo oficial de cada arte marcial.
+      aplicarGraduacoes(executar, todos, Number(criada.lastInsertRowid), modalidade.nome);
     });
 
     for (const plano of PLANOS) {
@@ -153,6 +164,241 @@ export function garantirDadosIniciais() {
 }
 
 /**
+ * Preenche o registro de atividades da demonstração, para o painel de
+ * segurança já nascer contando quem fez o quê nas últimas semanas.
+ */
+function gerarHistorico() {
+  const equipe = todos(`SELECT id, nome, papel FROM usuarios WHERE papel != 'aluno'`);
+  const ACOES = [
+    ['entrou no sistema', 'acesso', null],
+    ['registrou pagamento de', 'financeiro', 'Mensalidade do mês'],
+    ['publicou o aviso', 'avisos', 'Treino extra de sábado'],
+    ['fez a chamada de', 'chamada', 'Turma da noite'],
+    ['cadastrou', 'alunos', 'Novo aluno'],
+    ['alterou', 'turmas', 'Horário da turma'],
+    ['criou', 'competicoes', 'Copa Rio de Jiu-Jitsu'],
+    ['incluiu atleta', 'equipes', 'Atak Competição Jiu-Jitsu'],
+    ['aplicou a escala oficial', 'graduacoes', 'Jiu-Jitsu'],
+    ['registrou venda', 'loja', 'Kimono Atak Trançado'],
+  ];
+
+  for (let atras = 29; atras >= 0; atras -= 1) {
+    const dia = new Date();
+    dia.setDate(dia.getDate() - atras);
+    const quantas = 2 + (atras % 4);
+    for (let n = 0; n < quantas; n += 1) {
+      const pessoa = equipe[(atras * 3 + n) % equipe.length];
+      const [acao, area, alvo] = ACOES[(atras * 5 + n) % ACOES.length];
+      const hora = `${String(8 + ((atras + n) % 13)).padStart(2, '0')}:${String((n * 17) % 60).padStart(2, '0')}:00`;
+      executar(`
+        INSERT INTO auditoria (usuario_id, usuario_nome, papel, acao, area, alvo, criado_em)
+        VALUES (:id, :nome, :papel, :acao, :area, :alvo, :quando)
+      `, {
+        id: pessoa.id, nome: pessoa.nome, papel: pessoa.papel, acao, area, alvo,
+        quando: `${dia.toLocaleDateString('sv-SE')} ${hora}`,
+      });
+    }
+  }
+}
+
+/**
+ * Dá a cada aluno a faixa compatível com o tempo de casa e a modalidade que
+ * ele treina, para as telas de graduação nascerem com história.
+ */
+function gerarGraduacoes() {
+  const vinculos = todos(`
+    SELECT DISTINCT at.aluno_id, t.modalidade_id, a.categoria, a.matriculado_em
+    FROM aluno_turmas at
+    JOIN turmas t ON t.id = at.turma_id
+    JOIN alunos a ON a.id = at.aluno_id
+  `);
+
+  for (const vinculo of vinculos) {
+    const escala = todos(`
+      SELECT id, ordem FROM graduacoes
+      WHERE modalidade_id = :m AND faixa_etaria IN (:etaria, 'ambos')
+      ORDER BY ordem
+    `, { m: vinculo.modalidade_id, etaria: vinculo.categoria });
+    if (!escala.length) continue;
+
+    // Quanto mais tempo de casa, mais alto o degrau - com um teto prudente.
+    const teto = Math.max(1, Math.ceil(escala.length * 0.45));
+    const passo = (vinculo.aluno_id * 5) % teto;
+    const alvo = escala[passo];
+    executar(`
+      INSERT INTO aluno_graduacoes (aluno_id, modalidade_id, graduacao_id, data, grau, observacao)
+      VALUES (:aluno, :modalidade, :graduacao, :data, :grau, 'Graduação registrada no exame da academia.')
+    `, {
+      aluno: vinculo.aluno_id,
+      modalidade: vinculo.modalidade_id,
+      graduacao: alvo.id,
+      data: somarMeses(vinculo.matriculado_em || hoje(), 1),
+      grau: (vinculo.aluno_id * 3) % 4,
+    });
+  }
+}
+
+/**
+ * Monta as equipes de competição por modalidade, o calendário de campeonatos
+ * e o quadro de medalhas dos campeonatos que já aconteceram.
+ */
+function gerarCompeticoes(idsMestres) {
+  const EQUIPES = [
+    ['Atak Competição Jiu-Jitsu', 'Jiu-Jitsu', 'adulto', 'Equipe adulta de Gi e No-Gi, treina terça, quinta e sábado.'],
+    ['Atak Kids Jiu-Jitsu', 'Jiu-Jitsu', 'kids', 'Time infantil que representa a Atak nos festivais da federação.'],
+    ['Atak Muay Thai Fight Team', 'Muay Thai', 'adulto', 'Atletas de ringue com preparação física dedicada.'],
+    ['Atak Karatê Kata e Kumite', 'Karatê', 'misto', 'Time de kata e kumite da federação estadual.'],
+    ['Atak Judô', 'Judô', 'misto', 'Equipe de judô para torneios estaduais e regionais.'],
+    ['Atak Boxe Amador', 'Boxe', 'adulto', 'Atletas de classe C e B em preparação para as seletivas.'],
+    ['Atak MMA Pro', 'MMA', 'adulto', 'Time de MMA amador e profissional do CT Atak.'],
+    ['Atak Muay Thai Feminino', 'Muay Thai', 'feminino', 'Equipe feminina de Muay Thai, treino às terças e quintas.'],
+  ];
+
+  /** Escolhe um professor que realmente ensina aquela arte marcial. */
+  function mestreDaModalidade(nomeModalidade, mestres, alternativa) {
+    const habilitados = todos(`
+      SELECT um.usuario_id FROM usuario_modalidades um
+      JOIN modalidades m ON m.id = um.modalidade_id
+      WHERE m.nome = :nome ORDER BY um.usuario_id
+    `, { nome: nomeModalidade }).map((linha) => linha.usuario_id);
+    return habilitados.length
+      ? habilitados[alternativa % habilitados.length]
+      : mestres[alternativa % mestres.length];
+  }
+
+  const idsEquipes = {};
+  EQUIPES.forEach(([nome, modalidade, categoria, descricao], indice) => {
+    const modalidadeLinha = um('SELECT id, cor FROM modalidades WHERE nome = :nome', { nome: modalidade });
+    if (!modalidadeLinha) return;
+    const criada = executar(`
+      INSERT INTO equipes (nome, modalidade_id, categoria, tecnico_id, descricao, cor)
+      VALUES (:nome, :modalidade, :categoria, :tecnico, :descricao, :cor)
+    `, {
+      nome,
+      modalidade: modalidadeLinha.id,
+      categoria,
+      tecnico: mestreDaModalidade(modalidade, idsMestres, indice),
+      descricao,
+      cor: modalidadeLinha.cor,
+    });
+    idsEquipes[nome] = { id: Number(criada.lastInsertRowid), modalidade: modalidadeLinha.id, categoria };
+  });
+
+  // Cada equipe puxa atletas que ja treinam a modalidade dela.
+  for (const dados of Object.values(idsEquipes)) {
+    const candidatos = todos(`
+      SELECT DISTINCT a.id, a.categoria FROM alunos a
+      JOIN aluno_turmas at ON at.aluno_id = a.id
+      JOIN turmas t ON t.id = at.turma_id
+      WHERE t.modalidade_id = :m AND a.status = 'ativo'
+      ORDER BY a.id LIMIT 8
+    `, { m: dados.modalidade });
+    candidatos
+      .filter((aluno) => (dados.categoria === 'kids' ? aluno.categoria === 'kids' : aluno.categoria === 'adulto'))
+      .slice(0, 6)
+      .forEach((aluno, posicao) => {
+        executar(`
+          INSERT OR IGNORE INTO equipe_membros (equipe_id, aluno_id, funcao, desde)
+          VALUES (:equipe, :aluno, :funcao, :desde)
+        `, {
+          equipe: dados.id,
+          aluno: aluno.id,
+          funcao: posicao === 0 ? 'capitao' : 'atleta',
+          desde: somarMeses(hoje(), -6),
+        });
+      });
+  }
+
+  const COMPETICOES = [
+    ['Copa Rio de Jiu-Jitsu', 'Jiu-Jitsu', 'campeonato', 'estadual', 'Federação de Jiu-Jitsu do Rio de Janeiro',
+      1, 'Tijuca Tênis Clube', 'Rio de Janeiro', 120, 'inscricoes'],
+    ['Seletiva Estadual de Muay Thai', 'Muay Thai', 'seletiva', 'estadual', 'CBMT Rio',
+      1, 'Ginásio do Maracanãzinho', 'Rio de Janeiro', 90, 'inscricoes'],
+    ['Festival Kids da Atak', 'Jiu-Jitsu', 'interno', 'interno', 'CT Atak Pechincha',
+      2, 'CT Atak Pechincha', 'Rio de Janeiro', 0, 'agendada'],
+    ['Campeonato Carioca de Karatê', 'Karatê', 'campeonato', 'estadual', 'Federação de Karatê do Estado do Rio',
+      2, 'Vila Olímpica da Mangueira', 'Rio de Janeiro', 100, 'agendada'],
+    ['Torneio Regional de Judô', 'Judô', 'campeonato', 'municipal', 'Federação de Judô do Rio de Janeiro',
+      3, 'Clube Municipal', 'Rio de Janeiro', 80, 'agendada'],
+    ['Copa Brasil de Jiu-Jitsu', 'Jiu-Jitsu', 'campeonato', 'nacional', 'CBJJ',
+      -2, 'Ginásio do Ibirapuera', 'São Paulo', 180, 'realizada'],
+    ['Desafio de Boxe Amador', 'Boxe', 'amistoso', 'municipal', 'Liga Carioca de Boxe',
+      -1, 'CT Atak Pechincha', 'Rio de Janeiro', 0, 'realizada'],
+    ['Batizado e Troca de Cordas', 'Capoeira', 'festival', 'interno', 'CT Atak Pechincha',
+      -1, 'CT Atak Pechincha', 'Rio de Janeiro', 60, 'realizada'],
+  ];
+
+  COMPETICOES.forEach(([nome, modalidade, tipo, nivel, organizador, mesesAFrente, local, cidade, taxa, status], indice) => {
+    const dataInicio = somarMeses(hoje(), mesesAFrente);
+    const criada = executar(`
+      INSERT INTO competicoes (nome, modalidade_id, tipo, nivel, organizador, data_inicio, inscricao_ate,
+                               local, cidade, endereco, taxa, vagas, descricao, status, responsavel_id,
+                               publicar_site, criado_por)
+      VALUES (:nome, (SELECT id FROM modalidades WHERE nome = :modalidade), :tipo, :nivel, :organizador,
+              :data_inicio, :inscricao_ate, :local, :cidade, :endereco, :taxa, :vagas, :descricao, :status,
+              :responsavel, 1, (SELECT id FROM usuarios WHERE papel = 'dono' LIMIT 1))
+    `, {
+      nome, modalidade, tipo, nivel, organizador,
+      data_inicio: dataInicio,
+      inscricao_ate: mesesAFrente > 0 ? somarMeses(dataInicio, -1) : null,
+      local, cidade,
+      endereco: `${local} - ${cidade}`,
+      taxa,
+      vagas: 0,
+      descricao: `Competição de ${modalidade} organizada por ${organizador}. Fale com o responsável para confirmar categoria e peso.`,
+      status,
+      responsavel: mestreDaModalidade(modalidade, idsMestres, indice),
+    });
+
+    const competicaoId = Number(criada.lastInsertRowid);
+    // O festival kids leva atletas kids; o resto leva os adultos.
+    const categoriaAlvo = /kids/i.test(nome) ? 'kids' : 'adulto';
+    const inscritos = todos(`
+      SELECT DISTINCT a.id FROM alunos a
+      JOIN aluno_turmas at ON at.aluno_id = a.id
+      JOIN turmas t ON t.id = at.turma_id
+      JOIN modalidades m ON m.id = t.modalidade_id
+      WHERE m.nome = :modalidade AND a.status = 'ativo' AND a.categoria = :categoria
+      ORDER BY a.id LIMIT 7
+    `, { modalidade, categoria: categoriaAlvo });
+
+    const MEDALHAS = ['ouro', 'prata', 'bronze', 'participacao'];
+    inscritos.forEach((aluno, posicao) => {
+      const inscricao = executar(`
+        INSERT INTO competicao_inscricoes (competicao_id, aluno_id, equipe_id, categoria_peso, status, taxa_paga,
+                                           criado_por)
+        VALUES (:competicao, :aluno,
+                (SELECT id FROM equipes WHERE modalidade_id =
+                  (SELECT id FROM modalidades WHERE nome = :modalidade) LIMIT 1),
+                :peso, :status, :pago, (SELECT id FROM usuarios WHERE papel = 'dono' LIMIT 1))
+      `, {
+        competicao: competicaoId,
+        aluno: aluno.id,
+        modalidade,
+        peso: null,
+        status: status === 'realizada' ? 'confirmado' : (posicao % 4 === 3 ? 'interesse' : 'inscrito'),
+        pago: status === 'realizada' || posicao % 3 !== 0 ? 1 : 0,
+      });
+
+      if (status !== 'realizada' || posicao > 3) return;
+      executar(`
+        INSERT INTO competicao_resultados (inscricao_id, colocacao, medalha, lutas, vitorias, finalizacoes,
+                                           registrado_por)
+        VALUES (:inscricao, :colocacao, :medalha, :lutas, :vitorias, :finalizacoes,
+                (SELECT id FROM usuarios WHERE papel = 'dono' LIMIT 1))
+      `, {
+        inscricao: Number(inscricao.lastInsertRowid),
+        colocacao: posicao + 1,
+        medalha: MEDALHAS[posicao],
+        lutas: 3 + (posicao % 2),
+        vitorias: Math.max(0, 3 - posicao),
+        finalizacoes: Math.max(0, 2 - posicao),
+      });
+    });
+  });
+}
+
+/**
  * Gera 30 dias de check-in para a demonstração: cada aluno confirma presença
  * nas aulas da turma dele, com frequência variando de pessoa para pessoa.
  */
@@ -166,7 +412,8 @@ function gerarCheckins() {
     WHERE a.status = 'ativo'
   `);
 
-  for (let atras = 29; atras >= 0; atras -= 1) {
+  // 75 dias de histórico: dá base para comparar o mês atual com o anterior.
+  for (let atras = 74; atras >= 0; atras -= 1) {
     const dia = new Date();
     dia.setDate(dia.getDate() - atras);
     const iso = dia.toLocaleDateString('sv-SE');
@@ -177,8 +424,10 @@ function gerarCheckins() {
       const chave = `${vinculo.aluno_id}-${vinculo.turma_id}`;
       if (registrados.has(chave)) continue;
       // Frequência entre 45% e 85%, variando de aluno para aluno.
-      const propensao = 0.45 + ((vinculo.aluno_id * 7) % 40) / 100;
-      if (Math.random() > propensao) continue;
+      const base = 0.45 + ((vinculo.aluno_id * 7) % 40) / 100;
+      // Algumas turmas vêm crescendo e outras caindo, para a análise ter o que mostrar.
+      const rumo = ((vinculo.turma_id % 3) - 1) * 0.3 * (1 - atras / 74);
+      if (Math.random() > Math.min(0.95, Math.max(0.15, base + rumo))) continue;
       registrados.add(chave);
 
       const [h, m] = vinculo.hora_inicio.split(':').map(Number);
@@ -200,10 +449,11 @@ function gerarCheckins() {
 /** Dados de demonstração: alunos, matrículas, mensalidades, caixa, avisos e chamada. */
 export function carregarDemonstracao() {
   // Turma de cada aluno define a categoria (kids ou adulto) e onde ele aparece na chamada.
-  const TURMAS_KIDS = ['Jiu-Jitsu Kids', 'Muay Thai Kids', 'Karatê Kids'];
+  const TURMAS_KIDS = ['Jiu-Jitsu Kids', 'Muay Thai Kids', 'Karatê Kids', 'Judô Kids', 'Capoeira Kids', 'Taekwondo Kids'];
   const TURMAS_ADULTO = [
     'Jiu-Jitsu Adulto Manhã', 'Jiu-Jitsu Adulto Noite', 'Muay Thai Adulto', 'Muay Thai Feminino',
     'Karatê Adulto', 'Kickboxing Adulto', 'Boxe Adulto', 'MMA Iniciante', 'MMA Competição',
+    'Judô Adulto', 'Capoeira Roda Aberta', 'Taekwondo Adulto',
   ];
   const NOMES = [
     'Lucas Ferreira', 'Mariana Costa', 'Rafael Mendes', 'Juliana Rocha', 'Carlos Eduardo Lima',
@@ -230,24 +480,78 @@ export function carregarDemonstracao() {
 
   transacao(() => {
     const mestres = [
-      ['Mestre Ricardo Barbosa', 'ricardo@atak.com'],
-      ['Mestra Camila Nogueira', 'camila@atak.com'],
+      {
+        nome: 'Mestre Ricardo Barbosa', email: 'ricardo@atak.com', apelido: 'Mestre Ricardo',
+        faixa: 'Faixa preta 4º grau de Jiu-Jitsu', desde: '2009-03-01',
+        modalidades: ['Jiu-Jitsu', 'MMA'],
+        bio: 'Faixa preta pela CBJJ desde 2014, formou mais de 30 faixas pretas e comanda a equipe de competição da Atak.',
+        cargos: [['competicoes', null], ['graduacao', 'Jiu-Jitsu']],
+      },
+      {
+        nome: 'Mestra Camila Nogueira', email: 'camila@atak.com', apelido: 'Mestra Camila',
+        faixa: 'Prajied preto de Muay Thai', desde: '2012-08-01',
+        modalidades: ['Muay Thai', 'Kickboxing'],
+        bio: 'Kru formada pela CBMT, referência no Muay Thai feminino da Zona Oeste e árbitra estadual.',
+        cargos: [['kids', null], ['marketing', null]],
+      },
+      {
+        nome: 'Sensei Paulo Tanaka', email: 'paulo@atak.com', apelido: 'Sensei Paulo',
+        faixa: 'Faixa preta 3º dan de Karatê e 2º dan de Judô', desde: '2011-02-01',
+        modalidades: ['Karatê', 'Judô'],
+        bio: 'Formado pela Federação de Karatê do Rio de Janeiro, treina atletas de kata e kumite desde 2005.',
+        cargos: [['graduacao', 'Karatê']],
+      },
+      {
+        nome: 'Contramestre Jorge Alves', email: 'jorge@atak.com', apelido: 'Contramestre Jorge',
+        faixa: 'Corda marrom e vermelha de Capoeira', desde: '2015-05-01',
+        modalidades: ['Capoeira'],
+        bio: 'Contramestre de capoeira contemporânea, toca berimbau desde os 9 anos e conduz a roda de sábado.',
+        cargos: [],
+      },
+      {
+        nome: 'Treinador Diego Moura', email: 'diego@atak.com', apelido: 'Treinador Diego',
+        faixa: 'Técnico nível A de Boxe pela CBBoxe', desde: '2016-09-01',
+        modalidades: ['Boxe', 'Taekwondo'],
+        bio: 'Ex-atleta amador com 28 lutas, hoje prepara a equipe de boxe da Atak para as seletivas estaduais.',
+        cargos: [['competicoes', 'Boxe']],
+      },
     ];
-    const idsMestres = mestres.map(([nomeMestre, emailMestre]) => {
-      const criado = executar(`INSERT INTO usuarios (nome, email, senha_hash, papel, telefone)
-                               VALUES (:nome, :email, :hash, 'mestre', '(11) 90000-0000')`,
-        { nome: nomeMestre, email: emailMestre, hash: gerarHashSenha('mestre123') });
-      return Number(criado.lastInsertRowid);
+    const idsMestres = mestres.map((mestre) => {
+      const criado = executar(`
+        INSERT INTO usuarios (nome, email, senha_hash, papel, telefone, apelido, faixa, bio, desde, publicar_site)
+        VALUES (:nome, :email, :hash, 'mestre', '(21) 97024-0245', :apelido, :faixa, :bio, :desde, 1)
+      `, {
+        nome: mestre.nome, email: mestre.email, hash: gerarHashSenha('mestre123'),
+        apelido: mestre.apelido, faixa: mestre.faixa, bio: mestre.bio, desde: mestre.desde,
+      });
+      const id = Number(criado.lastInsertRowid);
+      for (const nomeModalidade of mestre.modalidades) {
+        executar(`INSERT INTO usuario_modalidades (usuario_id, modalidade_id)
+                  SELECT :id, id FROM modalidades WHERE nome = :nome`, { id, nome: nomeModalidade });
+      }
+      for (const [cargo, modalidade] of mestre.cargos) {
+        executar(`INSERT INTO usuario_cargos (usuario_id, cargo, modalidade_id)
+                  VALUES (:id, :cargo, (SELECT id FROM modalidades WHERE nome = :modalidade))`,
+          { id, cargo, modalidade });
+      }
+      return id;
     });
 
-    executar(`INSERT INTO usuarios (nome, email, senha_hash, papel) VALUES (:nome, :email, :hash, 'recepcao')`,
+    executar(`INSERT INTO usuarios (nome, email, senha_hash, papel, apelido) VALUES (:nome, :email, :hash, 'recepcao', 'Recepção Atak')`,
       { nome: 'Recepção', email: 'recepcao@atak.com', hash: gerarHashSenha('recepcao123') });
 
-    const turmas = todos('SELECT id, nome FROM turmas');
-    turmas.forEach((turma, indice) => {
-      executar('UPDATE turmas SET mestre_id = :m WHERE id = :id',
-        { m: idsMestres[indice % idsMestres.length], id: turma.id });
-    });
+    // Cada turma fica com um mestre que realmente ensina aquela arte marcial.
+    const turmas = todos('SELECT id, nome, modalidade_id FROM turmas');
+    let reserva = 0;
+    for (const turma of turmas) {
+      const habilitados = todos(`
+        SELECT usuario_id FROM usuario_modalidades WHERE modalidade_id = :m ORDER BY usuario_id
+      `, { m: turma.modalidade_id }).map((linha) => linha.usuario_id);
+      const escolhido = habilitados.length
+        ? habilitados[turma.id % habilitados.length]
+        : idsMestres[reserva++ % idsMestres.length];
+      executar('UPDATE turmas SET mestre_id = :m WHERE id = :id', { m: escolhido, id: turma.id });
+    }
 
     // A demonstração usa apenas planos mensais, para o caixa do mes fazer sentido.
     const planos = todos(`SELECT * FROM planos WHERE ativo = 1 AND periodicidade = 'mensal' ORDER BY valor`);
@@ -375,10 +679,15 @@ export function carregarDemonstracao() {
     }
 
     const certificadosDemo = [
-      ['Faixa preta de Jiu-Jitsu', 'mestre', 'Mestre Ricardo Barbosa', 'Jiu-Jitsu', 'Confederacao Brasileira de Jiu-Jitsu', 'CBJJ-2014-0912'],
-      ['Instrutor certificado de Muay Thai', 'mestre', 'Mestra Camila Nogueira', 'Muay Thai', 'Confederacao Brasileira de Muay Thai', 'CBMT-2017-4471'],
-      ['Faixa preta 1o grau', 'faixa_preta', 'Rafael Mendes', 'Jiu-Jitsu', 'Confederacao Brasileira de Jiu-Jitsu', 'CBJJ-2025-1180'],
+      ['Faixa preta 4º grau de Jiu-Jitsu', 'mestre', 'Mestre Ricardo Barbosa', 'Jiu-Jitsu', 'Confederação Brasileira de Jiu-Jitsu', 'CBJJ-2014-0912'],
+      ['Kru — instrutor formado de Muay Thai', 'mestre', 'Mestra Camila Nogueira', 'Muay Thai', 'Confederação Brasileira de Muay Thai', 'CBMT-2017-4471'],
+      ['Faixa preta 3º dan de Karatê', 'mestre', 'Sensei Paulo Tanaka', 'Karatê', 'Federação de Karatê do Estado do Rio de Janeiro', 'FKERJ-2013-0330'],
+      ['Corda marrom e vermelha de Capoeira', 'mestre', 'Contramestre Jorge Alves', 'Capoeira', 'Grupo de Capoeira Raízes do Brasil', 'GCRB-2019-0077'],
+      ['Técnico nível A de Boxe', 'mestre', 'Treinador Diego Moura', 'Boxe', 'Confederação Brasileira de Boxe', 'CBBoxe-2018-2210'],
+      ['Faixa preta 1º grau', 'faixa_preta', 'Rafael Mendes', 'Jiu-Jitsu', 'Confederação Brasileira de Jiu-Jitsu', 'CBJJ-2025-1180'],
+      ['Registro da academia na federação estadual', 'federacao', 'CT Atak Pechincha', 'Jiu-Jitsu', 'Federação de Jiu-Jitsu do Estado do Rio de Janeiro', 'FJJERJ-2011-0451'],
       ['Curso de primeiros socorros para academias', 'curso', 'Equipe CT Atak', null, 'Cruz Vermelha Brasileira', null],
+      ['Curso de arbitragem estadual', 'curso', 'Mestra Camila Nogueira', 'Muay Thai', 'Federação de Muay Thai do Rio de Janeiro', 'FMTERJ-2021-0918'],
     ];
     for (const [titulo, tipo, pessoa, modalidade, entidade, registro] of certificadosDemo) {
       executar(`
@@ -432,21 +741,35 @@ export function carregarDemonstracao() {
       });
     }
 
+    // Cada aviso tem um dono: a modalidade certa recebe o recado certo.
     const avisos = [
-      ['Campeonato Estadual de Jiu-Jitsu', 'Inscrições abertas até dia 20. Falar com a recepção para confirmar a categoria e o peso.', 'campeonato', 'todos', somarMeses(hoje(), 1)],
-      ['Sem aula no feriado', 'Na próxima sexta-feira a academia estará fechada. As aulas voltam no sábado no horário normal.', 'cancelamento', 'todos', null],
-      ['Exame de faixa Kids', 'Alunos kids com frequência acima de 75% já podem se inscrever no próximo exame de faixa.', 'graduacao', 'kids', somarMeses(hoje(), 1)],
-      ['Treino extra de MMA', 'Sábado teremos treino aberto de MMA das 10h as 12h. Traga protetor bucal.', 'evento', 'adultos', null],
+      ['Sem aula no feriado', 'Na próxima sexta-feira a academia estará fechada. As aulas voltam no sábado no horário normal.', 'cancelamento', 'todos', null, null],
+      ['Exame de faixa Kids', 'Alunos kids com frequência acima de 75% já podem se inscrever no próximo exame de faixa.', 'graduacao', 'kids', null, somarMeses(hoje(), 1)],
+      ['Seletiva da equipe de competição', 'Quem quiser entrar na equipe de competição precisa participar do treino de sábado.', 'evento', 'competidores', null, null],
+      ['Treino de No-Gi reforçado', 'Nas terças o treino das 19h passa a ser todo de No-Gi, com foco em pegadas e raspagens.', 'evento', 'modalidade', 'Jiu-Jitsu', null],
+      ['Exame de prajied', 'A troca de prajied do Muay Thai acontece no último sábado do mês. Fale com a Mestra Camila.', 'graduacao', 'modalidade', 'Muay Thai', somarMeses(hoje(), 1)],
+      ['Roda de aniversário da Capoeira', 'Roda aberta com berimbau e batizado dos alunos novos. Convide a família.', 'evento', 'modalidade', 'Capoeira', somarMeses(hoje(), 1)],
+      ['Kata obrigatório para a graduação', 'Quem vai fazer exame precisa apresentar o Heian Nidan completo. Treinamos nas quintas.', 'graduacao', 'modalidade', 'Karatê', null],
+      ['Randori extra no Judô', 'Na quinta o treino termina com 30 minutos de randori. Traga o judogi reserva.', 'evento', 'modalidade', 'Judô', null],
+      ['Sparring com equipamento completo', 'A partir desta semana o sparring de Boxe só com capacete, bucal e luva 14oz.', 'geral', 'modalidade', 'Boxe', null],
+      ['Preparação para o desafio de MMA', 'Treino de grappling com luva às terças e quintas, das 21h às 22h30.', 'evento', 'modalidade', 'MMA', null],
+      ['Aula de chutes altos', 'Sexta teremos aula especial de chutes altos no Taekwondo. Alongue antes.', 'evento', 'modalidade', 'Taekwondo', null],
+      ['Novo horário do Kickboxing', 'O treino de quarta passa a começar 18h, meia hora mais cedo.', 'geral', 'modalidade', 'Kickboxing', null],
     ];
-    for (const [titulo, mensagem, tipo, publico, dataEvento] of avisos) {
+    for (const [titulo, mensagem, tipo, publico, modalidade, dataEvento] of avisos) {
       executar(`
-        INSERT INTO avisos (titulo, mensagem, tipo, publico, data_evento, autor_id)
-        VALUES (:titulo, :mensagem, :tipo, :publico, :data_evento,
+        INSERT INTO avisos (titulo, mensagem, tipo, publico, modalidade_id, data_evento, autor_id)
+        VALUES (:titulo, :mensagem, :tipo, :publico,
+                (SELECT id FROM modalidades WHERE nome = :modalidade), :data_evento,
                 (SELECT id FROM usuarios WHERE papel = 'dono' LIMIT 1))
-      `, { titulo, mensagem, tipo, publico, data_evento: dataEvento });
+      `, { titulo, mensagem, tipo, publico, modalidade, data_evento: dataEvento });
     }
 
+    gerarGraduacoes();
+    gerarCompeticoes(idsMestres);
+
     gerarCheckins();
+    gerarHistorico();
   });
 
   return { mensagem: 'Dados de demonstração carregados.' };

@@ -19,25 +19,41 @@ import paginaAvaliacoes from './paginas/avaliacoes.js';
 import paginaCertificados from './paginas/certificados.js';
 import paginaCheckin from './paginas/checkin.js';
 import paginaLoja from './paginas/loja.js';
+import paginaCompeticoes from './paginas/competicoes.js';
+import paginaCompetidores from './paginas/competidores.js';
+import paginaGraduacoes from './paginas/graduacoes.js';
+import paginaAnalises from './paginas/analises.js';
+import paginaSeguranca from './paginas/seguranca.js';
 
-const EQUIPE = ['dono', 'mestre', 'recepcao'];
+const EQUIPE = ['dono', 'mestre', 'recepcao', 'competicoes'];
+const GESTAO = ['dono', 'recepcao'];
 
 /** Cada rota diz quem entra, em que grupo do menu aparece e o que desenha. */
 const ROTAS = [
   { caminho: 'painel', titulo: 'Painel', curto: 'Painel', icone: 'painel', grupo: 'Visão geral', papeis: [...EQUIPE, 'aluno'], render: paginaPainel, principal: true },
   { caminho: 'minha-area', titulo: 'Minha área', curto: 'Meu treino', icone: 'aluno', grupo: 'Visão geral', papeis: ['aluno'], render: paginaMinhaArea, principal: true },
+  { caminho: 'analises', titulo: 'Análises', curto: 'Análises', icone: 'grafico', grupo: 'Visão geral', papeis: GESTAO, render: paginaAnalises },
+
   { caminho: 'checkin', titulo: 'Check-in', curto: 'Check-in', icone: 'raio', grupo: 'Rotina', papeis: [...EQUIPE, 'aluno'], render: paginaCheckin, principal: true },
   { caminho: 'grade', titulo: 'Horários', curto: 'Horários', icone: 'calendario', grupo: 'Rotina', papeis: [...EQUIPE, 'aluno'], render: paginaGrade, principal: true },
-  { caminho: 'chamada', titulo: 'Chamada', curto: 'Chamada', icone: 'chamada', grupo: 'Rotina', papeis: EQUIPE, render: paginaChamada, principal: true },
+  { caminho: 'chamada', titulo: 'Chamada', curto: 'Chamada', icone: 'chamada', grupo: 'Rotina', papeis: EQUIPE, render: paginaChamada },
   { caminho: 'avisos', titulo: 'Avisos', curto: 'Avisos', icone: 'megafone', grupo: 'Rotina', papeis: [...EQUIPE, 'aluno'], render: paginaAvisos, principal: true },
+  { caminho: 'avaliacoes', titulo: 'Avaliações', curto: 'Avaliar', icone: 'estrela', grupo: 'Rotina', papeis: [...EQUIPE, 'aluno'], render: paginaAvaliacoes },
+
+  { caminho: 'competicoes', titulo: 'Competições', curto: 'Competir', icone: 'trofeu', grupo: 'Competição', papeis: [...EQUIPE, 'aluno'], render: paginaCompeticoes, principal: true },
+  { caminho: 'competidores', titulo: 'Competidores', curto: 'Equipes', icone: 'escudo', grupo: 'Competição', papeis: [...EQUIPE, 'aluno'], render: paginaCompetidores },
+
   { caminho: 'alunos', titulo: 'Alunos', curto: 'Alunos', icone: 'alunos', grupo: 'Gestão', papeis: EQUIPE, render: paginaAlunos, principal: true },
   { caminho: 'turmas', titulo: 'Turmas e modalidades', curto: 'Turmas', icone: 'luva', grupo: 'Gestão', papeis: EQUIPE, render: paginaTurmas },
+  { caminho: 'graduacoes', titulo: 'Graduações', curto: 'Faixas', icone: 'faixa', grupo: 'Gestão', papeis: [...EQUIPE, 'aluno'], render: paginaGraduacoes },
+  { caminho: 'certificados', titulo: 'Certificados', curto: 'Diplomas', icone: 'medalha', grupo: 'Gestão', papeis: [...EQUIPE, 'aluno'], render: paginaCertificados },
   { caminho: 'planos', titulo: 'Planos', curto: 'Planos', icone: 'cartao', grupo: 'Gestão', papeis: EQUIPE, render: paginaPlanos },
-  { caminho: 'loja', titulo: 'Loja', curto: 'Loja', icone: 'sacola', grupo: 'Gestão', papeis: [...EQUIPE, 'aluno'], render: paginaLoja, principal: true },
-  { caminho: 'avaliacoes', titulo: 'Avaliações', curto: 'Avaliar', icone: 'estrela', grupo: 'Rotina', papeis: [...EQUIPE, 'aluno'], render: paginaAvaliacoes },
-  { caminho: 'certificados', titulo: 'Certificados', curto: 'Faixas', icone: 'medalha', grupo: 'Gestão', papeis: [...EQUIPE, 'aluno'], render: paginaCertificados },
-  { caminho: 'financeiro', titulo: 'Financeiro', curto: 'Caixa', icone: 'dinheiro', grupo: 'Financeiro', papeis: ['dono', 'recepcao'], render: paginaFinanceiro, principal: true },
-  { caminho: 'equipe', titulo: 'Equipe e academia', curto: 'Equipe', icone: 'engrenagem', grupo: 'Sistema', papeis: ['dono'], render: paginaEquipe },
+  { caminho: 'loja', titulo: 'Loja', curto: 'Loja', icone: 'sacola', grupo: 'Gestão', papeis: [...EQUIPE, 'aluno'], render: paginaLoja },
+
+  { caminho: 'financeiro', titulo: 'Financeiro', curto: 'Caixa', icone: 'dinheiro', grupo: 'Financeiro', papeis: GESTAO, render: paginaFinanceiro, principal: true },
+
+  { caminho: 'equipe', titulo: 'Equipe e academia', curto: 'Equipe', icone: 'engrenagem', grupo: 'Sistema', papeis: [...GESTAO, 'mestre'], render: paginaEquipe },
+  { caminho: 'seguranca', titulo: 'Segurança e atividades', curto: 'Segurança', icone: 'cadeado', grupo: 'Sistema', papeis: ['dono'], render: paginaSeguranca },
 ];
 
 const raiz = document.getElementById('app');
@@ -52,7 +68,7 @@ export function irPara(caminho) {
 }
 
 function rotaInicial() {
-  return sessao.papel === 'aluno' ? 'minha-área' : 'painel';
+  return sessao.papel === 'aluno' ? 'minha-area' : 'painel';
 }
 
 function rotasPermitidas() {
@@ -60,7 +76,13 @@ function rotasPermitidas() {
 }
 
 export function traduzirPapel(papel) {
-  return { dono: 'Dono da academia', mestre: 'Mestre / professor', recepcao: 'Recepção', aluno: 'Aluno' }[papel] || papel;
+  return {
+    dono: 'Dono da academia',
+    mestre: 'Mestre / professor',
+    recepcao: 'Recepção',
+    competicoes: 'Responsável de Competições',
+    aluno: 'Aluno',
+  }[papel] || papel;
 }
 
 /* ------------------------------------------------------------------ menu */
@@ -106,7 +128,7 @@ function barraLateral(caminhoAtivo) {
 
 function navegacaoInferior(caminhoAtivo) {
   const principais = rotasPermitidas().filter((rota) => rota.principal).slice(0, 5);
-  return el('nav', { classe: 'nav-inferior', 'aria-label': 'Navegacao rapida' }, principais.map((rota) => el('button', {
+  return el('nav', { classe: 'nav-inferior', 'aria-label': 'Navegação rápida' }, principais.map((rota) => el('button', {
     classe: `item ${rota.caminho === caminhoAtivo ? 'ativo' : ''}`,
     aoClicar: () => irPara(rota.caminho),
   }, [

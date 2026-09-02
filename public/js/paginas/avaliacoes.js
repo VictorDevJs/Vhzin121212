@@ -39,8 +39,8 @@ async function telaDaEquipe() {
       el('div', {}, [
         el('div', { classe: 'media', texto: resumo.media.toFixed(1).replace('.', ',') }),
         estrelas(resumo.media, { tamanho: 18 }),
-        el('div', { classe: 'dica', texto: `${resumo.total} avaliacao(oes) publicada(s)` }),
-        pendentes ? el('div', { estilo: 'margin-top:.5rem' }, [etiqueta(`${pendentes} aguardando aprovacao`, 'atenção')]) : null,
+        el('div', { classe: 'dica', texto: `${resumo.total} avaliação(ões) publicada(s)` }),
+        pendentes ? el('div', { estilo: 'margin-top:.5rem' }, [etiqueta(`${pendentes} aguardando aprovação`, 'atenção')]) : null,
       ]),
       el('div', { classe: 'distribuicao' }, resumo.distribuicao.map((linha) => el('div', { classe: 'faixa-nota' }, [
         el('span', { texto: `${linha.nota}★`, estilo: 'width:26px' }),
@@ -118,7 +118,7 @@ async function telaDaEquipe() {
         el('label', { texto: 'Situação' }),
         el('select', { aoMudar: (evento) => { filtro.status = evento.target.value; carregar(); } }, [
           el('option', { value: '', texto: 'Todas' }),
-          el('option', { value: 'pendente', texto: 'Aguardando aprovacao' }),
+          el('option', { value: 'pendente', texto: 'Aguardando aprovação' }),
           el('option', { value: 'aprovada', texto: 'Publicadas' }),
           el('option', { value: 'recusada', texto: 'Recusadas' }),
         ]),
@@ -131,7 +131,7 @@ async function telaDaEquipe() {
 function formularioInterno(modalidades, aoTerminar) {
   abrirFormulario({
     titulo: 'Deixar uma avaliação',
-    aviso: 'Ela entra na fila de aprovacao antes de aparecer no site.',
+    aviso: 'Ela entra na fila de aprovação antes de aparecer no site.',
     campos: [
       { nome: 'nota', rotulo: 'Nota', tipo: 'estrelas', valor: 5 },
       { nome: 'comentario', rotulo: 'Comentário', tipo: 'textarea' },

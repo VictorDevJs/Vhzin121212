@@ -452,7 +452,7 @@ td.acoes-celula { display: flex; gap: var(--esp-1); }
 
 .barras { display: grid; gap: var(--esp-2); }
 .barra-linha {
-  display: grid; grid-template-columns: minmax(96px, 158px) 1fr auto;
+  display: grid; grid-template-columns: minmax(96px, 200px) 1fr auto;
   align-items: center; gap: var(--esp-3); border-radius: var(--raio-1);
   padding: .2rem .25rem; transition: background var(--mov-rapido);
 }
@@ -807,4 +807,287 @@ td.acoes-celula { display: flex; gap: var(--esp-1); }
 @media print {
   .lateral, .topo-app, .nav-inferior, .acoes, .filtros, .zap { display: none !important; }
   body { background: #fff; color: #000; }
+}
+
+/* ==========================================================================
+   Texto de apoio: explica o que a tela faz, em uma frase
+   ========================================================================== */
+
+.explicacao {
+  display: flex;
+  gap: .6rem;
+  align-items: flex-start;
+  margin: 0 0 1rem;
+  padding: .7rem .85rem;
+  border: 1px solid var(--borda);
+  border-left: 3px solid var(--marca-1);
+  border-radius: var(--raio-1);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--marca-1) 7%, transparent), transparent 60%);
+  color: var(--tinta-2);
+  font-size: .82rem;
+  line-height: 1.55;
+}
+
+.explicacao svg {
+  flex: none;
+  margin-top: .12rem;
+  color: var(--marca-1);
+}
+
+/* ==========================================================================
+   Abas por modalidade - o mural e as faixas divididos por arte marcial
+   ========================================================================== */
+
+.abas-modalidade {
+  display: flex;
+  gap: .4rem;
+  margin-bottom: 1rem;
+  padding-bottom: .35rem;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.aba-modalidade {
+  display: inline-flex;
+  align-items: center;
+  gap: .45rem;
+  flex: none;
+  padding: .48rem .85rem;
+  border: 1px solid var(--borda);
+  border-radius: var(--raio-pilula);
+  background: var(--superficie);
+  color: var(--tinta-2);
+  font: 600 .8rem/1 var(--fonte);
+  letter-spacing: .01em;
+  cursor: pointer;
+  transition: border-color var(--mov-rapido), color var(--mov-rapido), background var(--mov-rapido);
+}
+
+.aba-modalidade:hover { border-color: var(--borda-forte); color: var(--tinta); }
+
+.aba-modalidade.ativa {
+  border-color: color-mix(in srgb, var(--cor-aba, var(--marca-1)) 60%, transparent);
+  background: color-mix(in srgb, var(--cor-aba, var(--marca-1)) 14%, var(--superficie));
+  color: var(--tinta);
+}
+
+.ponto-aba {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--cor-aba, var(--marca-1));
+}
+
+.contador-aba {
+  min-width: 1.15rem;
+  padding: .05rem .3rem;
+  border-radius: var(--raio-pilula);
+  background: var(--superficie-3);
+  color: var(--tinta-2);
+  font-size: .68rem;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.aba-modalidade.ativa .contador-aba {
+  background: color-mix(in srgb, var(--cor-aba, var(--marca-1)) 30%, var(--superficie-3));
+  color: var(--tinta);
+}
+
+/* O aviso ganha a cor da arte marcial a que pertence */
+.cartao.aviso { border-left: 3px solid var(--cor-aviso, var(--borda)); }
+
+/* ==========================================================================
+   Ficha: pares rotulo / valor dentro dos cartoes
+   ========================================================================== */
+
+.ficha { margin: .7rem 0 0; }
+
+.linha-ficha {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: .32rem 0;
+  border-top: 1px solid var(--borda);
+  font-size: .8rem;
+}
+
+.linha-ficha:first-child { border-top: 0; }
+.linha-ficha dt { color: var(--tinta-3); }
+.linha-ficha dd { margin: 0; color: var(--tinta); text-align: right; font-weight: 550; }
+
+/* ==========================================================================
+   Competicoes e equipes
+   ========================================================================== */
+
+.cartao.competicao h3,
+.cartao.equipe h3 { margin: 0 0 .15rem; }
+
+.cartao.equipe { position: relative; overflow: hidden; }
+
+.faixa-equipe {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  background: linear-gradient(90deg, var(--cor-equipe, var(--marca-1)), transparent 85%);
+}
+
+.numeros-equipe {
+  display: flex;
+  gap: 1.4rem;
+  margin: .8rem 0 .2rem;
+}
+
+.bloco-numero { display: flex; flex-direction: column; }
+.bloco-numero strong {
+  font: 750 1.5rem/1 var(--fonte-numero, var(--fonte));
+  color: var(--tinta);
+  font-variant-numeric: tabular-nums;
+}
+.bloco-numero span {
+  font-size: .7rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--tinta-3);
+}
+
+/* ==========================================================================
+   Escala de graduacoes - cada degrau desenhado como a propria faixa
+   ========================================================================== */
+
+.escala {
+  display: flex;
+  flex-direction: column;
+  gap: .35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: degrau;
+}
+
+.degrau {
+  display: grid;
+  grid-template-columns: 2rem 76px 1fr auto;
+  gap: .9rem;
+  align-items: center;
+  padding: .6rem .7rem;
+  border: 1px solid var(--borda);
+  border-radius: var(--raio-1);
+  background: var(--superficie);
+  transition: border-color var(--mov-rapido), transform var(--mov-rapido);
+}
+
+.degrau:hover { border-color: var(--borda-forte); transform: translateX(2px); }
+
+.ordem-degrau {
+  font: 700 .78rem/1 var(--fonte);
+  color: var(--tinta-3);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+/* A faixa: corpo na cor principal, ponta na cor secundaria e os graus em branco */
+.faixa-visual {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 3px;
+  height: 20px;
+  padding-right: 5px;
+  border-radius: 3px;
+  background: var(--cor-faixa);
+  box-shadow: inset 0 -6px 10px rgba(0, 0, 0, .22), inset 0 1px 0 rgba(255, 255, 255, .16),
+              0 1px 3px rgba(0, 0, 0, .4);
+  overflow: hidden;
+}
+
+.ponta-faixa {
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: 34%;
+  background: var(--cor-ponta);
+  box-shadow: inset 1px 0 0 rgba(0, 0, 0, .25);
+}
+
+.grau-faixa {
+  position: relative;
+  z-index: 1;
+  width: 3px;
+  height: 12px;
+  border-radius: 1px;
+  background: #f6f5f3;
+  box-shadow: 0 0 2px rgba(0, 0, 0, .5);
+}
+
+.dados-degrau { display: flex; flex-direction: column; gap: .25rem; min-width: 0; }
+.dados-degrau strong { font-size: .88rem; }
+.dados-degrau .dica { margin: 0; }
+.acoes-degrau { display: flex; gap: .35rem; }
+
+/* ==========================================================================
+   Equipe da academia: retrato, biografia e cargos
+   ========================================================================== */
+
+.cabecalho-pessoa { display: flex; gap: .8rem; align-items: center; }
+
+.retrato {
+  width: 58px;
+  height: 58px;
+  flex: none;
+  border-radius: var(--raio-2);
+  object-fit: cover;
+  border: 1px solid var(--borda-forte);
+  background: var(--superficie-2);
+}
+
+.retrato.vazio {
+  display: grid;
+  place-items: center;
+  font: 700 1.05rem/1 var(--fonte);
+  color: var(--marca-1);
+  background: linear-gradient(150deg, var(--superficie-3), var(--superficie-2));
+}
+
+.dados-pessoa { min-width: 0; }
+.dados-pessoa h3 { margin: 0; font-size: 1rem; }
+.dados-pessoa .legenda { font-size: .76rem; }
+
+.cartao.pessoa .bio {
+  margin: .2rem 0 .6rem;
+  font-size: .82rem;
+  line-height: 1.55;
+  color: var(--tinta-2);
+}
+
+.lista-cargos { display: flex; flex-direction: column; gap: .45rem; }
+
+.item-cargo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: .55rem .7rem;
+  border: 1px solid var(--borda);
+  border-radius: var(--raio-1);
+  background: var(--superficie-2);
+}
+
+.item-cargo strong { display: block; font-size: .85rem; }
+.item-cargo .dica { margin: 0; font-size: .74rem; }
+
+.previa-marca {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+  padding: 1rem;
+  background: var(--plano-2);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio-2);
+}
+
+@media (max-width: 620px) {
+  .degrau { grid-template-columns: 1.4rem 56px 1fr; }
+  .acoes-degrau { grid-column: 1 / -1; }
 }

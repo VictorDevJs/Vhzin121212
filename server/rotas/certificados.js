@@ -26,7 +26,7 @@ roteador.get('/', exigirPapel(...EQUIPE, 'aluno'), rota((req, res) => {
 roteador.post('/', exigirPapel('dono'), rota((req, res) => {
   exigirCampos(req.body, ['titulo', 'pessoa_nome']);
   const tipo = texto(req.body.tipo, 'faixa_preta');
-  if (!TIPOS_CERTIFICADO.includes(tipo)) throw new ErroApi(`Tipo invalido. Use: ${TIPOS_CERTIFICADO.join(', ')}.`);
+  if (!TIPOS_CERTIFICADO.includes(tipo)) throw new ErroApi(`Tipo inválido. Use: ${TIPOS_CERTIFICADO.join(', ')}.`);
 
   const criado = executar(`
     INSERT INTO certificados (titulo, tipo, pessoa_nome, aluno_id, usuario_id, modalidade_id, entidade,

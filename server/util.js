@@ -18,7 +18,7 @@ export function exigirCampos(corpo, campos) {
     return valor === undefined || valor === null || String(valor).trim() === '';
   });
   if (faltando.length) {
-    throw new ErroApi(`Campos obrigatorios: ${faltando.join(', ')}.`);
+    throw new ErroApi(`Campos obrigatórios: ${faltando.join(', ')}.`);
   }
 }
 
@@ -56,7 +56,7 @@ export function competenciaAtual() {
 export function data(valor, padrao = null) {
   const limpo = texto(valor);
   if (!limpo) return padrao;
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(limpo)) throw new ErroApi(`Data invalida: ${limpo}. Use AAAA-MM-DD.`);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(limpo)) throw new ErroApi(`Data inválida: ${limpo}. Use AAAA-MM-DD.`);
   return limpo;
 }
 
@@ -64,7 +64,7 @@ export function data(valor, padrao = null) {
 export function hora(valor) {
   const limpo = texto(valor);
   if (!limpo || !/^([01]\d|2[0-3]):[0-5]\d$/.test(limpo)) {
-    throw new ErroApi(`Horario invalido: ${valor}. Use HH:MM.`);
+    throw new ErroApi(`Horário inválido: ${valor}. Use HH:MM.`);
   }
   return limpo;
 }

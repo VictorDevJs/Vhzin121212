@@ -24,6 +24,9 @@ import rotasCertificados from './rotas/certificados.js';
 import rotasArquivos, { PASTA_ARQUIVOS } from './rotas/arquivos.js';
 import rotasCheckins from './rotas/checkins.js';
 import rotasLoja from './rotas/loja.js';
+import rotasCompeticoes from './rotas/competicoes.js';
+import rotasEquipes from './rotas/equipes.js';
+import rotasAuditoria from './rotas/auditoria.js';
 
 const raiz = dirname(dirname(fileURLToPath(import.meta.url)));
 
@@ -56,6 +59,9 @@ export function criarApp() {
   app.use('/api/arquivos', rotasArquivos);
   app.use('/api/checkins', rotasCheckins);
   app.use('/api/loja', rotasLoja);
+  app.use('/api/competicoes', rotasCompeticoes);
+  app.use('/api/equipes', rotasEquipes);
+  app.use('/api/auditoria', rotasAuditoria);
 
   app.use('/api', (_req, res) => res.status(404).json({ erro: 'Endpoint não encontrado.' }));
 

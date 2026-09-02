@@ -134,7 +134,7 @@ roteador.put('/:id', exigirPapel(...GESTAO), rota((req, res) => {
   if (!atual) throw new ErroApi('Aluno não encontrado.', 404);
 
   const status = texto(req.body.status, atual.status);
-  if (!STATUS.includes(status)) throw new ErroApi(`Status invalido. Use: ${STATUS.join(', ')}.`);
+  if (!STATUS.includes(status)) throw new ErroApi(`Status inválido. Use: ${STATUS.join(', ')}.`);
 
   executar(`
     UPDATE alunos SET nome = :nome, email = :email, telefone = :telefone, data_nascimento = :data_nascimento,
@@ -189,7 +189,7 @@ roteador.post('/:id/graduacoes', exigirPapel('dono', 'mestre'), rota((req, res) 
     observacao: texto(req.body.observacao),
     registrado_por: req.usuario.id,
   });
-  res.status(201).json({ mensagem: `Graduacao ${graduacao.nome} registrada.` });
+  res.status(201).json({ mensagem: `Graduação ${graduacao.nome} registrada.` });
 }));
 
 export default roteador;

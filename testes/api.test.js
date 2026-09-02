@@ -459,3 +459,267 @@ test('a loja da página pública mostra só o que está publicado', async () => 
   const depois = await chamar('GET', '/api/publico/academia');
   assert.equal(depois.dados.produtos.length, quantidade - 1);
 });
+
+/* ==========================================================================
+   Cargos, competições, equipes, graduações e registro de atividades
+   ========================================================================== */
+
+test('a academia nasce com a escala completa de graduações de cada arte', async () => {
+  const { dados: modalidades } = await chamar('GET', '/api/modalidades', { token: estado.tokenDono });
+  const jiu = modalidades.find((m) => m.nome === 'Jiu-Jitsu');
+  const capoeira = modalidades.find((m) => m.nome === 'Capoeira');
+  assert.ok(jiu, 'Jiu-Jitsu cadastrado');
+  assert.ok(capoeira, 'Capoeira cadastrada');
+  estado.modalidadeJiu = jiu.id;
+
+  const { dados: faixas } = await chamar('GET', `/api/modalidades/${jiu.id}/graduacoes`,
+    { token: estado.tokenDono });
+  const nomes = faixas.map((f) => f.nome);
+  assert.ok(faixas.length >= 20, `escala do Jiu-Jitsu completa (${faixas.length} degraus)`);
+  for (const esperada of ['Branca', 'Azul', 'Roxa', 'Marrom', 'Preta', 'Vermelha']) {
+    assert.ok(nomes.includes(esperada), `faixa ${esperada} presente`);
+  }
+  assert.ok(nomes.some((n) => n.startsWith('Cinza')), 'faixas infantis presentes');
+  assert.equal(faixas.find((f) => f.nome === 'Preta').graus, 6, 'faixa preta com 6 graus');
+
+  const { dados: cordas } = await chamar('GET', `/api/modalidades/${capoeira.id}/graduacoes`,
+    { token: estado.tokenDono });
+  assert.ok(cordas.some((c) => c.nome.includes('Corda Crua')), 'capoeira começa na corda crua');
+});
+
+test('modalidade sem escala conhecida avisa e não inventa faixas', async () => {
+  const { status, dados } = await chamar('POST', '/api/modalidades', {
+    token: estado.tokenDono, corpo: { nome: 'Luta Livre Esportiva', cor: '#5b8def' },
+  });
+  assert.equal(status, 201);
+
+  const { dados: escala } = await chamar('GET', `/api/modalidades/${dados.id}/graduacoes`,
+    { token: estado.tokenDono });
+  assert.equal(escala.length, 0, 'arte sem catálogo começa sem faixas');
+
+  const padrao = await chamar('POST', `/api/modalidades/${dados.id}/graduacoes/padrao`,
+    { token: estado.tokenDono });
+  assert.equal(padrao.status, 400);
+  assert.match(padrao.dados.erro, /escala oficial pronta/);
+});
+
+test('reaplicar a escala oficial não duplica as faixas', async () => {
+  const { dados: modalidades } = await chamar('GET', '/api/modalidades', { token: estado.tokenDono });
+  const judo = modalidades.find((m) => m.nome === 'Judô');
+
+  const antes = await chamar('GET', `/api/modalidades/${judo.id}/graduacoes`, { token: estado.tokenDono });
+  const aplicar = await chamar('POST', `/api/modalidades/${judo.id}/graduacoes/padrao`,
+    { token: estado.tokenDono });
+  assert.equal(aplicar.status, 200);
+  assert.equal(aplicar.dados.criadas, 0, 'a escala já estava completa');
+
+  const depois = await chamar('GET', `/api/modalidades/${judo.id}/graduacoes`, { token: estado.tokenDono });
+  assert.equal(depois.dados.length, antes.dados.length);
+});
+
+test('graduação usada por um aluno não pode ser apagada', async () => {
+  const { dados: faixas } = await chamar('GET', `/api/modalidades/${estado.modalidadeJiu}/graduacoes`,
+    { token: estado.tokenDono });
+  const branca = faixas.find((f) => f.nome === 'Branca');
+
+  await chamar('POST', `/api/alunos/${estado.alunoId}/graduacoes`, {
+    token: estado.tokenDono,
+    corpo: { modalidade_id: estado.modalidadeJiu, graduacao_id: branca.id, data: '2025-01-10' },
+  });
+  const { status, dados } = await chamar('DELETE',
+    `/api/modalidades/${estado.modalidadeJiu}/graduacoes/${branca.id}`, { token: estado.tokenDono });
+  assert.equal(status, 409);
+  assert.match(dados.erro, /graduados/);
+});
+
+test('o dono cadastra um mestre com foto, biografia e modalidades', async () => {
+  const { status, dados } = await chamar('POST', '/api/usuarios', {
+    token: estado.tokenDono,
+    corpo: {
+      nome: 'Mestre Teste da Silva', apelido: 'Mestre Teste', email: 'mestre.teste@atak.com',
+      senha: 'mestre123', papel: 'mestre', faixa: 'Faixa preta 2º grau',
+      bio: 'Faixa preta com 15 anos de tatame.', modalidades: [estado.modalidadeJiu],
+      publicar_site: 1,
+    },
+  });
+  assert.equal(status, 201);
+  assert.equal(dados.apelido, 'Mestre Teste');
+  assert.equal(dados.modalidades.length, 1);
+  estado.mestreTesteId = dados.id;
+
+  const { dados: publico } = await chamar('GET', '/api/publico/academia');
+  assert.ok(publico.mestres.some((m) => m.apelido === 'Mestre Teste'),
+    'o mestre aparece na página pública');
+});
+
+test('mestre com turma ativa não é removido por engano', async () => {
+  await chamar('PUT', `/api/turmas/${estado.turmaId}`, {
+    token: estado.tokenDono, corpo: { mestre_id: estado.mestreTesteId },
+  });
+  const { status, dados } = await chamar('DELETE', `/api/usuarios/${estado.mestreTesteId}`,
+    { token: estado.tokenDono });
+  assert.equal(status, 409);
+  assert.match(dados.erro, /turma/);
+
+  await chamar('PUT', `/api/turmas/${estado.turmaId}`, {
+    token: estado.tokenDono, corpo: { mestre_id: '' },
+  });
+});
+
+test('o dono atribui o cargo de Responsável de Competições', async () => {
+  const { status, dados } = await chamar('POST', `/api/usuarios/${estado.mestreTesteId}/cargos`, {
+    token: estado.tokenDono, corpo: { cargo: 'competicoes' },
+  });
+  assert.equal(status, 201);
+  assert.ok(dados.cargos.some((c) => c.cargo === 'competicoes'));
+  estado.cargoId = dados.cargos.find((c) => c.cargo === 'competicoes').id;
+
+  const repetido = await chamar('POST', `/api/usuarios/${estado.mestreTesteId}/cargos`, {
+    token: estado.tokenDono, corpo: { cargo: 'competicoes' },
+  });
+  assert.equal(repetido.status, 409, 'o mesmo cargo não entra duas vezes');
+});
+
+test('sem o cargo de competições ninguém cria campeonato', async () => {
+  const login = await chamar('POST', '/api/auth/login', {
+    corpo: { email: 'mestre.teste@atak.com', senha: 'mestre123' },
+  });
+  estado.tokenMestreTeste = login.dados.token;
+
+  // Com o cargo recém-atribuído, o mestre consegue criar.
+  const permitido = await chamar('POST', '/api/competicoes', {
+    token: estado.tokenMestreTeste,
+    corpo: { nome: 'Copa de Teste', data_inicio: '2026-11-20', modalidade_id: estado.modalidadeJiu,
+      status: 'inscricoes', taxa: 90 },
+  });
+  assert.equal(permitido.status, 201);
+  estado.competicaoId = permitido.dados.id;
+
+  // Retirado o cargo, a permissão some junto.
+  await chamar('DELETE', `/api/usuarios/${estado.mestreTesteId}/cargos/${estado.cargoId}`,
+    { token: estado.tokenDono });
+  const negado = await chamar('POST', '/api/competicoes', {
+    token: estado.tokenMestreTeste,
+    corpo: { nome: 'Copa Sem Permissão', data_inicio: '2026-12-01' },
+  });
+  assert.equal(negado.status, 403);
+  assert.match(negado.dados.erro, /Responsável de Competições/);
+});
+
+test('o aluno demonstra interesse na competição e não se inscreve por outro', async () => {
+  const { status, dados } = await chamar('POST', `/api/competicoes/${estado.competicaoId}/inscricoes`, {
+    token: estado.tokenAluno, corpo: {},
+  });
+  assert.equal(status, 201);
+  assert.equal(dados.status, 'interesse', 'o aluno entra como interessado, não como confirmado');
+  estado.inscricaoId = dados.id;
+
+  const repetida = await chamar('POST', `/api/competicoes/${estado.competicaoId}/inscricoes`, {
+    token: estado.tokenAluno, corpo: {},
+  });
+  assert.equal(repetida.status, 409);
+
+  const { dados: lista } = await chamar('GET', '/api/competicoes', { token: estado.tokenAluno });
+  const minha = lista.find((c) => c.id === estado.competicaoId);
+  assert.equal(minha.minha_inscricao, 'interesse', 'a tela do aluno mostra a inscrição dele');
+});
+
+test('o resultado do campeonato entra no quadro de medalhas', async () => {
+  const { status } = await chamar('PUT',
+    `/api/competicoes/${estado.competicaoId}/resultados/${estado.inscricaoId}`, {
+      token: estado.tokenDono,
+      corpo: { colocacao: 1, medalha: 'ouro', lutas: 4, vitorias: 4, finalizacoes: 3 },
+    });
+  assert.equal(status, 200);
+
+  const { dados: agenda } = await chamar('GET', '/api/competicoes/agenda', { token: estado.tokenDono });
+  const atleta = agenda.quadro_medalhas.atletas[0];
+  assert.equal(atleta.ouro, 1);
+  assert.equal(atleta.vitorias, 4);
+
+  const { dados: detalhe } = await chamar('GET', `/api/competicoes/${estado.competicaoId}`,
+    { token: estado.tokenDono });
+  assert.equal(detalhe.inscricoes[0].status, 'confirmado', 'o resultado confirma a presença');
+});
+
+test('equipe kids não aceita atleta adulto', async () => {
+  const { status, dados: equipe } = await chamar('POST', '/api/equipes', {
+    token: estado.tokenDono,
+    corpo: { nome: 'Equipe Kids de Teste', modalidade_id: estado.modalidadeJiu, categoria: 'kids' },
+  });
+  assert.equal(status, 201);
+
+  const recusado = await chamar('POST', `/api/equipes/${equipe.id}/membros`, {
+    token: estado.tokenDono, corpo: { aluno_id: estado.alunoId, funcao: 'atleta' },
+  });
+  assert.equal(recusado.status, 400);
+  assert.match(recusado.dados.erro, /kids/);
+});
+
+test('o aviso de uma modalidade só chega a quem treina aquela arte', async () => {
+  // O aluno de teste treina na turma de Judo; o Jiu-Jitsu é a arte dos outros.
+  await chamar('POST', '/api/avisos', {
+    token: estado.tokenDono,
+    corpo: { titulo: 'Treino extra de Jiu-Jitsu', mensagem: 'Sábado às 9h.',
+      publico: 'modalidade', modalidade_id: estado.modalidadeJiu },
+  });
+  await chamar('POST', '/api/avisos', {
+    token: estado.tokenDono,
+    corpo: { titulo: 'Randori extra no Judo', mensagem: 'Sábado às 11h.',
+      publico: 'modalidade', modalidade_id: estado.modalidadeId },
+  });
+
+  const { dados: doAluno } = await chamar('GET', '/api/avisos', { token: estado.tokenAluno });
+  const titulos = doAluno.map((a) => a.titulo);
+  assert.ok(titulos.includes('Randori extra no Judo'), 'recebe o aviso da arte que treina');
+  assert.ok(!titulos.includes('Treino extra de Jiu-Jitsu'), 'não recebe o aviso de outra arte');
+
+  const { dados: filtrado } = await chamar('GET',
+    `/api/avisos?modalidade_id=${estado.modalidadeJiu}`, { token: estado.tokenDono });
+  assert.ok(filtrado.length > 0);
+  assert.ok(filtrado.every((a) => a.modalidade_id === estado.modalidadeJiu),
+    'o filtro por modalidade devolve só aquela arte');
+});
+
+test('as abas do mural do aluno são só as modalidades que ele treina', async () => {
+  const { dados } = await chamar('GET', '/api/avisos/modalidades', { token: estado.tokenAluno });
+  assert.ok(dados.length >= 1);
+  assert.ok(dados.some((m) => m.id === estado.modalidadeId), 'aparece a arte que ele treina');
+  assert.ok(dados.every((m) => m.id !== estado.modalidadeJiu), 'não aparece arte que ele não treina');
+});
+
+test('o registro de atividades guarda quem fez cada coisa', async () => {
+  const { status, dados } = await chamar('GET', '/api/auditoria', { token: estado.tokenDono });
+  assert.equal(status, 200);
+  assert.ok(dados.length > 0, 'há atividades registradas');
+  assert.ok(dados.some((linha) => linha.area === 'competicoes'), 'competições ficam registradas');
+  assert.ok(dados.some((linha) => linha.area === 'acesso'), 'os logins ficam registrados');
+
+  const { dados: resumo } = await chamar('GET', '/api/auditoria/resumo', { token: estado.tokenDono });
+  assert.ok(resumo.contas.equipe_ativa >= 1);
+  assert.ok(resumo.acessos.some((a) => a.ultimo_acesso), 'o último acesso é gravado no login');
+});
+
+test('só o dono abre o registro de atividades', async () => {
+  const { status } = await chamar('GET', '/api/auditoria', { token: estado.tokenAluno });
+  assert.equal(status, 403);
+});
+
+test('as análises trazem o retrato de cada modalidade', async () => {
+  const { status, dados } = await chamar('GET', '/api/painel/analises', { token: estado.tokenDono });
+  assert.equal(status, 200);
+  assert.ok(dados.modalidades.length >= 9);
+  const primeira = dados.modalidades[0];
+  for (const campo of ['alunos', 'turmas', 'ocupacao', 'checkins_mes', 'media_por_aula', 'podios']) {
+    assert.ok(campo in primeira, `a análise traz ${campo}`);
+  }
+  assert.ok('ativos' in dados.retencao);
+});
+
+test('a página pública mostra competições, equipes e a escala de faixas', async () => {
+  const { dados } = await chamar('GET', '/api/publico/academia');
+  assert.ok(dados.competicoes.length >= 1, 'competições publicadas');
+  assert.ok(dados.equipes.length >= 1, 'equipes publicadas');
+  assert.ok(dados.modalidades[0].faixas.length > 0, 'escala de faixas no site');
+  assert.ok(dados.numeros.graduacoes > 50, 'o site conta todas as graduações');
+});

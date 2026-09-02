@@ -15,10 +15,18 @@ roteador.get('/academia', rota((_req, res) => {
   );
 
   const modalidades = todos(`
-    SELECT m.id, m.nome, m.descricao, m.cor, m.destaque, m.imagem,
-           (SELECT COUNT(*) FROM turmas t WHERE t.modalidade_id = m.id AND t.ativo = 1) AS turmas
+    SELECT m.id, m.nome, m.descricao, m.cor, m.destaque, m.imagem, m.sigla,
+           (SELECT COUNT(*) FROM turmas t WHERE t.modalidade_id = m.id AND t.ativo = 1) AS turmas,
+           (SELECT COUNT(*) FROM graduacoes g WHERE g.modalidade_id = m.id) AS graduacoes
     FROM modalidades m WHERE m.ativo = 1 ORDER BY m.ordem, m.nome
   `);
+  // A escala completa de faixas de cada arte aparece na vitrine.
+  for (const modalidade of modalidades) {
+    modalidade.faixas = todos(`
+      SELECT nome, cor, cor_ponta, graus, faixa_etaria, descricao
+      FROM graduacoes WHERE modalidade_id = :id ORDER BY ordem, nome
+    `, { id: modalidade.id });
+  }
 
   const grade = todos(`
     SELECT h.dia_semana, h.hora_inicio, h.hora_fim, h.rotulo,
@@ -51,15 +59,21 @@ roteador.get('/academia', rota((_req, res) => {
 
   // Professores mostrados no site, com as titulacoes que o dono publicou.
   const mestres = todos(`
-    SELECT u.id, u.nome,
+    SELECT u.id, u.nome, u.apelido, u.foto, u.bio, u.faixa, u.instagram, u.desde,
            (SELECT COUNT(*) FROM turmas t WHERE t.mestre_id = u.id AND t.ativo = 1) AS turmas
-    FROM usuarios u WHERE u.papel = 'mestre' AND u.ativo = 1 ORDER BY u.nome
+    FROM usuarios u
+    WHERE u.papel IN ('mestre','competicoes') AND u.ativo = 1 AND u.publicar_site = 1
+    ORDER BY u.nome
   `);
   for (const mestre of mestres) {
+    // Junta o que ele ensina (cadastro) com o que ele leciona (turmas).
     mestre.modalidades = todos(`
-      SELECT DISTINCT m.nome FROM turmas t JOIN modalidades m ON m.id = t.modalidade_id
-      WHERE t.mestre_id = :id AND t.ativo = 1 ORDER BY m.nome
-    `, { id: mestre.id }).map((m) => m.nome);
+      SELECT DISTINCT m.nome, m.cor FROM (
+        SELECT modalidade_id FROM usuario_modalidades WHERE usuario_id = :id
+        UNION
+        SELECT modalidade_id FROM turmas WHERE mestre_id = :id AND ativo = 1
+      ) v JOIN modalidades m ON m.id = v.modalidade_id WHERE m.ativo = 1 ORDER BY m.ordem, m.nome
+    `, { id: mestre.id });
     mestre.titulos = todos(`
       SELECT titulo, tipo, entidade, data_emissao FROM certificados
       WHERE usuario_id = :id AND publicar_site = 1 ORDER BY data_emissao DESC
@@ -82,6 +96,38 @@ roteador.get('/academia', rota((_req, res) => {
     LEFT JOIN modalidades m ON m.id = p.modalidade_id
     WHERE p.ativo = 1 AND p.publicar_site = 1
     ORDER BY m.nome, p.nome
+  `);
+
+  // Calendário de competições que a academia divulga para o público.
+  const competicoes = todos(`
+    SELECT c.id, c.nome, c.tipo, c.nivel, c.organizador, c.data_inicio, c.data_fim, c.inscricao_ate,
+           c.local, c.cidade, c.taxa, c.descricao, c.cartaz, c.link, c.status,
+           m.nome AS modalidade, m.cor AS modalidade_cor,
+           (SELECT COUNT(*) FROM competicao_inscricoes i
+             WHERE i.competicao_id = c.id AND i.status != 'desistiu') AS inscritos
+    FROM competicoes c
+    LEFT JOIN modalidades m ON m.id = c.modalidade_id
+    WHERE c.publicar_site = 1 AND c.status != 'cancelada'
+    ORDER BY CASE WHEN c.data_inicio >= date('now','localtime') THEN 0 ELSE 1 END,
+             c.data_inicio LIMIT 12
+  `);
+
+  const equipes = todos(`
+    SELECT e.id, e.nome, e.categoria, e.descricao, e.cor, e.imagem,
+           m.nome AS modalidade, u.nome AS tecnico,
+           (SELECT COUNT(*) FROM equipe_membros em WHERE em.equipe_id = e.id) AS atletas
+    FROM equipes e
+    LEFT JOIN modalidades m ON m.id = e.modalidade_id
+    LEFT JOIN usuarios u ON u.id = e.tecnico_id
+    WHERE e.ativo = 1 ORDER BY m.ordem, e.nome
+  `);
+
+  const medalhas = um(`
+    SELECT
+      SUM(CASE WHEN medalha = 'ouro' THEN 1 ELSE 0 END) AS ouro,
+      SUM(CASE WHEN medalha = 'prata' THEN 1 ELSE 0 END) AS prata,
+      SUM(CASE WHEN medalha = 'bronze' THEN 1 ELSE 0 END) AS bronze
+    FROM competicao_resultados
   `);
 
   const avaliacoes = todos(`
@@ -118,6 +164,9 @@ roteador.get('/academia', rota((_req, res) => {
     planos,
     avisos,
     mestres,
+    competicoes,
+    equipes,
+    medalhas,
     produtos,
     certificados,
     avaliacoes,
@@ -126,6 +175,8 @@ roteador.get('/academia', rota((_req, res) => {
       alunos_ativos: totalAlunos.total,
       modalidades: modalidades.length,
       aulas_semana: grade.length,
+      graduacoes: modalidades.reduce((soma, m) => soma + m.faixas.length, 0),
+      medalhas: (medalhas?.ouro || 0) + (medalhas?.prata || 0) + (medalhas?.bronze || 0),
       anos_de_historia: anosDeHistoria,
     },
   });

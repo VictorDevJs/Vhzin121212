@@ -29,7 +29,7 @@ roteador.post('/', exigirPapel('dono'), rota((req, res) => {
   exigirCampos(req.body, ['nome', 'valor']);
   const periodicidade = texto(req.body.periodicidade, 'mensal');
   if (!PERIODICIDADES.includes(periodicidade)) {
-    throw new ErroApi(`Periodicidade invalida. Use: ${PERIODICIDADES.join(', ')}.`);
+    throw new ErroApi(`Periodicidade inválida. Use: ${PERIODICIDADES.join(', ')}.`);
   }
   const valor = numero(req.body.valor, -1);
   if (valor < 0) throw new ErroApi('Informe um valor válido para o plano.');

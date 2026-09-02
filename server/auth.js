@@ -1,5 +1,5 @@
 import { randomBytes, scryptSync, timingSafeEqual, createHmac } from 'node:crypto';
-import { um } from './db.js';
+import { um, todos, executar } from './db.js';
 
 const SEGREDO = process.env.APP_SEGREDO || 'academia-de-lutas-segredo-padrao-troque-em-producao';
 const VALIDADE_MS = 7 * 24 * 60 * 60 * 1000; // 7 dias
@@ -64,31 +64,103 @@ export function autenticacaoOpcional(req, _res, proximo) {
   const dados = lerToken(token);
   if (dados) {
     const usuario = um(
-      'SELECT id, nome, email, papel, telefone, ativo FROM usuarios WHERE id = :id',
+      'SELECT id, nome, email, papel, telefone, foto, apelido, ativo FROM usuarios WHERE id = :id',
       { id: dados.id },
     );
-    if (usuario && usuario.ativo) req.usuario = usuario;
+    if (usuario && usuario.ativo) {
+      usuario.cargos = cargosDe(usuario.id);
+      req.usuario = usuario;
+    }
   }
   proximo();
 }
 
 /** Exige um usuario autenticado. */
 export function exigirLogin(req, res, proximo) {
-  if (!req.usuario) return res.status(401).json({ erro: 'Faca login para continuar.' });
+  if (!req.usuario) return res.status(401).json({ erro: 'Faça login para continuar.' });
   proximo();
 }
 
 /** Exige que o usuario tenha um dos papeis informados. */
 export function exigirPapel(...papeis) {
   return (req, res, proximo) => {
-    if (!req.usuario) return res.status(401).json({ erro: 'Faca login para continuar.' });
+    if (!req.usuario) return res.status(401).json({ erro: 'Faça login para continuar.' });
     if (!papeis.includes(req.usuario.papel)) {
-      return res.status(403).json({ erro: 'Você não tem permissao para esta ação.' });
+      return res.status(403).json({ erro: 'Você não tem permissão para esta ação.' });
     }
     proximo();
   };
 }
 
 /** Papeis com acesso administrativo ao sistema. */
-export const EQUIPE = ['dono', 'mestre', 'recepcao'];
+export const EQUIPE = ['dono', 'mestre', 'recepcao', 'competicoes'];
 export const GESTAO = ['dono', 'recepcao'];
+
+/**
+ * Cargos sao responsabilidades extras. Um mestre pode acumular o cargo de
+ * responsavel de competicoes sem deixar de ser mestre, e o cargo pode valer
+ * so para uma modalidade.
+ */
+export const CARGOS = [
+  { valor: 'competicoes', rotulo: 'Responsável de Competições',
+    descricao: 'Cria competições, inscreve atletas, monta equipes e lança resultados.' },
+  { valor: 'graduacao', rotulo: 'Responsável de Graduação',
+    descricao: 'Conduz exames de faixa, registra graduações e emite certificados.' },
+  { valor: 'financeiro', rotulo: 'Responsável Financeiro',
+    descricao: 'Acompanha mensalidades, lançamentos e o caixa da academia.' },
+  { valor: 'kids', rotulo: 'Coordenador Kids',
+    descricao: 'Cuida das turmas infantis, dos responsáveis e dos avisos kids.' },
+  { valor: 'loja', rotulo: 'Responsável da Loja',
+    descricao: 'Cadastra produtos, controla estoque e registra as vendas.' },
+  { valor: 'marketing', rotulo: 'Comunicação e Marketing',
+    descricao: 'Publica avisos, cuida das fotos e do que aparece na página pública.' },
+];
+
+export function cargosDe(usuarioId) {
+  return todos(`
+    SELECT c.cargo, c.modalidade_id, m.nome AS modalidade
+    FROM usuario_cargos c
+    LEFT JOIN modalidades m ON m.id = c.modalidade_id
+    WHERE c.usuario_id = :id
+  `, { id: usuarioId });
+}
+
+/** O dono enxerga tudo; os demais dependem do papel ou de um cargo atribuido. */
+export function temCargo(usuario, cargo, modalidadeId = null) {
+  if (!usuario) return false;
+  if (usuario.papel === 'dono') return true;
+  if (cargo === 'competicoes' && usuario.papel === 'competicoes') return true;
+  return (usuario.cargos || []).some((item) => item.cargo === cargo
+    && (item.modalidade_id === null || modalidadeId === null || item.modalidade_id === modalidadeId));
+}
+
+/** Exige um cargo (ou o papel de dono) para seguir adiante. */
+export function exigirCargo(cargo) {
+  return (req, res, proximo) => {
+    if (!req.usuario) return res.status(401).json({ erro: 'Faça login para continuar.' });
+    if (!temCargo(req.usuario, cargo)) {
+      return res.status(403).json({
+        erro: 'Esta área é do responsável designado. Peça ao dono da academia para liberar o cargo.',
+      });
+    }
+    proximo();
+  };
+}
+
+/**
+ * Guarda no historico quem mexeu em cada parte do sistema. Nunca derruba a
+ * requisicao: registrar e importante, mas nao pode travar o atendimento.
+ */
+export function registrar(req, { acao, area, alvo = null, alvoId = null, detalhe = null }) {
+  try {
+    executar(`
+      INSERT INTO auditoria (usuario_id, usuario_nome, papel, acao, area, alvo, alvo_id, detalhe)
+      VALUES (:usuario_id, :usuario_nome, :papel, :acao, :area, :alvo, :alvo_id, :detalhe)
+    `, {
+      usuario_id: req.usuario?.id ?? null,
+      usuario_nome: req.usuario?.nome ?? 'visitante',
+      papel: req.usuario?.papel ?? 'publico',
+      acao, area, alvo, alvo_id: alvoId, detalhe,
+    });
+  } catch { /* o historico nunca pode atrapalhar a operacao */ }
+}

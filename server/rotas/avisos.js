@@ -6,7 +6,7 @@ import { rota, ErroApi, exigirCampos, texto, inteiro, booleano, data } from '../
 const roteador = Router();
 
 const TIPOS = ['geral', 'campeonato', 'evento', 'cancelamento', 'manutencao', 'graduacao'];
-const PUBLICOS = ['todos', 'kids', 'adultos', 'equipe', 'modalidade', 'turma'];
+const PUBLICOS = ['todos', 'kids', 'adultos', 'equipe', 'modalidade', 'turma', 'competidores'];
 
 const SELECT_AVISO = `
   SELECT av.*, u.nome AS autor, m.nome AS modalidade, t.nome AS turma
@@ -32,16 +32,54 @@ function filtroPorUsuario(usuario) {
 
   const listaTurmas = turmas.length ? turmas.join(',') : '-1';
   const listaModalidades = modalidades.length ? modalidades.join(',') : '-1';
+  // Quem está em alguma equipe de competição também recebe os avisos de competidores.
+  const competidor = aluno
+    ? um('SELECT COUNT(*) AS total FROM equipe_membros WHERE aluno_id = :id', { id: aluno.id }).total > 0
+    : false;
+
   return {
     clausula: `av.ativo = 1 AND (
         av.publico = 'todos'
         OR av.publico = :categoria
         OR (av.publico = 'turma' AND av.turma_id IN (${listaTurmas}))
         OR (av.publico = 'modalidade' AND av.modalidade_id IN (${listaModalidades}))
+        ${competidor ? `OR av.publico = 'competidores'` : ''}
       )`,
     params: { categoria },
   };
 }
+
+/**
+ * Modalidades que a pessoa acompanha. O aluno vê só as artes que treina;
+ * a equipe vê todas, para poder publicar em qualquer uma.
+ */
+function modalidadesDoUsuario(usuario) {
+  if (usuario.papel !== 'aluno') {
+    return todos(`
+      SELECT m.id, m.nome, m.cor, m.sigla,
+             (SELECT COUNT(*) FROM avisos av
+               WHERE av.modalidade_id = m.id AND av.ativo = 1) AS avisos
+      FROM modalidades m WHERE m.ativo = 1 ORDER BY m.ordem, m.nome
+    `);
+  }
+  const aluno = um('SELECT id FROM alunos WHERE usuario_id = :id', { id: usuario.id });
+  if (!aluno) return [];
+  return todos(`
+    SELECT DISTINCT m.id, m.nome, m.cor, m.sigla,
+           (SELECT COUNT(*) FROM avisos av
+             WHERE av.modalidade_id = m.id AND av.ativo = 1) AS avisos
+    FROM aluno_turmas at
+    JOIN turmas t ON t.id = at.turma_id
+    JOIN modalidades m ON m.id = t.modalidade_id
+    WHERE at.aluno_id = :id AND m.ativo = 1
+    ORDER BY m.ordem, m.nome
+  `, { id: aluno.id });
+}
+
+/** Abas de modalidade do mural: cada arte marcial tem o seu próprio quadro. */
+roteador.get('/modalidades', exigirPapel(...EQUIPE, 'aluno'), rota((req, res) => {
+  res.json(modalidadesDoUsuario(req.usuario));
+}));
 
 roteador.get('/', exigirPapel(...EQUIPE, 'aluno'), rota((req, res) => {
   const filtros = [];
@@ -50,6 +88,12 @@ roteador.get('/', exigirPapel(...EQUIPE, 'aluno'), rota((req, res) => {
   if (clausula) { filtros.push(`(${clausula})`); Object.assign(params, paramsUsuario); }
   if (texto(req.query.tipo)) { filtros.push('av.tipo = :tipo'); params.tipo = texto(req.query.tipo); }
   if (texto(req.query.ativo) === '1') filtros.push('av.ativo = 1');
+  // Filtro por arte marcial: mostra o que é daquela modalidade e o que vale para todos.
+  if (inteiro(req.query.modalidade_id)) {
+    filtros.push('av.modalidade_id = :modalidade_id');
+    params.modalidade_id = inteiro(req.query.modalidade_id);
+  }
+  if (texto(req.query.publico)) { filtros.push('av.publico = :publico'); params.publico = texto(req.query.publico); }
 
   const onde = filtros.length ? `WHERE ${filtros.join(' AND ')}` : '';
   res.json(todos(`${SELECT_AVISO} ${onde} ORDER BY av.fixado DESC, av.criado_em DESC LIMIT 200`, params));
@@ -58,9 +102,9 @@ roteador.get('/', exigirPapel(...EQUIPE, 'aluno'), rota((req, res) => {
 roteador.post('/', exigirPapel(...EQUIPE), rota((req, res) => {
   exigirCampos(req.body, ['titulo', 'mensagem']);
   const tipo = texto(req.body.tipo, 'geral');
-  if (!TIPOS.includes(tipo)) throw new ErroApi(`Tipo invalido. Use: ${TIPOS.join(', ')}.`);
+  if (!TIPOS.includes(tipo)) throw new ErroApi(`Tipo inválido. Use: ${TIPOS.join(', ')}.`);
   const publico = texto(req.body.publico, 'todos');
-  if (!PUBLICOS.includes(publico)) throw new ErroApi(`Publico invalido. Use: ${PUBLICOS.join(', ')}.`);
+  if (!PUBLICOS.includes(publico)) throw new ErroApi(`Público inválido. Use: ${PUBLICOS.join(', ')}.`);
   if (publico === 'modalidade' && !inteiro(req.body.modalidade_id)) throw new ErroApi('Escolha a modalidade do aviso.');
   if (publico === 'turma' && !inteiro(req.body.turma_id)) throw new ErroApi('Escolha a turma do aviso.');
 

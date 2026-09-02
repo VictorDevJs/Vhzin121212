@@ -86,9 +86,9 @@ roteador.post('/', exigirPapel('dono'), rota((req, res) => {
     throw new ErroApi('Modalidade não encontrada.', 404);
   }
   const categoria = texto(req.body.categoria, 'adulto');
-  if (!CATEGORIAS.includes(categoria)) throw new ErroApi(`Categoria invalida. Use: ${CATEGORIAS.join(', ')}.`);
+  if (!CATEGORIAS.includes(categoria)) throw new ErroApi(`Categoria inválida. Use: ${CATEGORIAS.join(', ')}.`);
   const nivel = texto(req.body.nivel, 'todos');
-  if (!NIVEIS.includes(nivel)) throw new ErroApi(`Nivel invalido. Use: ${NIVEIS.join(', ')}.`);
+  if (!NIVEIS.includes(nivel)) throw new ErroApi(`Nível inválido. Use: ${NIVEIS.join(', ')}.`);
 
   const criada = executar(`
     INSERT INTO turmas (modalidade_id, nome, categoria, nivel, mestre_id, capacidade, local, idade_minima, idade_maxima, ativo)

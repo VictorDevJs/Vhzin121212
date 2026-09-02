@@ -1,6 +1,6 @@
 import { api, sessao } from '../api.js';
 import {
-  el, moeda, dataBr, DIAS_SEMANA, hojeISO, etiqueta, estrelas, entradaEstrelas, aviso,
+  el, moeda, dataBr, DIAS_SEMANA, hojeISO, etiqueta, etiquetaCor, estrelas, entradaEstrelas, aviso,
 } from '../ui.js';
 import { linkWhatsapp } from '../whatsapp.js';
 import { logotipo, simbolo, marca } from '../marca.js';
@@ -27,8 +27,8 @@ const CATEGORIA_PRODUTO = {
 export default async function paginaPublica() {
   const dados = await api.obter('/publico/academia');
   const {
-    academia, modalidades, grade, planos, avisos, mestres, produtos,
-    certificados, avaliacoes, resumo_avaliacoes: resumoAvaliacoes, numeros,
+    academia, modalidades, grade, planos, avisos, mestres, produtos, competicoes, equipes,
+    medalhas, certificados, avaliacoes, resumo_avaliacoes: resumoAvaliacoes, numeros,
   } = dados;
 
   return el('div', { classe: 'site' }, [
@@ -39,6 +39,8 @@ export default async function paginaPublica() {
       secaoModalidades(modalidades),
       secaoHorarios(grade, modalidades),
       mestres.length ? secaoProfessores(mestres) : null,
+      secaoGraduacoes(modalidades),
+      competicoes.length ? secaoCompeticoes(competicoes, equipes, medalhas) : null,
       secaoPlanos(planos, academia),
       produtos.length ? secaoLoja(produtos) : null,
       certificados.length ? secaoCertificados(certificados) : null,
@@ -66,6 +68,8 @@ function cabecalho() {
       el('a', { href: '#modalidades', texto: 'Modalidades', aoClicar: rolarAte('modalidades') }),
       el('a', { href: '#horarios', texto: 'Horários', aoClicar: rolarAte('horarios') }),
       el('a', { href: '#professores', texto: 'Professores', aoClicar: rolarAte('professores') }),
+      el('a', { href: '#graduacoes', texto: 'Graduações', aoClicar: rolarAte('graduacoes') }),
+      el('a', { href: '#competicoes', texto: 'Competições', aoClicar: rolarAte('competicoes') }),
       el('a', { href: '#planos', texto: 'Planos', aoClicar: rolarAte('planos') }),
       el('a', { href: '#loja', texto: 'Loja', aoClicar: rolarAte('loja') }),
     ]),
@@ -250,15 +254,156 @@ function marcar(container, ativo) {
 function secaoProfessores(mestres) {
   return el('section', { classe: 'secao', id: 'professores' }, [
     tituloSecao('Quem conduz o treino', 'Professores'),
-    el('div', { classe: 'grade col-3' }, mestres.map((mestre) => el('article', { classe: 'cartao tilt' }, [
-      el('h3', { texto: mestre.nome }),
-      el('div', { classe: 'acoes', estilo: 'margin-bottom:.6rem' },
-        mestre.modalidades.map((nome) => etiqueta(nome, 'marca'))),
-      el('p', { classe: 'dica', texto: `${mestre.turmas} turma(s) na semana` }),
-      ...mestre.titulos.map((titulo) => el('p', { classe: 'dica', estilo: 'margin:.2rem 0' }, [
-        `${titulo.titulo}${titulo.entidade ? ` · ${titulo.entidade}` : ''}`,
+    el('div', { classe: 'grade col-3' }, mestres.map((mestre) => el('article', { classe: 'cartao pessoa tilt' }, [
+      el('div', { classe: 'cabecalho-pessoa' }, [
+        mestre.foto
+          ? el('img', { classe: 'retrato', src: mestre.foto, alt: `Foto de ${mestre.nome}`, loading: 'lazy' })
+          : el('span', { classe: 'retrato vazio', texto: iniciaisDe(mestre.nome) }),
+        el('div', { classe: 'dados-pessoa' }, [
+          el('h3', { texto: mestre.apelido || mestre.nome }),
+          mestre.faixa ? el('span', { classe: 'legenda', texto: mestre.faixa }) : null,
+        ]),
+      ]),
+      el('div', { classe: 'acoes', estilo: 'margin:.7rem 0 .5rem' },
+        mestre.modalidades.map((m) => etiquetaCor(m.nome, m.cor))),
+      mestre.bio ? el('p', { classe: 'bio', texto: mestre.bio }) : null,
+      el('dl', { classe: 'ficha' }, [
+        parFicha('Turmas na semana', String(mestre.turmas)),
+        mestre.desde ? parFicha('Na Atak desde', dataBr(mestre.desde)) : null,
+        mestre.instagram ? parFicha('Instagram', mestre.instagram) : null,
+      ].filter(Boolean)),
+      ...mestre.titulos.map((titulo) => el('p', { classe: 'dica', estilo: 'margin:.3rem 0 0' }, [
+        icone('medalha', 13),
+        ` ${titulo.titulo}${titulo.entidade ? ` · ${titulo.entidade}` : ''}`,
       ])),
     ]))),
+  ]);
+}
+
+function parFicha(rotulo, valor) {
+  return el('div', { classe: 'linha-ficha' }, [
+    el('dt', { texto: rotulo }),
+    el('dd', { texto: valor }),
+  ]);
+}
+
+function iniciaisDe(nome = '') {
+  return nome.trim().split(/\s+/).slice(0, 2).map((p) => p[0] || '').join('').toUpperCase();
+}
+
+/** A escala completa de faixas de cada arte marcial, desenhada como faixa. */
+function secaoGraduacoes(modalidades) {
+  const comFaixas = modalidades.filter((m) => (m.faixas || []).length);
+  if (!comFaixas.length) return null;
+
+  const area = el('div');
+  let escolhida = comFaixas[0];
+
+  function desenhar() {
+    area.replaceChildren(
+      el('nav', { classe: 'abas-modalidade' }, comFaixas.map((modalidade) => el('button', {
+        classe: `aba-modalidade ${escolhida.id === modalidade.id ? 'ativa' : ''}`,
+        type: 'button',
+        estilo: `--cor-aba:${modalidade.cor}`,
+        aoClicar: () => { escolhida = modalidade; desenhar(); },
+      }, [
+        el('span', { classe: 'ponto-aba' }),
+        modalidade.nome,
+        el('span', { classe: 'contador-aba', texto: String(modalidade.faixas.length) }),
+      ]))),
+
+      el('ol', { classe: 'escala' }, escolhida.faixas.map((faixa, indice) => el('li', { classe: 'degrau' }, [
+        el('span', { classe: 'ordem-degrau', texto: String(indice + 1) }),
+        el('span', {
+          classe: 'faixa-visual', 'aria-hidden': 'true',
+          estilo: `--cor-faixa:${faixa.cor || '#888'};--cor-ponta:${faixa.cor_ponta || faixa.cor || '#888'}`,
+        }, [
+          el('span', { classe: 'ponta-faixa' }),
+          ...Array.from({ length: Math.min(faixa.graus, 6) }, () => el('span', { classe: 'grau-faixa' })),
+        ]),
+        el('div', { classe: 'dados-degrau' }, [
+          el('strong', { texto: faixa.nome }),
+          faixa.descricao ? el('span', { classe: 'dica', texto: faixa.descricao }) : null,
+          el('div', { classe: 'acoes' }, [
+            faixa.faixa_etaria === 'kids' ? etiqueta('infantil', 'info') : null,
+            faixa.faixa_etaria === 'adulto' ? etiqueta('adulto', 'neutra') : null,
+            faixa.graus ? etiqueta(`até ${faixa.graus} grau(s)`, 'neutra') : null,
+          ].filter(Boolean)),
+        ]),
+      ]))),
+    );
+  }
+
+  desenhar();
+  return el('section', { classe: 'secao', id: 'graduacoes' }, [
+    tituloSecao('O caminho até a faixa preta', 'Graduações'),
+    el('p', { classe: 'dica', estilo: 'max-width:70ch;margin-bottom:1.1rem' },
+      ['Cada arte marcial tem a sua escala. Aqui está a sequência completa que a Atak segue, '
+        + 'da primeira faixa até a graduação de mestre.']),
+    area,
+  ]);
+}
+
+/** Calendário de competições e as equipes que representam a academia. */
+function secaoCompeticoes(competicoes, equipes, medalhas) {
+  const total = (medalhas?.ouro || 0) + (medalhas?.prata || 0) + (medalhas?.bronze || 0);
+  return el('section', { classe: 'secao', id: 'competicoes' }, [
+    tituloSecao('A Atak no pódio', 'Competições'),
+
+    total
+      ? el('div', { classe: 'grade col-3', estilo: 'margin-bottom:1.4rem' }, [
+        placar(medalhas.ouro, 'medalhas de ouro'),
+        placar(medalhas.prata, 'medalhas de prata'),
+        placar(medalhas.bronze, 'medalhas de bronze'),
+      ])
+      : null,
+
+    el('div', { classe: 'grade col-2' }, competicoes.map((competicao) => el('article', {
+      classe: 'cartao competicao tilt',
+    }, [
+      el('div', { classe: 'acoes', estilo: 'margin-bottom:.5rem' }, [
+        competicao.modalidade ? etiquetaCor(competicao.modalidade, competicao.modalidade_cor) : null,
+        etiqueta(competicao.nivel, 'neutra'),
+        competicao.status === 'inscricoes' ? etiqueta('inscrições abertas', 'ok') : null,
+        competicao.status === 'realizada' ? etiqueta('já realizada', 'neutra') : null,
+      ].filter(Boolean)),
+      el('h3', { texto: competicao.nome }),
+      el('p', { classe: 'dica', texto: competicao.organizador || '' }),
+      el('dl', { classe: 'ficha' }, [
+        parFicha('Data', dataBr(competicao.data_inicio)),
+        parFicha('Local', [competicao.local, competicao.cidade].filter(Boolean).join(' · ') || 'A definir'),
+        competicao.inscricao_ate ? parFicha('Inscrições até', dataBr(competicao.inscricao_ate)) : null,
+        parFicha('Atletas da Atak', `${competicao.inscritos} inscrito(s)`),
+      ].filter(Boolean)),
+      competicao.descricao ? el('p', { texto: competicao.descricao }) : null,
+    ]))),
+
+    equipes.length
+      ? el('div', { estilo: 'margin-top:1.6rem' }, [
+        el('h3', { estilo: 'margin-bottom:.8rem', texto: 'Equipes de competição' }),
+        el('div', { classe: 'grade col-3' }, equipes.map((equipe) => el('article', {
+          classe: 'cartao equipe', estilo: `--cor-equipe:${equipe.cor || 'var(--marca-1)'}`,
+        }, [
+          el('div', { classe: 'faixa-equipe' }),
+          el('h3', { texto: equipe.nome }),
+          el('p', { classe: 'dica', texto: equipe.descricao || '' }),
+          el('div', { classe: 'numeros-equipe' }, [
+            el('div', { classe: 'bloco-numero' }, [
+              el('strong', { texto: String(equipe.atletas) }),
+              el('span', { texto: 'atletas' }),
+            ]),
+          ]),
+          el('p', { classe: 'dica', texto: `Técnico: ${equipe.tecnico || 'a definir'}` }),
+        ]))),
+      ])
+      : null,
+  ]);
+}
+
+function placar(valor, rotulo) {
+  return el('div', { classe: 'cartao', estilo: 'text-align:center' }, [
+    el('strong', { estilo: 'display:block;font:750 2.2rem/1 var(--fonte-titulo, inherit)', texto: String(valor || 0) }),
+    el('span', { classe: 'dica', texto: rotulo }),
   ]);
 }
 
