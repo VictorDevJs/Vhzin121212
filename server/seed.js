@@ -286,16 +286,15 @@ function gerarCompeticoes(idsMestres) {
 
   // Cada equipe puxa atletas que ja treinam a modalidade dela.
   for (const dados of Object.values(idsEquipes)) {
+    // Busca já filtrando pela categoria da equipe, para o time kids não ficar vazio.
     const candidatos = todos(`
-      SELECT DISTINCT a.id, a.categoria FROM alunos a
+      SELECT DISTINCT a.id FROM alunos a
       JOIN aluno_turmas at ON at.aluno_id = a.id
       JOIN turmas t ON t.id = at.turma_id
-      WHERE t.modalidade_id = :m AND a.status = 'ativo'
-      ORDER BY a.id LIMIT 8
-    `, { m: dados.modalidade });
+      WHERE t.modalidade_id = :m AND a.status = 'ativo' AND a.categoria = :categoria
+      ORDER BY a.id LIMIT 6
+    `, { m: dados.modalidade, categoria: dados.categoria === 'kids' ? 'kids' : 'adulto' });
     candidatos
-      .filter((aluno) => (dados.categoria === 'kids' ? aluno.categoria === 'kids' : aluno.categoria === 'adulto'))
-      .slice(0, 6)
       .forEach((aluno, posicao) => {
         executar(`
           INSERT OR IGNORE INTO equipe_membros (equipe_id, aluno_id, funcao, desde)
@@ -458,13 +457,17 @@ export function carregarDemonstracao() {
   const NOMES = [
     'Lucas Ferreira', 'Mariana Costa', 'Rafael Mendes', 'Juliana Rocha', 'Carlos Eduardo Lima',
     'Beatriz Almeida', 'Thiago Barros', 'Camila Duarte', 'Bruno Antunes', 'Larissa Pires',
-    'Diego Nascimento', 'Patricia Gomes', 'Felipe Cardoso', 'Amanda Ribeiro', 'Vinicius Teixeira',
-    'Gabriela Moraes', 'Rodrigo Farias', 'Aline Fontes', 'Pedro Henrique Alves', 'Ana Beatriz Souza',
-    'Sofia Martins', 'Miguel Andrade', 'Helena Vasques', 'Davi Lucca Ramos',
+    'Diego Nascimento', 'Patrícia Gomes', 'Felipe Cardoso', 'Amanda Ribeiro', 'Vinícius Teixeira',
+    'Gabriela Moraes', 'Rodrigo Farias', 'Aline Fontes', 'Pedro Henrique Alves', 'Marcela Duarte',
+    'Otávio Bezerra', 'Renata Lopes', 'Caio Villar', 'Isabela Prado',
+    // Turma infantil: duas crianças por aula kids.
+    'Ana Beatriz Souza', 'Sofia Martins', 'Miguel Andrade', 'Helena Vasques', 'Davi Lucca Ramos',
+    'Enzo Gabriel Rocha', 'Manuela Freitas', 'Arthur Bonfim', 'Cecília Nunes', 'Bernardo Paiva',
+    'Alice Camargo', 'Théo Vasconcelos',
   ];
-  // Os 5 últimos são kids; o último da lista fica pendente, esperando a recepção.
+  // Os 12 últimos são kids; o último da lista fica pendente, esperando a recepção.
   const alunosDemo = NOMES.map((nome, indice) => {
-    const ehKids = indice >= NOMES.length - 5;
+    const ehKids = indice >= NOMES.length - 12;
     const anoNascimento = ehKids ? 2013 + (indice % 5) : 1985 + (indice % 18);
     return [
       nome,
