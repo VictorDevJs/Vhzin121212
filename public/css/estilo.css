@@ -37,11 +37,11 @@ h1, h2 { font-weight: 750; letter-spacing: -.015em; text-wrap: balance; }
 h1 { font-size: 1.55rem; }
 h2 { font-size: 1.25rem; }
 /* O tipo condensado fica reservado para a vitrine e para os números. */
-.heroi h1, .titulo-secao h2, .indicador .valor, .cartao-plano .preco, .produto .preco,
+.titulo-secao h2, .indicador .valor, .cartao-plano .preco, .produto .preco,
 .numeros strong, .nota-grande .media, .cartao-modalidade h3, .identidade .nome {
   font-family: var(--fonte-titulo); font-weight: 400; letter-spacing: .01em;
 }
-.heroi h1, .titulo-secao h2, .cartao-modalidade h3 { text-transform: uppercase; }
+.titulo-secao h2, .cartao-modalidade h3 { text-transform: uppercase; }
 h3 { font-size: 1.05rem; font-weight: 700; letter-spacing: -.01em; }
 h4 { font-size: .95rem; font-weight: 700; }
 p { margin: 0 0 var(--esp-3); }
@@ -693,33 +693,215 @@ td.acoes-celula { display: flex; gap: var(--esp-1); }
 .site-topo {
   position: sticky; top: 0; z-index: 30;
   display: flex; align-items: center; justify-content: space-between; gap: var(--esp-4);
-  padding: var(--esp-3) var(--esp-5); background: var(--vidro);
-  backdrop-filter: blur(18px) saturate(1.5); border-bottom: 1px solid var(--borda);
+  padding: var(--esp-3) var(--esp-5);
+  /* Escuro nos dois temas, para não haver emenda entre o menu e a capa. */
+  background: rgba(10, 10, 11, .82);
+  backdrop-filter: blur(18px) saturate(1.5);
+  border-bottom: 1px solid rgba(255, 255, 255, .1);
+  color: #f6f5f3;
 }
+.site-topo .assinatura { color: #f6f5f3; }
+.site-topo nav a { color: #d6d3cd; }
+.site-topo nav a:hover { color: var(--marca-2); }
+.site-topo .botao-icone {
+  color: #d6d3cd;
+  background: rgba(255, 255, 255, .07);
+  border: 1px solid rgba(255, 255, 255, .16);
+}
+.site-topo .botao-icone:hover { background: rgba(255, 255, 255, .13); color: #fff; }
 .site-topo nav { display: flex; gap: var(--esp-5); font-size: .88rem; font-weight: 700; }
 .site-topo nav a { color: var(--tinta-2); letter-spacing: .02em; }
 .site-topo nav a:hover { color: var(--marca-1); text-decoration: none; }
 .envolucro { max-width: 1220px; margin: 0 auto; padding: 0 var(--esp-5); }
 
-.heroi { position: relative; padding: var(--esp-7) 0 var(--esp-6); }
-.heroi-grade { display: grid; grid-template-columns: 1.05fr .95fr; gap: var(--esp-7); align-items: center; }
-.heroi h1 { font-size: clamp(3rem, 7.5vw, 5.6rem); line-height: .88; letter-spacing: .005em; }
-.heroi h1 .destaque {
-  background: var(--marca-gradiente); -webkit-background-clip: text; background-clip: text;
-  color: transparent; filter: drop-shadow(0 6px 22px rgba(245, 179, 1, .25));
+/* ---------------------------------------------------------------- topo
+   Sem foto, o fundo é uma composição escura com o brasão gravado.
+   Com a foto do dono, ela assume e recebe um véu para o texto seguir legível.
+   O grão por cima tira o aspecto liso demais de fundo gerado no computador. */
+
+.heroi {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+
+  /* A capa é sempre escura, mesmo no tema claro: é a foto da academia,
+     e o texto por cima dela precisa de contraste garantido. */
+  --tinta: #f6f5f3;
+  --tinta-2: #b9b6b0;
+  --tinta-3: #86837d;
+  --borda: rgba(255, 255, 255, .12);
+  --borda-forte: rgba(255, 255, 255, .24);
+  color: var(--tinta);
+  background: #0a0a0b;
+  border-bottom: 1px solid rgba(255, 255, 255, .12);
 }
-.heroi .chamada { font-size: 1.1rem; color: var(--tinta-2); max-width: 48ch; }
-.selo {
-  display: inline-flex; align-items: center; gap: var(--esp-2); margin-bottom: var(--esp-4);
-  background: rgba(245, 179, 1, .1); color: var(--marca-2);
-  border: 1px solid rgba(245, 179, 1, .28);
-  padding: .3rem .9rem; border-radius: var(--raio-pilula);
-  font-family: var(--fonte-rotulo); font-size: .86rem; font-weight: 600;
-  letter-spacing: .2em; text-transform: uppercase;
+
+.heroi-fundo {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background:
+    radial-gradient(120% 90% at 12% 0%, rgba(245, 179, 1, .10), transparent 55%),
+    radial-gradient(90% 70% at 88% 12%, rgba(224, 32, 32, .07), transparent 60%),
+    linear-gradient(178deg, #131316, #08080a 62%);
+  background-size: cover;
+  background-position: center;
 }
-.numeros { display: flex; gap: var(--esp-6); flex-wrap: wrap; margin-top: var(--esp-5); }
-.numeros strong { display: block; font-family: var(--fonte-titulo); font-size: 2.6rem; line-height: 1; }
-.numeros span { font-family: var(--fonte-rotulo); color: var(--tinta-3); font-size: .84rem; text-transform: uppercase; letter-spacing: .16em; }
+
+.heroi-fundo.com-foto { background-repeat: no-repeat; }
+
+/* Véu em degradê: escuro do lado do texto, aberto do lado da foto. */
+.heroi-fundo.com-foto::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(100deg, rgba(6, 6, 7, .93) 0%, rgba(6, 6, 7, .8) 44%, rgba(6, 6, 7, .42) 100%),
+    linear-gradient(180deg, rgba(6, 6, 7, .55), transparent 32%, rgba(6, 6, 7, .72));
+}
+
+/* Grão fino: quebra os degradês e dá textura de impresso. */
+.heroi-fundo::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: .5;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='.86' numOctaves='3' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='140' height='140' filter='url(%23g)' opacity='.5'/></svg>");
+}
+
+/* O brasão vira marca-d'água gravada, parado - nada de peça girando. */
+.heroi-gravado {
+  position: absolute;
+  z-index: -1;
+  right: -14%;
+  top: 52%;
+  transform: translateY(-50%);
+  opacity: .055;
+  pointer-events: none;
+  filter: grayscale(1) contrast(1.08);
+  -webkit-mask-image: radial-gradient(70% 70% at 50% 50%, #000 45%, transparent 100%);
+  mask-image: radial-gradient(70% 70% at 50% 50%, #000 45%, transparent 100%);
+}
+.heroi-gravado img { display: block; width: min(600px, 50vw); height: auto; }
+
+.heroi-corpo { position: relative; padding: 5.5rem 0 4rem; }
+
+.olho-hero {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .55rem;
+  margin: 0 0 1.4rem;
+  font-family: var(--fonte-rotulo);
+  font-size: .82rem;
+  font-weight: 600;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--marca-2);
+}
+.olho-hero .traco { color: var(--tinta-3); }
+.olho-hero .traco::before { content: '/'; margin-right: .55rem; color: var(--marca-1); opacity: .55; }
+
+.heroi h1 {
+  margin: 0;
+  max-width: 21ch;
+  /* Manrope pesada, não a display em caixa alta: o topo informa, não grita. */
+  font-family: var(--fonte-ui);
+  font-weight: 800;
+  font-size: clamp(2rem, 3.9vw, 3.05rem);
+  line-height: 1.08;
+  letter-spacing: -.022em;
+  text-transform: none;
+  color: var(--tinta);
+}
+
+.heroi .chamada {
+  margin: 1.15rem 0 0;
+  max-width: 56ch;
+  font-size: 1.02rem;
+  line-height: 1.65;
+  color: var(--tinta-2);
+}
+
+.acoes-hero { display: flex; flex-wrap: wrap; gap: .7rem; margin-top: 1.9rem; }
+
+/* Lista de artes: linha de credenciais, como num quadro de parede */
+.artes-hero {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem 1.35rem;
+  margin: 2.4rem 0 0;
+  padding: 1.1rem 0 0;
+  border-top: 1px solid var(--borda);
+  list-style: none;
+  max-width: 62ch;
+}
+.artes-hero li {
+  font-family: var(--fonte-rotulo);
+  font-size: .84rem;
+  font-weight: 600;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+  color: var(--tinta-2);
+}
+.artes-hero li:not(:last-child)::after { content: '•'; margin-left: 1.35rem; color: var(--marca-1); opacity: .5; }
+
+/* Faixa de dados: endereço, horário e telefone, como em site de academia */
+.faixa-hero {
+  position: relative;
+  border-top: 1px solid var(--borda);
+  background: rgba(0, 0, 0, .34);
+  backdrop-filter: blur(4px);
+}
+.faixa-grade { display: grid; grid-template-columns: repeat(4, 1fr); padding-left: 0; padding-right: 0; }
+.dado-faixa {
+  display: flex;
+  flex-direction: column;
+  gap: .3rem;
+  padding: 1.15rem clamp(1rem, 2.2vw, 1.8rem);
+  border-left: 1px solid var(--borda);
+}
+.dado-faixa:first-child { border-left: 0; padding-left: 0; }
+.rotulo-faixa {
+  font-family: var(--fonte-rotulo);
+  font-size: .72rem;
+  font-weight: 600;
+  letter-spacing: .17em;
+  text-transform: uppercase;
+  color: var(--marca-1);
+}
+.valor-faixa { font-size: .86rem; line-height: 1.45; color: var(--tinta-2); }
+
+/* Botão vazado: a segunda ação não compete com a principal */
+.botao.vazado {
+  background: transparent;
+  color: var(--tinta);
+  border: 1px solid var(--borda-forte);
+  box-shadow: none;
+}
+.botao.vazado:hover { border-color: var(--marca-1); color: var(--marca-2); background: rgba(245, 179, 1, .06); }
+
+.acesso-janela .abas { margin-bottom: var(--esp-4); }
+
+@media (max-width: 900px) {
+  /* No celular o brasão de fundo só atrapalha a leitura. */
+  .heroi-gravado { display: none; }
+  .faixa-grade { grid-template-columns: repeat(2, 1fr); }
+  .dado-faixa:nth-child(3) { border-left: 0; }
+  .dado-faixa:nth-child(n+3) { border-top: 1px solid var(--borda); }
+  .heroi-corpo { padding: 3.5rem 0 2.5rem; }
+  .heroi .chamada { font-size: .96rem; }
+  .acoes-hero .botao { flex: 1 1 100%; justify-content: center; }
+}
+
+@media (max-width: 560px) {
+  .faixa-grade { grid-template-columns: 1fr; }
+  .olho-hero { gap: .35rem; font-size: .74rem; letter-spacing: .16em; }
+  .artes-hero { gap: .4rem 1rem; }
+  .artes-hero li:not(:last-child)::after { margin-left: 1rem; }
+  .dado-faixa { border-left: 0; border-top: 1px solid var(--borda); }
+  .dado-faixa:first-child { border-top: 0; }
+}
 
 .painel-acesso {
   background: var(--superficie); border: 1px solid var(--borda-forte);
@@ -739,7 +921,7 @@ td.acoes-celula { display: flex; gap: var(--esp-1); }
   font-family: var(--fonte-rotulo); color: var(--marca-1); font-size: .88rem;
   font-weight: 600; letter-spacing: .28em; text-transform: uppercase;
 }
-.titulo-secao h2 { font-size: clamp(1.9rem, 4vw, 3rem); }
+.titulo-secao h2 { font-size: clamp(1.55rem, 2.6vw, 2.15rem); letter-spacing: .015em; }
 
 .cartao-modalidade {
   position: relative; overflow: hidden;
@@ -775,7 +957,6 @@ td.acoes-celula { display: flex; gap: var(--esp-1); }
    ========================================================================= */
 
 @media (max-width: 1040px) {
-  .heroi-grade { grid-template-columns: 1fr; gap: var(--esp-5); }
   .site-topo nav { display: none; }
   .checkin-agora { grid-template-columns: 1fr; text-align: center; justify-items: center; }
 }
@@ -1101,4 +1282,29 @@ td.acoes-celula { display: flex; gap: var(--esp-1); }
   object-fit: cover;
   border-radius: var(--raio-2) var(--raio-2) 0 0;
   background: var(--superficie-2);
+}
+
+/* Assinatura da marca: brasão + palavra, alinhados pela linha ótica */
+.assinatura { display: inline-flex; align-items: center; gap: .6rem; color: var(--tinta); }
+.assinatura svg { display: block; }
+
+/* Prévia da foto de capa na tela de identidade visual */
+.previa-capa {
+  overflow: hidden;
+  border: 1px solid var(--borda);
+  border-radius: var(--raio-2);
+  background: var(--plano-2);
+}
+.previa-capa img { display: block; width: 100%; aspect-ratio: 21 / 7; object-fit: cover; }
+.previa-capa.vazia {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 21 / 7;
+  padding: 1rem;
+  text-align: center;
+  color: var(--tinta-3);
+  font-size: .84rem;
+  background:
+    repeating-linear-gradient(45deg, transparent 0 10px, rgba(255, 255, 255, .025) 10px 20px),
+    var(--plano-2);
 }

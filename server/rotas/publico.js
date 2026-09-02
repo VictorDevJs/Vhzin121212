@@ -150,6 +150,8 @@ roteador.get('/academia', rota((_req, res) => {
       instagram: configuracoes.instagram || '',
       sobre: configuracoes.sobre || '',
       chamada: configuracoes.chamada || '',
+      manchete: configuracoes.manchete || '',
+      foto_capa: configuracoes.foto_capa || '',
       cor_primaria: configuracoes.cor_primaria || '',
       logo_url: configuracoes.logo_url || '',
       simbolo_url: configuracoes.simbolo_url || '',

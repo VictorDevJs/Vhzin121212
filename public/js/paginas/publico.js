@@ -1,6 +1,7 @@
 import { api, sessao } from '../api.js';
 import {
-  el, moeda, dataBr, DIAS_SEMANA, hojeISO, etiqueta, etiquetaCor, estrelas, entradaEstrelas, aviso,
+  el, moeda, dataBr, DIAS_SEMANA, hojeISO, etiqueta, etiquetaCor, estrelas, entradaEstrelas,
+  abrirModal, aviso,
 } from '../ui.js';
 import { linkWhatsapp } from '../whatsapp.js';
 import { logotipo, simbolo, marca } from '../marca.js';
@@ -33,8 +34,8 @@ export default async function paginaPublica() {
 
   return el('div', { classe: 'site' }, [
     cabecalho(),
+    heroi(academia, numeros, modalidades),
     el('div', { classe: 'envolucro' }, [
-      heroi(academia, numeros),
       academia.historia ? secaoHistoria(academia) : null,
       secaoModalidades(modalidades),
       secaoHorarios(grade, modalidades),
@@ -81,59 +82,84 @@ function cabecalho() {
           evento.currentTarget.replaceChildren(icone(ehEscuro() ? 'sol' : 'lua', 18));
         },
       }, [icone(ehEscuro() ? 'sol' : 'lua', 18)]),
-      el('button', { classe: 'botao', texto: 'Entrar', aoClicar: rolarAte('acesso') }),
+      el('button', { classe: 'botao', texto: 'Entrar', aoClicar: () => abrirAcesso('entrar') }),
     ]),
   ]);
 }
 
 /* -------------------------------------------------------------- topo */
 
-function heroi(academia, numeros) {
+/**
+ * Topo do site. Sem foto de capa, o fundo é uma composição escura com o
+ * brasão gravado ao fundo; com a foto que o dono envia, ela assume e o texto
+ * ganha um véu escuro por cima para continuar legível.
+ */
+function heroi(academia, numeros, modalidades) {
+  const capa = academia.foto_capa;
+  const fundo = el('div', { classe: 'heroi-fundo' });
+  if (capa) {
+    fundo.classList.add('com-foto');
+    fundo.style.backgroundImage = `url("${encodeURI(capa)}")`;
+  }
+
+  const desde = academia.ano_fundacao ? `desde ${academia.ano_fundacao}` : null;
+  const cidade = cidadeDoEndereco(academia.endereco);
+
   return el('section', { classe: 'heroi' }, [
-    el('div', { classe: 'heroi-grade' }, [
-      el('div', {}, [
-        el('span', { classe: 'selo' }, [
-          el('span', { classe: 'ponto', estilo: 'background:var(--marca-1)' }),
-          academia.chamada || 'Centro de treinamento de lutas',
-        ]),
-        tituloDaCasa(academia.nome),
-        el('p', { classe: 'chamada', texto: academia.sobre || '' }),
-        el('div', { classe: 'acoes', estilo: 'margin-top:1.5rem' }, [
-          el('button', {
-            classe: 'botao grande', texto: 'Fazer minha matrícula',
-            aoClicar: (evento) => {
-              rolarAte('acesso')(evento);
-              document.getElementById('aba-cadastro')?.click();
-            },
-          }),
-          el('button', { classe: 'botao secundario grande', texto: 'Ver horários', aoClicar: rolarAte('horarios') }),
-        ]),
-        numeros.anos_de_historia
-          ? el('div', { classe: 'numeros' }, [numero(`+${numeros.anos_de_historia}`, 'anos de história')])
-          : null,
+    fundo,
+    capa ? null : el('div', { classe: 'heroi-gravado' }, [simbolo(560)]),
+
+    el('div', { classe: 'envolucro heroi-corpo' }, [
+      el('p', { classe: 'olho-hero' }, [
+        el('span', { texto: academia.nome }),
+        cidade ? el('span', { classe: 'traco', texto: cidade }) : null,
+        desde ? el('span', { classe: 'traco', texto: desde }) : null,
+      ].filter(Boolean)),
+
+      el('h1', { texto: academia.manchete || 'Aqui se forma lutador.' }),
+
+      academia.sobre ? el('p', { classe: 'chamada', texto: academia.sobre }) : null,
+
+      el('div', { classe: 'acoes-hero' }, [
+        el('button', {
+          classe: 'botao grande', texto: 'Fazer minha matrícula',
+          aoClicar: () => abrirAcesso('criar'),
+        }),
+        el('button', {
+          classe: 'botao vazado grande', texto: 'Ver horários das aulas',
+          aoClicar: rolarAte('horarios'),
+        }),
       ]),
 
-      el('div', { estilo: 'display:grid;gap:1.5rem' }, [
-        el('div', { classe: 'palco-3d' }, [
-          el('div', { classe: 'brasao-3d' }, [
-            el('div', { classe: 'anel' }),
-            el('div', { classe: 'anel dois' }),
-            simbolo(300),
-          ]),
-        ]),
-        el('div', { id: 'acesso' }, [caixaAcesso()]),
+      modalidades.length
+        ? el('ul', { classe: 'artes-hero' },
+          modalidades.slice(0, 9).map((m) => el('li', { texto: m.nome })))
+        : null,
+    ]),
+
+    el('div', { classe: 'faixa-hero' }, [
+      el('div', { classe: 'envolucro faixa-grade' }, [
+        dadoDaFaixa('Endereço', academia.endereco || 'Pechincha, Rio de Janeiro'),
+        dadoDaFaixa('Funcionamento', academia.horario_funcionamento || 'Consulte a recepção'),
+        dadoDaFaixa('Contato', academia.telefone || academia.whatsapp || '-'),
+        dadoDaFaixa('Treinando na Pechincha há',
+          numeros.anos_de_historia ? `${numeros.anos_de_historia} anos` : 'muitos anos'),
       ]),
     ]),
   ]);
 }
 
-/** O nome da academia vira o título, com a última palavra em dourado. */
-function tituloDaCasa(nome) {
-  const partes = String(nome || 'Atak').trim().split(/\s+/);
-  const ultima = partes.length > 1 ? partes.pop() : null;
-  return el('h1', {}, [
-    partes.join(' '),
-    ultima ? el('span', { classe: 'destaque', texto: ` ${ultima}` }) : null,
+/** Tira "Cidade - UF" do endereço completo, para a linha do topo. */
+function cidadeDoEndereco(endereco) {
+  if (!endereco) return null;
+  const achado = String(endereco).match(/,\s*([^,]+?)\s*-\s*([A-Z]{2})\b/);
+  return achado ? `${achado[1].trim()} · ${achado[2]}` : null;
+}
+
+function dadoDaFaixa(rotulo, valor) {
+  return el('div', { classe: 'dado-faixa' }, [
+    el('span', { classe: 'rotulo-faixa', texto: rotulo }),
+    el('span', { classe: 'valor-faixa', texto: valor }),
   ]);
 }
 
@@ -642,7 +668,17 @@ function rodape(academia) {
 
 /* -------------------------------------------------- login e cadastro */
 
-function caixaAcesso() {
+/** Abre a janela de login / cadastro a partir de qualquer botão do site. */
+export function abrirAcesso(aba = 'entrar') {
+  const { fechar } = abrirModal({
+    titulo: aba === 'criar' ? 'Criar minha conta' : 'Entrar no sistema',
+    conteudo: caixaAcesso(aba, true),
+    largura: '440px',
+  });
+  return fechar;
+}
+
+function caixaAcesso(inicial = 'entrar', semMoldura = false) {
   const conteudo = el('div');
   const abaEntrar = el('button', { classe: 'ativo', texto: 'Entrar', type: 'button', id: 'aba-entrar' });
   const abaCriar = el('button', { texto: 'Criar conta', type: 'button', id: 'aba-cadastro' });
@@ -654,9 +690,9 @@ function caixaAcesso() {
   }
   abaEntrar.addEventListener('click', () => selecionar('entrar'));
   abaCriar.addEventListener('click', () => selecionar('criar'));
-  selecionar('entrar');
+  selecionar(inicial);
 
-  return el('div', { classe: 'painel-acesso' }, [
+  return el('div', { classe: semMoldura ? 'acesso-janela' : 'painel-acesso' }, [
     el('div', { classe: 'abas' }, [abaEntrar, abaCriar]),
     conteudo,
   ]);

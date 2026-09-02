@@ -84,9 +84,10 @@ const CONFIGURACOES = {
   endereco: 'Rua Coronel Francisco Lobo, 145 - Pechincha, Rio de Janeiro - RJ, 22740-350',
   instagram: '@ctatak',
   chamada: 'Centro de treinamento de lutas',
-  sobre: 'O CT Atak Pechincha forma lutadores de Jiu-Jitsu, Muay Thai, Karatê, Kickboxing, Boxe e MMA - do primeiro dia no tatame até o pódio, com turmas kids, adulto e feminino.',
+  manchete: 'Formando lutador de verdade na Pechincha.',
+  sobre: 'Jiu-Jitsu, Muay Thai, Karatê, Judô, Capoeira, Boxe, Kickboxing, Taekwondo e MMA. Turmas kids, adulto e feminino, do primeiro dia no tatame até a equipe de competição.',
   historia: 'São mais de 15 anos formando atletas e mudando histórias no Pechincha. O que começou como um projeto de bairro virou um centro de treinamento com equipe de competição, turmas kids e professores graduados.',
-  horario_funcionamento: 'Segunda a sexta, 06h as 22h · Sábado, 09h as 13h',
+  horario_funcionamento: 'Segunda a sexta, das 6h às 22h · Sábado, das 9h às 13h',
   ano_fundacao: String(new Date().getFullYear() - 15),
   cor_primaria: '#f5b301',
 };

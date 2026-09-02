@@ -239,7 +239,14 @@ export default async function paginaEquipe() {
     const form = el('form', {}, [
       el('div', { classe: 'linha' }, [
         campo('nome_academia', 'Nome da academia', config.nome_academia),
-        campo('chamada', 'Frase de efeito (aparece no topo do site)', config.chamada),
+        campo('chamada', 'Frase curta ao lado do nome', config.chamada),
+      ]),
+      el('div', { classe: 'campo' }, [
+        el('label', { texto: 'Manchete do site' }),
+        el('input', { name: 'manchete', value: config.manchete || '',
+          placeholder: 'Formando lutador de verdade na Pechincha.' }),
+        el('div', { classe: 'dica', texto:
+          'É a frase grande que abre o site. Fale do que a academia entrega, não do nome dela.' }),
       ]),
       el('div', { classe: 'linha' }, [
         campo('telefone', 'Telefone', config.telefone),
@@ -287,7 +294,7 @@ export default async function paginaEquipe() {
       aviso('Identidade da academia atualizada.');
     });
 
-    areaConfig.replaceChildren(cartaoDaArte(config), form);
+    areaConfig.replaceChildren(cartaoDaArte(config), cartaoDaCapa(config), form);
   }
 
   /** Envio da arte oficial: o arquivo passa a valer em todo o sistema. */
@@ -330,6 +337,55 @@ export default async function paginaEquipe() {
       el('div', { classe: 'dica', texto:
         'Envie a arte em alta: o logo horizontal aparece no topo do site e do sistema; '
         + 'o brasão vira o ícone do aplicativo e a marca-d’água das telas.' }),
+    ]);
+  }
+
+  /**
+   * Foto de capa: é o que tira a cara de site genérico. Sem ela o topo usa
+   * o fundo gráfico; com ela, a academia de verdade aparece.
+   */
+  function cartaoDaCapa(config) {
+    const previa = config.foto_capa
+      ? el('div', { classe: 'previa-capa' }, [
+        el('img', { src: config.foto_capa, alt: 'Foto de capa do site' }),
+      ])
+      : el('div', { classe: 'previa-capa vazia' }, [
+        el('span', { texto: 'Nenhuma foto de capa. O topo do site está usando o fundo padrão.' }),
+      ]);
+
+    function enviar() {
+      abrirFormulario({
+        titulo: 'Foto de capa do site',
+        aviso: 'Use uma foto larga do tatame, de treino ou da turma. Deitada (paisagem), '
+          + 'com pelo menos 1600 pixels de largura, até 5 MB.',
+        campos: [{ nome: 'arquivo', rotulo: 'Foto de capa', tipo: 'arquivo', aceita: 'image/*', obrigatorio: true }],
+        textoConfirmar: 'Enviar',
+        aoSalvar: async (dados) => {
+          if (!dados.arquivo) throw new Error('Escolha uma foto.');
+          const enviada = await api.criar('/arquivos', { conteudo: dados.arquivo });
+          await api.atualizar('/configuracoes', { foto_capa: enviada.url });
+          aviso('Foto de capa publicada. Abra o site para ver.');
+          await carregarConfiguracoes();
+        },
+      });
+    }
+
+    return el('div', { classe: 'campo' }, [
+      el('label', { texto: 'Foto de capa do site' }),
+      previa,
+      el('div', { classe: 'acoes', estilo: 'margin-top:.75rem' }, [
+        botao(config.foto_capa ? 'Trocar a foto' : 'Enviar foto de capa', enviar, 'botao secundario'),
+        config.foto_capa
+          ? botao('Remover a foto', async () => {
+            if (!confirmar('Voltar ao fundo padrão do topo?')) return;
+            await api.atualizar('/configuracoes', { foto_capa: '' });
+            aviso('Foto removida.');
+            await carregarConfiguracoes();
+          }, 'botao perigo')
+          : null,
+      ].filter(Boolean)),
+      el('div', { classe: 'dica', texto:
+        'A foto ocupa o topo inteiro do site, com um véu escuro por cima para o texto continuar legível.' }),
     ]);
   }
 

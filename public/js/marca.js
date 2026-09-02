@@ -55,13 +55,41 @@ function clarear(cor, quanto) {
   return `#${ajustado.map((v) => v.toString(16).padStart(2, '0')).join('')}`;
 }
 
-/** Logo horizontal, com o nome em texto caso o arquivo não exista. */
+/** Desenho da palavra ATAK - as mesmas formas usadas no brasão. */
+const LETRAS_ATAK = [
+  'M0,64 L18,0 H32 L50,64 H35.5 L32,50.5 H18 L14.5,64 Z M20.5,38.5 H29.5 L25,17 Z',
+  'M55,0 H101 V13.5 H85 V64 H71 V13.5 H55 Z',
+  'M106,64 L124,0 H138 L156,64 H141.5 L138,50.5 H124 L120.5,64 Z M126.5,38.5 H135.5 L131,17 Z',
+  'M162,0 H176.5 V27 L195.5,0 H213 L191.5,30.5 L214,64 H196.5 L182,41.5 L176.5,48.5 V64 H162 Z',
+];
+
+function svg(tag, atributos) {
+  const no = document.createElementNS('http://www.w3.org/2000/svg', tag);
+  for (const [chave, valor] of Object.entries(atributos)) no.setAttribute(chave, valor);
+  return no;
+}
+
+/**
+ * Assinatura horizontal: brasão + a palavra ATAK.
+ * A palavra é desenhada no próprio documento, e não dentro de um arquivo
+ * separado, para herdar a cor do tema - preta no claro, clara no escuro.
+ */
 export function logotipo(altura = 32) {
-  const imagem = el('img', {
-    src: marca.logo || '/marca/logo.svg', alt: marca.nome, estilo: `height:${altura}px`,
+  if (marca.logo) {
+    const enviado = el('img', { src: marca.logo, alt: marca.nome, estilo: `height:${altura}px` });
+    enviado.addEventListener('error', () => enviado.replaceWith(el('span', { classe: 'nome', texto: marca.nome })));
+    return enviado;
+  }
+
+  const palavra = svg('svg', {
+    viewBox: '0 0 214 64', height: String(Math.round(altura * 0.46)),
+    fill: 'currentColor', role: 'img', 'aria-label': marca.nome,
   });
-  imagem.addEventListener('error', () => imagem.replaceWith(el('span', { classe: 'nome', texto: marca.nome })));
-  return imagem;
+  for (const desenho of LETRAS_ATAK) {
+    palavra.append(svg('path', { d: desenho, 'fill-rule': 'evenodd' }));
+  }
+
+  return el('span', { classe: 'assinatura' }, [simbolo(altura), palavra]);
 }
 
 /** Simbolo quadrado (menu, avatar da academia, favicon). */
