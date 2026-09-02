@@ -1,6 +1,7 @@
 import { api, sessao } from '../api.js';
 import { el, cartao, indicador, moeda, dataBr, tabela, vazio, etiqueta, competenciaBr } from '../ui.js';
 import { barrasHorizontais, rosca, evolucao, sparkline, corDaSerie } from '../graficos.js';
+import { linkWhatsapp } from '../whatsapp.js';
 import { topo, irPara } from '../app.js';
 
 /** Painel inicial, com os numeros que cada papel precisa ver primeiro. */
@@ -20,6 +21,10 @@ export default async function paginaPainel() {
   if (sessao.ehUm('dono', 'recepcao')) raiz.append(...painelGestao(dados));
   if (sessao.papel === 'mestre') raiz.append(...painelMestre(dados));
   if (sessao.papel === 'aluno') raiz.append(painelAluno(dados));
+
+  if (sessao.ehUm('dono', 'recepcao') && (dados.aniversariantes || []).length) {
+    raiz.append(cartao('Aniversariantes do mes', listaAniversariantes(dados.aniversariantes)));
+  }
 
   raiz.append(el('div', { classe: 'grade col-2' }, [
     cartao('Aulas de hoje', listaAulasHoje(dados.aulas_hoje),
@@ -70,6 +75,13 @@ function painelGestao(dados) {
         delta: { valor: saldo >= 0 ? 'no azul' : 'no vermelho', sobe: saldo >= 0 },
       }),
     );
+  }
+
+  if (dados.avaliacoes_pendentes) {
+    indicadores.push(indicador({
+      rotulo: 'Avaliacoes na fila', valor: String(dados.avaliacoes_pendentes),
+      detalhe: 'Aprove para publicar no site', tipo: 'atencao',
+    }));
   }
 
   indicadores.push(indicador({
@@ -153,6 +165,25 @@ function listaAulasHoje(aulas) {
     el('div', { texto: `${aula.modalidade} · ${aula.turma}` }),
     el('div', { classe: 'info', texto: [aula.mestre || 'sem mestre definido', aula.local].filter(Boolean).join(' · ') }),
   ])));
+}
+
+/** Lembrete de relacionamento: quem faz aniversario este mes. */
+function listaAniversariantes(lista) {
+  const hoje = new Date().getDate();
+  return el('div', { classe: 'acoes' }, lista.map((pessoa) => {
+    const link = linkWhatsapp(pessoa.telefone,
+      `Parabens, ${pessoa.nome.split(' ')[0]}! A equipe da Atak deseja um otimo aniversario. Bons treinos!`);
+    const conteudo = [
+      el('strong', { texto: pessoa.nome }),
+      el('span', { classe: 'dica', texto: `dia ${String(pessoa.dia).padStart(2, '0')}` }),
+      pessoa.dia === hoje ? etiqueta('hoje', 'bom') : null,
+    ];
+    const estilo = 'display:flex;gap:.5rem;align-items:center;background:var(--superficie-2);'
+      + 'border:1px solid var(--borda);border-radius:var(--raio-pilula);padding:.35rem .8rem;font-size:.85rem';
+    return link
+      ? el('a', { href: link, target: '_blank', rel: 'noopener', estilo, classe: 'aniversariante' }, conteudo)
+      : el('span', { estilo }, conteudo);
+  }));
 }
 
 function listaAvisos(avisos) {

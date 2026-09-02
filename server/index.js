@@ -19,6 +19,9 @@ import rotasPresencas from './rotas/presencas.js';
 import rotasUsuarios from './rotas/usuarios.js';
 import rotasConfiguracoes from './rotas/configuracoes.js';
 import rotasMinhaArea from './rotas/minha-area.js';
+import rotasAvaliacoes from './rotas/avaliacoes.js';
+import rotasCertificados from './rotas/certificados.js';
+import rotasArquivos, { PASTA_ARQUIVOS } from './rotas/arquivos.js';
 
 const raiz = dirname(dirname(fileURLToPath(import.meta.url)));
 
@@ -27,7 +30,7 @@ export function criarApp() {
   garantirDadosIniciais();
 
   const app = express();
-  app.use(express.json({ limit: '1mb' }));
+  app.use(express.json({ limit: '8mb' })); // o limite maior atende o upload de certificados
   app.use(autenticacaoOpcional);
 
   app.get('/api/saude', (_req, res) => res.json({ ok: true, servico: 'atak' }));
@@ -46,8 +49,14 @@ export function criarApp() {
   app.use('/api/usuarios', rotasUsuarios);
   app.use('/api/configuracoes', rotasConfiguracoes);
   app.use('/api/minha-area', rotasMinhaArea);
+  app.use('/api/avaliacoes', rotasAvaliacoes);
+  app.use('/api/certificados', rotasCertificados);
+  app.use('/api/arquivos', rotasArquivos);
 
   app.use('/api', (_req, res) => res.status(404).json({ erro: 'Endpoint nao encontrado.' }));
+
+  // Certificados e imagens enviados pelo dono
+  app.use('/arquivos', express.static(PASTA_ARQUIVOS, { maxAge: '7d' }));
 
   // Front-end (SPA)
   app.use(express.static(join(raiz, 'public')));

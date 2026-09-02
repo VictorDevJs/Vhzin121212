@@ -180,6 +180,43 @@ export function campoFormulario(campo, valor) {
   const valorAtual = valor ?? campo.valor ?? '';
   let controle;
 
+  if (campo.tipo === 'estrelas') {
+    return el('div', { classe: 'campo' }, [
+      el('label', { texto: campo.rotulo }),
+      entradaEstrelas(campo.nome, Number(valorAtual) || 5),
+      campo.dica ? el('div', { classe: 'dica', texto: campo.dica }) : null,
+    ]);
+  }
+
+  if (campo.tipo === 'arquivo') {
+    // Le o arquivo no navegador e guarda como data URL para enviar junto do formulario.
+    const previa = el('div', { classe: 'dica', texto: valorAtual ? 'Arquivo atual mantido.' : 'Nenhum arquivo escolhido.' });
+    const entrada = el('input', {
+      type: 'file', name: campo.nome, accept: campo.aceita || 'image/*,application/pdf',
+      aoMudar: (evento) => {
+        const arquivo = evento.target.files?.[0];
+        if (!arquivo) { entrada.dataset.conteudo = ''; previa.textContent = 'Nenhum arquivo escolhido.'; return; }
+        if (arquivo.size > 5 * 1024 * 1024) {
+          entrada.value = '';
+          previa.textContent = 'Arquivo maior que 5 MB. Escolha um menor.';
+          return;
+        }
+        const leitor = new FileReader();
+        leitor.onload = () => {
+          entrada.dataset.conteudo = String(leitor.result);
+          previa.textContent = `${arquivo.name} (${Math.round(arquivo.size / 1024)} KB)`;
+        };
+        leitor.readAsDataURL(arquivo);
+      },
+    });
+    return el('div', { classe: 'campo' }, [
+      el('label', { texto: campo.rotulo }),
+      entrada,
+      previa,
+      campo.dica ? el('div', { classe: 'dica', texto: campo.dica }) : null,
+    ]);
+  }
+
   if (campo.tipo === 'select') {
     controle = el('select', { name: campo.nome }, (campo.opcoes || []).map((opcao) => el('option', {
       value: opcao.valor,
@@ -232,6 +269,8 @@ export function lerFormulario(form, campos) {
       dados[campo.nome] = form.elements[campo.nome].checked ? 1 : 0;
     } else if (campo.tipo === 'multi') {
       dados[campo.nome] = [...form.querySelectorAll(`input[name="${campo.nome}"]:checked`)].map((i) => Number(i.value));
+    } else if (campo.tipo === 'arquivo') {
+      dados[campo.nome] = form.elements[campo.nome]?.dataset.conteudo || '';
     } else {
       const controle = form.elements[campo.nome];
       dados[campo.nome] = controle ? controle.value : '';
@@ -296,6 +335,50 @@ export function abrirFormulario({ titulo, campos, valores = {}, textoConfirmar =
   document.body.append(fundo);
   form.querySelector('input, select, textarea')?.focus();
   return fechar;
+}
+
+/**
+ * Estrelas de avaliacao. A nota tambem vai por texto e por aria-label,
+ * para nunca depender so do desenho.
+ */
+export function estrelas(nota, { tamanho = 16, mostrarNumero = false } = {}) {
+  const valor = Math.round(Number(nota) || 0);
+  const caixa = el('span', {
+    classe: 'estrelas',
+    estilo: `font-size:${tamanho}px`,
+    role: 'img',
+    'aria-label': `${valor} de 5 estrelas`,
+  }, Array.from({ length: 5 }, (_, i) => el('span', {
+    classe: i < valor ? 'cheia' : 'vazia',
+    texto: i < valor ? '\u2605' : '\u2606',
+    'aria-hidden': 'true',
+  })));
+  if (!mostrarNumero) return caixa;
+  return el('span', { classe: 'nota-composta' }, [caixa, el('strong', { texto: Number(nota).toFixed(1) })]);
+}
+
+/** Campo de nota por estrelas, com teclado e valor num input escondido. */
+export function entradaEstrelas(nome, valorInicial = 5) {
+  const oculto = el('input', { type: 'hidden', name: nome, value: String(valorInicial) });
+  const botoes = [];
+  function pintar(nota) {
+    oculto.value = String(nota);
+    botoes.forEach((botao, indice) => {
+      botao.textContent = indice < nota ? '\u2605' : '\u2606';
+      botao.classList.toggle('cheia', indice < nota);
+      botao.setAttribute('aria-checked', indice + 1 === nota ? 'true' : 'false');
+    });
+  }
+  for (let i = 1; i <= 5; i += 1) {
+    const botao = el('button', {
+      type: 'button', classe: 'estrela-botao', role: 'radio',
+      'aria-label': `${i} estrela${i > 1 ? 's' : ''}`,
+      aoClicar: () => pintar(i),
+    });
+    botoes.push(botao);
+  }
+  pintar(valorInicial);
+  return el('div', { classe: 'entrada-estrelas', role: 'radiogroup', 'aria-label': 'Nota' }, [...botoes, oculto]);
 }
 
 /** Modal livre, para fichas e telas de detalhe. */

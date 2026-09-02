@@ -6,10 +6,10 @@
 
 :root {
   /* ---- Marca (substitua pelas cores oficiais da Atak) ---- */
-  --marca-1: #e11d2e;          /* cor principal: botoes, destaques, item ativo */
-  --marca-2: #ff6a00;          /* cor de apoio: gradientes e brilhos */
-  --marca-3: #12b6ff;          /* cor fria de apoio: detalhes e foco */
-  --marca-contraste: #ffffff;  /* texto sobre a cor principal */
+  --marca-1: #f5b301;          /* amarelo Atak: botoes, destaques, item ativo */
+  --marca-2: #ff8a00;          /* laranja de apoio: gradientes e brilhos */
+  --marca-3: #e02020;          /* vermelho Rizzo: foco e detalhes */
+  --marca-contraste: #111111;  /* texto sobre a cor principal */
   --marca-gradiente: linear-gradient(135deg, var(--marca-1), var(--marca-2));
 
   /* ---- Tipografia ---- */
@@ -81,7 +81,7 @@
     --sombra-1: 0 1px 2px rgba(0, 0, 0, .5);
     --sombra-2: 0 6px 18px rgba(0, 0, 0, .45);
     --sombra-3: 0 24px 60px rgba(0, 0, 0, .6);
-    --brilho-marca: 0 0 28px rgba(225, 29, 46, .28);
+    --brilho-marca: 0 0 28px rgba(245, 179, 1, .25);
     --bom-tinta: #4ade4a;
     --critico-tinta: #ff8a8a;
     --serie-1: #3987e5;  --serie-2: #d95926;  --serie-3: #199e70;  --serie-4: #c98500;
@@ -106,7 +106,7 @@
   --sombra-1: 0 1px 2px rgba(0, 0, 0, .5);
   --sombra-2: 0 6px 18px rgba(0, 0, 0, .45);
   --sombra-3: 0 24px 60px rgba(0, 0, 0, .6);
-  --brilho-marca: 0 0 28px rgba(225, 29, 46, .28);
+  --brilho-marca: 0 0 28px rgba(245, 179, 1, .25);
   --bom-tinta: #4ade4a;
   --critico-tinta: #ff8a8a;
   --serie-1: #3987e5;  --serie-2: #d95926;  --serie-3: #199e70;  --serie-4: #c98500;

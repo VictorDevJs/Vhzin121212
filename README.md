@@ -1,6 +1,6 @@
-# 🥋 ATAK · Sistema de Gestão
+# 🥋 CT ATAK PECHINCHA · Sistema de Gestão
 
-Sistema completo para administrar a academia: **cadastro de alunos, planos, turmas, horários,
+Sistema completo para administrar o Centro de Treinamento Atak — Pechincha, Rio de Janeiro: **cadastro de alunos, planos, turmas, horários,
 avisos, chamada e controle financeiro**, com áreas separadas para o **dono**, os **mestres**,
 a **recepção** e os **alunos**.
 
@@ -57,7 +57,21 @@ os planos e os avisos liberados para o site. É por ali que o aluno também **cr
 - **Avisos** — campeonatos, eventos, exames de faixa, cancelamento de aula e recados gerais,
   com público-alvo (todos, kids, adultos, uma modalidade, uma turma ou só a equipe) e opção de
   publicar também na página pública.
-- **Chamada** — lista de presença por turma e por data, com resumo de frequência do mês.
+- **Chamada** — lista de presença por turma e por data, com resumo de frequência do mês e
+  **ranking dos alunos mais presentes**.
+- **Mensalidades por arte marcial** — quanto cada modalidade e cada turma faturou, recebeu e tem
+  em aberto no mês. Quem treina duas artes tem a mensalidade **rateada entre elas**, então a soma
+  das linhas fecha exatamente com o total do mês (nada é contado duas vezes).
+- **Avaliações com estrelas e comentários** — alunos e visitantes do site avaliam de 1 a 5
+  estrelas; tudo entra numa **fila de aprovação**, a academia responde publicamente e só o que
+  for aprovado aparece no site. A página pública mostra a média e a distribuição das notas.
+- **Certificados e titulações** — área do dono para publicar faixas pretas, titulações dos
+  mestres, registros em federação, cursos e premiações, com **upload da foto ou do PDF** do
+  diploma (até 5 MB). O que estiver marcado como público aparece no site, para qualquer pessoa
+  conferir a formação da equipe.
+- **Cobrança por WhatsApp** — na lista de alunos e nas mensalidades atrasadas, um botão abre a
+  conversa com o aluno já com a mensagem de cobrança escrita.
+- **Aniversariantes do mês** no painel, com link direto para mandar os parabéns.
 
 ---
 
@@ -100,6 +114,9 @@ Logins criados pela demonstração:
 | Recepção | `recepcao@atak.com` | `recepcao123` |
 | Aluno | `lucas0@email.com` | `aluno123` |
 
+A demonstração já vem com 24 alunos, 6 meses de mensalidades, avaliações (aprovadas e na fila)
+e certificados publicados.
+
 ### Outros comandos
 
 ```bash
@@ -130,7 +147,7 @@ Tudo o que é marca fica em **dois lugares**:
 |---|---|
 | Logo horizontal | `public/marca/logo.svg` (aparece no topo do site e do sistema) |
 | Símbolo quadrado | `public/marca/simbolo.svg` (ícone do app, favicon, avatar) |
-| Cores da marca | `public/css/tema.css` → `--marca-1`, `--marca-2`, `--marca-3` |
+| Cores da marca | `public/css/tema.css` → `--marca-1` (amarelo), `--marca-2` (laranja), `--marca-3` (vermelho) |
 | Nome, frase, contato e cor principal | dentro do sistema, em **Equipe e academia → Identidade visual** |
 
 Trocar a cor principal pelo sistema muda a interface inteira na hora (botões, menu, destaques) e
@@ -138,8 +155,11 @@ vale para todo mundo. As **cores dos gráficos são independentes da marca** de 
 seguem uma paleta validada para daltonismo, então continuam legíveis mesmo se a cor da academia
 for vermelha, azul ou verde.
 
-Se você preferir manter os arquivos originais com outro nome, é só apontar o caminho novo em
-`public/js/marca.js`. Se um dos arquivos não existir, o sistema mostra o nome da academia em texto.
+Os arquivos de marca que estão aqui são uma **reprodução aproximada** do brasão da Atak
+(preto + amarelo, com as modalidades no anel). Substitua pelos arquivos oficiais quando tiver a
+arte em alta — é só sobrescrever os dois SVG mantendo os nomes. Se preferir outro nome de arquivo,
+aponte o caminho novo em `public/js/marca.js`; se um deles não existir, o sistema mostra o nome da
+academia em texto.
 
 > As fontes (Inter e Barlow Condensed) vêm do Google Fonts. Se a academia tiver internet instável,
 > baixe os arquivos das fontes para `public/` e troque o `<link>` do `public/index.html` — o
@@ -190,7 +210,12 @@ Todas as rotas ficam sob `/api` e usam `Authorization: Bearer <token>`, exceto a
 | `/api/planos` · `/api/matriculas` | planos e matrículas |
 | `/api/financeiro` | mensalidades, lançamentos e `GET /api/financeiro/resumo` |
 | `/api/avisos` | mural de avisos (filtrado pelo público-alvo de cada aluno) |
-| `/api/presencas` | chamada e resumo de frequência |
+| `/api/presencas` | chamada, resumo de frequência e `GET /api/presencas/ranking` |
+| `/api/avaliacoes` | moderação, resposta e envio de avaliações |
+| `POST /api/publico/avaliacoes` | avaliação enviada por quem visita o site (pública) |
+| `/api/certificados` | certificados e titulações |
+| `POST /api/arquivos` | upload do PDF/imagem do certificado (só o dono) |
+| `GET /api/financeiro/por-modalidade` | mensalidades divididas por arte marcial e por turma |
 | `/api/usuarios` · `/api/configuracoes` | equipe e dados institucionais (dono) |
 | `GET /api/minha-area` | tudo o que o aluno logado precisa ver |
 
@@ -214,3 +239,15 @@ Todas as rotas ficam sob `/api` e usam `Authorization: Bearer <token>`, exceto a
 4. **Equipe e academia** → crie os acessos dos mestres e da recepção.
 5. **Alunos** → cadastre (ou aprove quem se cadastrou sozinho) e matricule em um plano.
 6. Todo dia 1º, use **Financeiro → Gerar mensalidades** para criar as cobranças do mês.
+7. **Certificados** → publique as faixas pretas e as titulações dos mestres (isso aparece no site
+   e passa confiança para quem está pesquisando a academia).
+8. **Avaliações** → aprove e responda o que os alunos escreveram; peça avaliação para os alunos
+   antigos, é o que mais converte visitante em matrícula.
+
+## Dados da unidade já cadastrados
+
+- **CT Atak Pechincha** — Centro de Treinamento de Lutas
+- Rua Coronel Francisco Lobo, 145 — Pechincha, Rio de Janeiro/RJ, 22740-350
+- WhatsApp: (21) 97024-0245
+- Mais de 15 anos de história (o ano de fundação fica em Equipe e academia e alimenta o contador
+  do site automaticamente)

@@ -5,7 +5,10 @@ import { rota, texto } from '../util.js';
 
 const roteador = Router();
 
-const CHAVES = ['nome_academia', 'telefone', 'endereco', 'instagram', 'whatsapp', 'sobre', 'chamada', 'cor_primaria'];
+const CHAVES = [
+  'nome_academia', 'telefone', 'whatsapp', 'endereco', 'instagram', 'sobre', 'chamada',
+  'cor_primaria', 'ano_fundacao', 'historia', 'horario_funcionamento',
+];
 
 roteador.get('/', exigirPapel(...EQUIPE), rota((_req, res) => {
   const atuais = Object.fromEntries(todos('SELECT chave, valor FROM configuracoes').map((c) => [c.chave, c.valor]));

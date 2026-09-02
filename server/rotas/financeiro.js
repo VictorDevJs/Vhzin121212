@@ -209,6 +209,108 @@ roteador.delete('/mensalidades/:id', exigirPapel('dono'), rota((req, res) => {
 
 // ----------------- Relatorios -----------------
 
+/**
+ * Acompanhamento das mensalidades por arte marcial e por turma.
+ * Como um aluno pode treinar mais de uma modalidade, o valor da mensalidade e
+ * rateado em partes iguais entre as modalidades dele - assim a soma das linhas
+ * bate com o faturamento total, sem contar o mesmo dinheiro duas vezes.
+ */
+roteador.get('/por-modalidade', exigirPapel(...GESTAO), rota((req, res) => {
+  const competencia = texto(req.query.competencia, competenciaAtual());
+
+  const mensalidades = todos(`
+    SELECT me.id, me.aluno_id, me.valor, me.status, me.vencimento, a.nome AS aluno
+    FROM mensalidades me JOIN alunos a ON a.id = me.aluno_id
+    WHERE me.competencia = :competencia AND me.status != 'cancelado'
+  `, { competencia });
+
+  const vinculos = todos(`
+    SELECT at.aluno_id, t.id AS turma_id, t.nome AS turma,
+           m.id AS modalidade_id, m.nome AS modalidade, m.cor
+    FROM aluno_turmas at
+    JOIN turmas t ON t.id = at.turma_id
+    JOIN modalidades m ON m.id = t.modalidade_id
+  `);
+
+  const porAluno = new Map();
+  for (const vinculo of vinculos) {
+    if (!porAluno.has(vinculo.aluno_id)) porAluno.set(vinculo.aluno_id, []);
+    porAluno.get(vinculo.aluno_id).push(vinculo);
+  }
+
+  const hojeISO = hoje();
+  const modalidades = new Map();
+  const turmas = new Map();
+  const semTurma = { modalidade: 'Sem turma definida', cor: null, previsto: 0, recebido: 0, em_aberto: 0, atrasado: 0, alunos: new Set() };
+
+  function acumular(mapa, chave, base, valor, mensalidade) {
+    if (!mapa.has(chave)) mapa.set(chave, { ...base, previsto: 0, recebido: 0, em_aberto: 0, atrasado: 0, alunos: new Set(), inadimplentes: new Set() });
+    const linha = mapa.get(chave);
+    linha.previsto += valor;
+    linha.alunos.add(mensalidade.aluno_id);
+    if (mensalidade.status === 'pago') linha.recebido += valor;
+    else {
+      linha.em_aberto += valor;
+      if (mensalidade.vencimento < hojeISO) {
+        linha.atrasado += valor;
+        linha.inadimplentes.add(mensalidade.aluno_id);
+      }
+    }
+  }
+
+  for (const mensalidade of mensalidades) {
+    const doAluno = porAluno.get(mensalidade.aluno_id) || [];
+    const modalidadesDoAluno = [...new Map(doAluno.map((v) => [v.modalidade_id, v])).values()];
+
+    if (!modalidadesDoAluno.length) {
+      semTurma.previsto += mensalidade.valor;
+      semTurma.alunos.add(mensalidade.aluno_id);
+      if (mensalidade.status === 'pago') semTurma.recebido += mensalidade.valor;
+      else {
+        semTurma.em_aberto += mensalidade.valor;
+        if (mensalidade.vencimento < hojeISO) semTurma.atrasado += mensalidade.valor;
+      }
+      continue;
+    }
+
+    const fatiaModalidade = mensalidade.valor / modalidadesDoAluno.length;
+    for (const vinculo of modalidadesDoAluno) {
+      acumular(modalidades, vinculo.modalidade_id,
+        { modalidade_id: vinculo.modalidade_id, modalidade: vinculo.modalidade, cor: vinculo.cor },
+        fatiaModalidade, mensalidade);
+    }
+
+    const fatiaTurma = mensalidade.valor / doAluno.length;
+    for (const vinculo of doAluno) {
+      acumular(turmas, vinculo.turma_id,
+        { turma_id: vinculo.turma_id, turma: vinculo.turma, modalidade: vinculo.modalidade, cor: vinculo.cor },
+        fatiaTurma, mensalidade);
+    }
+  }
+
+  const materializar = (mapa) => [...mapa.values()]
+    .map((linha) => ({
+      ...linha,
+      previsto: Number(linha.previsto.toFixed(2)),
+      recebido: Number(linha.recebido.toFixed(2)),
+      em_aberto: Number(linha.em_aberto.toFixed(2)),
+      atrasado: Number(linha.atrasado.toFixed(2)),
+      alunos: linha.alunos.size,
+      inadimplentes: linha.inadimplentes.size,
+    }))
+    .sort((a, b) => b.previsto - a.previsto);
+
+  res.json({
+    competencia,
+    modalidades: materializar(modalidades),
+    turmas: materializar(turmas),
+    sem_turma: semTurma.previsto > 0
+      ? { ...semTurma, alunos: semTurma.alunos.size, previsto: Number(semTurma.previsto.toFixed(2)) }
+      : null,
+    total_previsto: mensalidades.reduce((soma, m) => soma + m.valor, 0),
+  });
+}));
+
 roteador.get('/resumo', exigirPapel(...GESTAO), rota((req, res) => {
   somenteDono(req);
   const competencia = texto(req.query.competencia, competenciaAtual());

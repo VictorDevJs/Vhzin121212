@@ -12,6 +12,7 @@ export default async function paginaChamada() {
   const estado = { turmaId: disponiveis[0]?.id ?? null, data: hojeISO(), marcacoes: new Map(), lista: null };
   const area = el('div');
   const areaResumo = el('div');
+  const areaRanking = el('div');
 
   async function recarregar() {
     if (!estado.turmaId) {
@@ -84,6 +85,19 @@ export default async function paginaChamada() {
     await api.criar('/presencas', { turma_id: estado.turmaId, data: estado.data, presencas });
     aviso('Chamada salva.');
     await carregarResumo();
+    await carregarRanking();
+  }
+
+  async function carregarRanking() {
+    const { ranking } = await api.obter('/presencas/ranking');
+    areaRanking.replaceChildren(ranking.length
+      ? tabela(['#', 'Aluno', 'Categoria', 'Presencas'], ranking.map((linha, indice) => [
+        celula([indice < 3 ? etiqueta(['1o', '2o', '3o'][indice], 'bom') : String(indice + 1)]),
+        linha.nome,
+        linha.categoria,
+        String(linha.presencas),
+      ]))
+      : vazio('Ainda nao ha presencas registradas neste mes.', '\u{1F3C6}'));
   }
 
   async function carregarResumo() {
@@ -111,6 +125,7 @@ export default async function paginaChamada() {
 
   await recarregar();
   await carregarResumo();
+  await carregarRanking();
 
   return el('div', {}, [
     topo('Chamada', 'Registre presencas e faltas de cada aula'),
@@ -119,6 +134,9 @@ export default async function paginaChamada() {
       el('div', { classe: 'campo' }, [el('label', { texto: 'Data da aula' }), seletorData]),
     ]),
     cartao('Lista de presenca', area),
-    cartao('Frequencia do mes', areaResumo),
+    el('div', { classe: 'grade col-2' }, [
+      cartao('Frequencia por turma no mes', areaResumo),
+      cartao('Ranking de presenca do mes', areaRanking),
+    ]),
   ]);
 }

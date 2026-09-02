@@ -108,9 +108,24 @@ roteador.get('/', exigirPapel(...EQUIPE, 'aluno'), rota((req, res) => {
     GROUP BY competencia ORDER BY competencia
   `);
 
+  // Aniversariantes do mes: gancho simples de relacionamento com o aluno.
+  const aniversariantes = todos(`
+    SELECT nome, data_nascimento, telefone, categoria,
+           CAST(strftime('%d', data_nascimento) AS INTEGER) AS dia
+    FROM alunos
+    WHERE data_nascimento IS NOT NULL
+      AND strftime('%m', data_nascimento) = strftime('%m', 'now', 'localtime')
+      AND status = 'ativo'
+    ORDER BY dia
+  `);
+
+  const avaliacoesPendentes = um(`SELECT COUNT(*) AS total FROM avaliacoes WHERE status = 'pendente'`);
+
   res.json({
     ...base,
     alunos,
+    aniversariantes,
+    avaliacoes_pendentes: avaliacoesPendentes.total,
     serie_matriculas: serieMatriculas,
     serie_caixa: papel === 'dono' ? serieCaixa : [],
     financeiro: papel === 'dono'

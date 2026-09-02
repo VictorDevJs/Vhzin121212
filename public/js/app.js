@@ -15,6 +15,8 @@ import paginaAvisos from './paginas/avisos.js';
 import paginaChamada from './paginas/chamada.js';
 import paginaEquipe from './paginas/equipe.js';
 import paginaMinhaArea from './paginas/minha-area.js';
+import paginaAvaliacoes from './paginas/avaliacoes.js';
+import paginaCertificados from './paginas/certificados.js';
 
 const EQUIPE = ['dono', 'mestre', 'recepcao'];
 
@@ -28,6 +30,8 @@ const ROTAS = [
   { caminho: 'alunos', titulo: 'Alunos', curto: 'Alunos', icone: 'alunos', grupo: 'Gestao', papeis: EQUIPE, render: paginaAlunos, principal: true },
   { caminho: 'turmas', titulo: 'Turmas e modalidades', curto: 'Turmas', icone: 'luva', grupo: 'Gestao', papeis: EQUIPE, render: paginaTurmas },
   { caminho: 'planos', titulo: 'Planos', curto: 'Planos', icone: 'cartao', grupo: 'Gestao', papeis: EQUIPE, render: paginaPlanos },
+  { caminho: 'avaliacoes', titulo: 'Avaliacoes', curto: 'Avaliar', icone: 'estrela', grupo: 'Rotina', papeis: [...EQUIPE, 'aluno'], render: paginaAvaliacoes },
+  { caminho: 'certificados', titulo: 'Certificados', curto: 'Faixas', icone: 'medalha', grupo: 'Gestao', papeis: [...EQUIPE, 'aluno'], render: paginaCertificados },
   { caminho: 'financeiro', titulo: 'Financeiro', curto: 'Caixa', icone: 'dinheiro', grupo: 'Financeiro', papeis: ['dono', 'recepcao'], render: paginaFinanceiro, principal: true },
   { caminho: 'equipe', titulo: 'Equipe e academia', curto: 'Equipe', icone: 'engrenagem', grupo: 'Sistema', papeis: ['dono'], render: paginaEquipe },
 ];

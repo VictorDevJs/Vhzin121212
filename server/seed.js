@@ -25,6 +25,11 @@ const MODALIDADES = [
     faixas: ['Branca', 'Amarela', 'Laranja', 'Verde', 'Azul', 'Marrom', 'Preta'],
   },
   {
+    nome: 'Boxe', cor: '#4a3aa7',
+    descricao: 'Jogo de maos, esquiva e ritmo: a base da trocacao em qualquer luta.',
+    faixas: ['Iniciante', 'Intermediario', 'Avancado', 'Competicao'],
+  },
+  {
     nome: 'MMA', cor: '#e87ba4',
     descricao: 'Artes marciais mistas: trocacao, quedas e solo em um so treino.',
     faixas: ['Iniciante', 'Intermediario', 'Avancado', 'Competicao'],
@@ -50,19 +55,23 @@ const TURMAS = [
   ['Karate', 'Karate Kids', 'kids', 'todos', [[2, '16:00', '17:00'], [4, '16:00', '17:00']]],
   ['Karate', 'Karate Adulto', 'adulto', 'todos', [[2, '18:00', '19:00'], [4, '18:00', '19:00']]],
   ['Kickboxing', 'Kickboxing Adulto', 'adulto', 'todos', [[1, '18:00', '19:00'], [3, '18:00', '19:00'], [5, '18:00', '19:00']]],
+  ['Boxe', 'Boxe Adulto', 'adulto', 'todos', [[2, '19:00', '20:00'], [4, '19:00', '20:00']]],
   ['MMA', 'MMA Iniciante', 'adulto', 'iniciante', [[2, '21:00', '22:00'], [4, '21:00', '22:00']]],
   ['MMA', 'MMA Competicao', 'adulto', 'avancado', [[3, '21:00', '22:30'], [6, '10:00', '12:00']]],
 ];
 
 const CONFIGURACOES = {
-  nome_academia: 'Atak',
-  telefone: '(00) 00000-0000',
-  whatsapp: '',
-  endereco: 'Rua das Artes Marciais, 100 - Centro',
-  instagram: '@atak',
-  chamada: 'Treine forte. Evolua sempre.',
-  sobre: 'A Atak forma lutadores de Jiu-Jitsu, Muay Thai, Karate, Kickboxing e MMA - do primeiro dia no tatame ate o podio, com turmas kids, adulto e feminino.',
-  cor_primaria: '#e11d2e',
+  nome_academia: 'CT Atak Pechincha',
+  telefone: '(21) 97024-0245',
+  whatsapp: '5521970240245',
+  endereco: 'Rua Coronel Francisco Lobo, 145 - Pechincha, Rio de Janeiro - RJ, 22740-350',
+  instagram: '@ctatak',
+  chamada: 'Centro de treinamento de lutas',
+  sobre: 'O CT Atak Pechincha forma lutadores de Jiu-Jitsu, Muay Thai, Karate, Kickboxing, Boxe e MMA - do primeiro dia no tatame ate o podio, com turmas kids, adulto e feminino.',
+  historia: 'Sao mais de 15 anos formando atletas e mudando historias no Pechincha. O que comecou como um projeto de bairro virou um centro de treinamento com equipe de competicao, turmas kids e professores graduados.',
+  horario_funcionamento: 'Segunda a sexta, 06h as 22h · Sabado, 09h as 13h',
+  ano_fundacao: String(new Date().getFullYear() - 15),
+  cor_primaria: '#f5b301',
 };
 
 /**
@@ -137,7 +146,7 @@ export function carregarDemonstracao() {
   const TURMAS_KIDS = ['Jiu-Jitsu Kids', 'Muay Thai Kids', 'Karate Kids'];
   const TURMAS_ADULTO = [
     'Jiu-Jitsu Adulto Manha', 'Jiu-Jitsu Adulto Noite', 'Muay Thai Adulto', 'Muay Thai Feminino',
-    'Karate Adulto', 'Kickboxing Adulto', 'MMA Iniciante', 'MMA Competicao',
+    'Karate Adulto', 'Kickboxing Adulto', 'Boxe Adulto', 'MMA Iniciante', 'MMA Competicao',
   ];
   const NOMES = [
     'Lucas Ferreira', 'Mariana Costa', 'Rafael Mendes', 'Juliana Rocha', 'Carlos Eduardo Lima',
@@ -291,6 +300,39 @@ export function carregarDemonstracao() {
         VALUES ('receita', 'produtos', 'Venda de kimonos e camisetas', :valor, :data, 'pix',
                 (SELECT id FROM usuarios WHERE papel = 'dono' LIMIT 1))
       `, { valor: 260 + atras * 45, data: `${mes}-20` });
+    }
+
+    const avaliacoesDemo = [
+      ['Lucas Ferreira', 5, 'Melhor CT da regiao. Professores atenciosos e turma unida. Entrei sem saber nada de Jiu-Jitsu e hoje compito.', 'aprovada', 'aluno'],
+      ['Mariana Costa', 5, 'As aulas de Muay Thai feminino sao maravilhosas, me sinto segura e evoluindo todo mes.', 'aprovada', 'aluno'],
+      ['Rodrigo Farias', 4, 'Estrutura muito boa e horarios que cabem no meu trabalho. So sinto falta de mais turmas de sabado.', 'aprovada', 'site'],
+      ['Patricia Gomes', 5, 'Coloquei meu filho no kids e a mudanca na disciplina dele foi visivel. Recomendo demais.', 'aprovada', 'site'],
+      ['Visitante', 5, 'Fiz aula experimental e fui muito bem recebido pela equipe.', 'pendente', 'site'],
+    ];
+    for (const [autor, nota, comentario, status, origem] of avaliacoesDemo) {
+      executar(`
+        INSERT INTO avaliacoes (autor_nome, nota, comentario, status, origem, aluno_id)
+        VALUES (:autor, :nota, :comentario, :status, :origem,
+                (SELECT id FROM alunos WHERE nome = :autor LIMIT 1))
+      `, { autor, nota, comentario, status, origem });
+    }
+
+    const certificadosDemo = [
+      ['Faixa preta de Jiu-Jitsu', 'mestre', 'Mestre Ricardo Barbosa', 'Jiu-Jitsu', 'Confederacao Brasileira de Jiu-Jitsu', 'CBJJ-2014-0912'],
+      ['Instrutor certificado de Muay Thai', 'mestre', 'Mestra Camila Nogueira', 'Muay Thai', 'Confederacao Brasileira de Muay Thai', 'CBMT-2017-4471'],
+      ['Faixa preta 1o grau', 'faixa_preta', 'Rafael Mendes', 'Jiu-Jitsu', 'Confederacao Brasileira de Jiu-Jitsu', 'CBJJ-2025-1180'],
+      ['Curso de primeiros socorros para academias', 'curso', 'Equipe CT Atak', null, 'Cruz Vermelha Brasileira', null],
+    ];
+    for (const [titulo, tipo, pessoa, modalidade, entidade, registro] of certificadosDemo) {
+      executar(`
+        INSERT INTO certificados (titulo, tipo, pessoa_nome, modalidade_id, entidade, registro, data_emissao,
+                                  publicar_site, usuario_id, criado_por)
+        VALUES (:titulo, :tipo, :pessoa,
+                (SELECT id FROM modalidades WHERE nome = :modalidade),
+                :entidade, :registro, :data, 1,
+                (SELECT id FROM usuarios WHERE nome = :pessoa),
+                (SELECT id FROM usuarios WHERE papel = 'dono' LIMIT 1))
+      `, { titulo, tipo, pessoa, modalidade, entidade, registro, data: somarMeses(hoje(), -12) });
     }
 
     const avisos = [

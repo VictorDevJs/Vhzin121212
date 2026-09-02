@@ -104,66 +104,29 @@ function criarDica(container) {
    Barras horizontais - comparar magnitude entre categorias
    ------------------------------------------------------------------------ */
 
-export function barrasHorizontais({ dados, formatar = numeroCurto, alturaBarra = 22 }) {
+export function barrasHorizontais({ dados, formatar = numeroCurto }) {
   const itens = dados.filter((d) => Number(d.valor) > 0);
   if (!itens.length) return el('div', { classe: 'vazio', texto: 'Sem dados para exibir.' });
 
   const maximo = Math.max(...itens.map((d) => d.valor));
-  const larguraRotulo = 132;
-  const larguraValor = 96;
-  const espaco = 12;
-  const altura = itens.length * (alturaBarra + espaco);
-  const largura = 640;
-  const larguraPista = largura - larguraRotulo - larguraValor;
 
-  const container = el('div', { classe: 'grafico' });
-  const dica = criarDica(container);
-
-  const svg = svgEl('svg', {
-    viewBox: `0 0 ${largura} ${altura}`, role: 'img',
-    'aria-label': `Grafico de barras: ${itens.map((i) => `${i.rotulo} ${formatar(i.valor)}`).join(', ')}`,
-  });
-
-  itens.forEach((item, indice) => {
-    const y = indice * (alturaBarra + espaco);
-    const comprimento = Math.max(3, (item.valor / maximo) * larguraPista);
+  // Montado em HTML (nao em SVG) para o texto nunca esticar junto com a barra.
+  const lista = el('div', { classe: 'barras' }, itens.map((item, indice) => {
     const cor = item.cor || corDaSerie(indice);
-
-    svg.append(texto(item.rotulo, {
-      x: 0, y: y + alturaBarra / 2 + 4, class: 'eixo-texto',
-      style: 'fill:var(--tinta);font-size:12px;font-weight:550',
-    }));
-    // Trilho de fundo, para a barra curta ainda mostrar a escala.
-    svg.append(svgEl('rect', {
-      x: larguraRotulo, y, width: larguraPista, height: alturaBarra, rx: 4,
-      fill: 'var(--superficie-2)',
-    }));
-    const barra = svgEl('rect', {
-      x: larguraRotulo, y, width: comprimento, height: alturaBarra, rx: 4,
-      fill: cor, tabindex: '0', role: 'listitem',
+    return el('div', {
+      classe: 'barra-linha', tabindex: '0',
       'aria-label': `${item.rotulo}: ${formatar(item.valor)}`,
-    });
-    svg.append(barra);
-    // Rotulo direto no fim da barra (nunca dentro, para nunca cortar texto).
-    svg.append(texto(formatar(item.valor), {
-      x: largura - 6, y: y + alturaBarra / 2 + 4, 'text-anchor': 'end', class: 'rotulo-direto',
-    }));
+      title: `${item.rotulo}: ${formatar(item.valor)}${item.legenda ? ` (${item.legenda})` : ''}`,
+    }, [
+      el('span', { classe: 'barra-rotulo', texto: item.rotulo }),
+      el('span', { classe: 'barra-trilho' }, [
+        el('span', { classe: 'barra-valor', estilo: `width:${Math.max(2, (item.valor / maximo) * 100)}%;background:${cor}` }),
+      ]),
+      el('strong', { classe: 'barra-numero', texto: formatar(item.valor) }),
+    ]);
+  }));
 
-    const mostrar = (evento) => {
-      const caixa = container.getBoundingClientRect();
-      const ponto = evento.touches?.[0] ?? evento;
-      const px = ponto.clientX ? ponto.clientX - caixa.left : larguraRotulo;
-      dica.mostrar(px, (y / altura) * container.clientHeight, item.rotulo,
-        [{ nome: item.legenda || 'total', valor: formatar(item.valor), cor }]);
-    };
-    barra.addEventListener('pointermove', mostrar);
-    barra.addEventListener('focus', mostrar);
-    barra.addEventListener('pointerleave', () => dica.esconder());
-    barra.addEventListener('blur', () => dica.esconder());
-  });
-
-  container.append(svg);
-  return comTabela(container, () => tabelaSimples(['Categoria', 'Valor'],
+  return comTabela(lista, () => tabelaSimples(['Categoria', 'Valor'],
     itens.map((i) => [i.rotulo, formatar(i.valor)])));
 }
 

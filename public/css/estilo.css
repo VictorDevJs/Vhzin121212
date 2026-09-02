@@ -265,6 +265,58 @@ td.acoes-celula { display: flex; gap: var(--esp-1); }
 .etiqueta.marca { background: color-mix(in srgb, var(--marca-1) 14%, transparent); color: var(--marca-1); }
 .ponto { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex: 0 0 8px; }
 
+/* Estrelas de avaliacao */
+.estrelas { letter-spacing: 1px; line-height: 1; white-space: nowrap; }
+.estrelas .cheia { color: var(--marca-1); }
+.estrelas .vazia { color: var(--tinta-3); }
+.nota-composta { display: inline-flex; align-items: center; gap: .4rem; }
+.nota-composta strong { font-variant-numeric: tabular-nums; }
+.entrada-estrelas { display: flex; gap: .25rem; }
+.estrela-botao {
+  background: none; border: none; cursor: pointer; padding: 0 .1rem;
+  font-size: 1.7rem; line-height: 1; color: var(--tinta-3);
+  transition: transform var(--mov-rapido), color var(--mov-rapido);
+}
+.estrela-botao.cheia { color: var(--marca-1); }
+.estrela-botao:hover { transform: scale(1.12); }
+
+.nota-grande { display: flex; align-items: center; gap: var(--esp-4); flex-wrap: wrap; }
+.nota-grande .media { font-family: var(--fonte-titulo); font-size: 3.2rem; font-weight: 700; line-height: 1; }
+.distribuicao { display: grid; gap: .3rem; min-width: 200px; flex: 1; }
+.distribuicao .faixa-nota { display: flex; align-items: center; gap: var(--esp-2); font-size: .8rem; color: var(--tinta-2); }
+.distribuicao .faixa-nota .barra { flex: 1; }
+
+/* Cartao de depoimento */
+.depoimento { background: var(--superficie); border: var(--borda-fina) solid var(--borda); border-radius: var(--raio-3); padding: var(--esp-4); }
+.depoimento .texto { font-size: .95rem; }
+.depoimento .autor { display: flex; align-items: center; gap: var(--esp-2); margin-top: var(--esp-3); font-size: .85rem; color: var(--tinta-2); }
+.depoimento .resposta { margin-top: var(--esp-3); padding-left: var(--esp-3); border-left: 2px solid var(--marca-1); font-size: .85rem; color: var(--tinta-2); }
+
+/* Certificados */
+.certificado {
+  display: flex; gap: var(--esp-3); background: var(--superficie);
+  border: var(--borda-fina) solid var(--borda); border-radius: var(--raio-2); padding: var(--esp-3);
+  transition: transform var(--mov-medio), box-shadow var(--mov-medio);
+}
+.certificado:hover { transform: translateY(-2px); box-shadow: var(--sombra-2); }
+.certificado .miniatura {
+  width: 74px; height: 74px; flex: 0 0 74px; border-radius: var(--raio-1);
+  background: var(--superficie-2); display: grid; place-items: center; overflow: hidden;
+  border: var(--borda-fina) solid var(--borda); font-size: 1.4rem;
+}
+.certificado .miniatura img { width: 100%; height: 100%; object-fit: cover; }
+.certificado .selo-tipo { font-size: .7rem; text-transform: uppercase; letter-spacing: .08em; color: var(--tinta-3); font-weight: 650; }
+
+/* Botao flutuante do WhatsApp */
+.zap {
+  position: fixed; right: var(--esp-4); bottom: var(--esp-5); z-index: 50;
+  display: inline-flex; align-items: center; gap: var(--esp-2);
+  background: #25d366; color: #06301a; font-weight: 700; font-size: .9rem;
+  padding: .7rem 1.1rem; border-radius: var(--raio-pilula); box-shadow: var(--sombra-3);
+  border: none; cursor: pointer; text-decoration: none;
+}
+.zap:hover { text-decoration: none; transform: translateY(-2px); }
+
 /* Estados vazios e carregamento */
 .vazio { text-align: center; color: var(--tinta-3); padding: var(--esp-6) var(--esp-4); }
 .vazio .icone { font-size: 2rem; opacity: .6; display: block; margin-bottom: var(--esp-2); }
@@ -370,6 +422,19 @@ td.acoes-celula { display: flex; gap: var(--esp-1); }
 .aula .hora { font-weight: 700; font-variant-numeric: tabular-nums; }
 .aula .info { color: var(--tinta-3); font-size: .74rem; }
 
+/* Barras horizontais dos graficos */
+.barras { display: grid; gap: var(--esp-2); }
+.barra-linha {
+  display: grid; grid-template-columns: minmax(90px, 150px) 1fr auto;
+  align-items: center; gap: var(--esp-3); border-radius: var(--raio-1);
+  padding: .15rem .2rem; transition: background var(--mov-rapido);
+}
+.barra-linha:hover, .barra-linha:focus-visible { background: var(--superficie-2); }
+.barra-rotulo { font-size: .85rem; font-weight: 550; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.barra-trilho { background: var(--superficie-2); border-radius: 4px; height: 20px; overflow: hidden; }
+.barra-valor { display: block; height: 100%; border-radius: 0 4px 4px 0; transition: width var(--mov-suave); }
+.barra-numero { font-size: .85rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
 /* Barra de proporcao */
 .barra { background: var(--superficie-2); border-radius: var(--raio-pilula); height: 8px; overflow: hidden; }
 .barra > span { display: block; height: 100%; border-radius: var(--raio-pilula); transition: width var(--mov-suave); }
@@ -408,9 +473,9 @@ td.acoes-celula { display: flex; gap: var(--esp-1); }
   padding: .25rem .75rem; border-radius: var(--raio-pilula); font-size: .78rem; font-weight: 650;
   letter-spacing: .08em; text-transform: uppercase;
 }
-.numeros { display: flex; gap: var(--esp-6); flex-wrap: wrap; margin-top: var(--esp-5); }
-.numeros strong { display: block; font-family: var(--fonte-titulo); font-size: 2.4rem; font-weight: 700; line-height: 1; }
-.numeros span { color: var(--tinta-3); font-size: .8rem; text-transform: uppercase; letter-spacing: .08em; }
+.numeros { display: flex; gap: var(--esp-5); flex-wrap: wrap; margin-top: var(--esp-5); }
+.numeros strong { display: block; font-family: var(--fonte-titulo); font-size: 2.1rem; font-weight: 700; line-height: 1; }
+.numeros span { color: var(--tinta-3); font-size: .74rem; text-transform: uppercase; letter-spacing: .07em; }
 
 .painel-acesso {
   background: var(--superficie); border: var(--borda-fina) solid var(--borda);

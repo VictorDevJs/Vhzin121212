@@ -3,6 +3,8 @@ import {
   el, cartao, tabela, celula, botao, etiqueta, etiquetaStatus, moeda, dataBr, competenciaBr,
   abrirFormulario, abrirModal, aviso, confirmar, vazio, idade, hojeISO,
 } from '../ui.js';
+import { linkWhatsapp, mensagemCobranca } from '../whatsapp.js';
+import { marca } from '../marca.js';
 import { topo } from '../app.js';
 
 /** Cadastro e acompanhamento dos alunos da academia. */
@@ -33,9 +35,23 @@ export default async function paginaAlunos() {
           celula([etiquetaStatus(aluno.status)]),
           aluno.plano || '-',
           aluno.telefone || aluno.email || '-',
-          celula([aluno.mensalidades_atrasadas
-            ? etiqueta(`${aluno.mensalidades_atrasadas} em atraso`, 'erro')
-            : etiqueta('em dia', 'ok')]),
+          celula([
+            aluno.mensalidades_atrasadas
+              ? etiqueta(`${aluno.mensalidades_atrasadas} em atraso`, 'erro')
+              : etiqueta('em dia', 'ok'),
+            aluno.mensalidades_atrasadas && linkWhatsapp(aluno.telefone)
+              ? el('a', {
+                classe: 'botao pequeno secundario', target: '_blank', rel: 'noopener', texto: 'Cobrar',
+                href: linkWhatsapp(aluno.telefone, mensagemCobranca({
+                  aluno: aluno.nome,
+                  competencia: 'em aberto',
+                  valor: 'sua mensalidade',
+                  vencimento: 'ja',
+                  academia: marca.nome,
+                })),
+              })
+              : null,
+          ]),
           celula([
             botao('Ficha', () => abrirFicha(aluno.id), 'botao pequeno secundario'),
             podeGerir ? botao('Editar', () => formularioAluno(aluno), 'botao pequeno secundario') : null,

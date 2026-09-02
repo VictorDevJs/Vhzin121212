@@ -6,7 +6,7 @@
 import { el } from './ui.js';
 
 export const marca = {
-  nome: 'Atak',
+  nome: 'CT Atak',
   chamada: '',
   cor: '',
 };

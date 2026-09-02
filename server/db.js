@@ -246,6 +246,44 @@ function criarEsquema(banco) {
       registrado_por INTEGER REFERENCES usuarios(id) ON DELETE SET NULL
     );
 
+    -- Avaliacoes com estrela e comentario (aluno logado ou visitante do site)
+    CREATE TABLE IF NOT EXISTS avaliacoes (
+      id            INTEGER PRIMARY KEY AUTOINCREMENT,
+      aluno_id      INTEGER REFERENCES alunos(id) ON DELETE SET NULL,
+      autor_nome    TEXT NOT NULL,
+      autor_contato TEXT,
+      nota          INTEGER NOT NULL CHECK (nota BETWEEN 1 AND 5),
+      comentario    TEXT,
+      modalidade_id INTEGER REFERENCES modalidades(id) ON DELETE SET NULL,
+      mestre_id     INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
+      status        TEXT NOT NULL DEFAULT 'pendente'
+                    CHECK (status IN ('pendente','aprovada','recusada')),
+      resposta      TEXT,
+      respondido_em TEXT,
+      origem        TEXT NOT NULL DEFAULT 'site' CHECK (origem IN ('site','aluno')),
+      criado_em     TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+    );
+
+    -- Certificados e titulacoes (faixas pretas, mestres, federacoes, cursos)
+    CREATE TABLE IF NOT EXISTS certificados (
+      id            INTEGER PRIMARY KEY AUTOINCREMENT,
+      titulo        TEXT NOT NULL,
+      tipo          TEXT NOT NULL DEFAULT 'faixa_preta'
+                    CHECK (tipo IN ('faixa_preta','graduacao','mestre','federacao','curso','premiacao','outro')),
+      pessoa_nome   TEXT NOT NULL,
+      aluno_id      INTEGER REFERENCES alunos(id) ON DELETE SET NULL,
+      usuario_id    INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
+      modalidade_id INTEGER REFERENCES modalidades(id) ON DELETE SET NULL,
+      entidade      TEXT,
+      registro      TEXT,
+      data_emissao  TEXT,
+      descricao     TEXT,
+      arquivo       TEXT,
+      publicar_site INTEGER NOT NULL DEFAULT 1,
+      criado_por    INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
+      criado_em     TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+    );
+
     -- Dados institucionais mostrados na pagina publica da academia
     CREATE TABLE IF NOT EXISTS configuracoes (
       chave TEXT PRIMARY KEY,
@@ -258,5 +296,7 @@ function criarEsquema(banco) {
     CREATE INDEX IF NOT EXISTS idx_lancamentos_data ON lancamentos(data);
     CREATE INDEX IF NOT EXISTS idx_presencas_data ON presencas(data);
     CREATE INDEX IF NOT EXISTS idx_avisos_criado ON avisos(criado_em DESC);
+    CREATE INDEX IF NOT EXISTS idx_avaliacoes_status ON avaliacoes(status, criado_em DESC);
+    CREATE INDEX IF NOT EXISTS idx_certificados_tipo ON certificados(tipo, data_emissao DESC);
   `);
 }

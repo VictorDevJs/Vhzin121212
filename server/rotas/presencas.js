@@ -76,4 +76,19 @@ roteador.get('/resumo', exigirPapel(...EQUIPE), rota((req, res) => {
   res.json({ periodo: { de, ate }, turmas: porTurma });
 }));
 
+/** Ranking de frequencia do mes - quem mais apareceu no tatame. */
+roteador.get('/ranking', exigirPapel(...EQUIPE, 'aluno'), rota((req, res) => {
+  const de = data(req.query.de, `${hoje().slice(0, 7)}-01`);
+  const ate = data(req.query.ate, hoje());
+  const ranking = todos(`
+    SELECT a.id, a.nome, a.categoria,
+           SUM(CASE WHEN p.presente = 1 THEN 1 ELSE 0 END) AS presencas
+    FROM presencas p JOIN alunos a ON a.id = p.aluno_id
+    WHERE p.data BETWEEN :de AND :ate
+    GROUP BY a.id HAVING presencas > 0
+    ORDER BY presencas DESC, a.nome LIMIT 20
+  `, { de, ate });
+  res.json({ periodo: { de, ate }, ranking });
+}));
+
 export default roteador;

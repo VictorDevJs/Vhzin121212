@@ -86,11 +86,19 @@ export default async function paginaEquipe() {
       ]),
       el('div', { classe: 'linha' }, [
         campo('telefone', 'Telefone', config.telefone),
-        campo('whatsapp', 'WhatsApp', config.whatsapp),
+        campo('whatsapp', 'WhatsApp (so numeros, com DDD)', config.whatsapp),
       ]),
       el('div', { classe: 'linha' }, [
         campo('endereco', 'Endereco', config.endereco),
         campo('instagram', 'Instagram', config.instagram),
+      ]),
+      el('div', { classe: 'linha' }, [
+        campo('ano_fundacao', 'Ano de fundacao', config.ano_fundacao),
+        campo('horario_funcionamento', 'Horario de funcionamento', config.horario_funcionamento),
+      ]),
+      el('div', { classe: 'campo' }, [
+        el('label', { texto: 'Nossa historia (secao da pagina publica)' }),
+        el('textarea', { name: 'historia', value: config.historia || '' }),
       ]),
       el('div', { classe: 'campo' }, [
         el('label', { texto: 'Sobre a academia (texto da pagina publica)' }),

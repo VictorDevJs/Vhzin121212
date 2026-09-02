@@ -4,6 +4,8 @@ import {
   abrirFormulario, aviso, confirmar, vazio, hojeISO, competenciaAtual,
 } from '../ui.js';
 import { barrasHorizontais, evolucao } from '../graficos.js';
+import { linkWhatsapp, mensagemCobranca } from '../whatsapp.js';
+import { marca } from '../marca.js';
 import { topo } from '../app.js';
 
 const FORMAS = ['dinheiro', 'pix', 'debito', 'credito', 'transferencia', 'boleto'];
@@ -11,13 +13,14 @@ const FORMAS = ['dinheiro', 'pix', 'debito', 'credito', 'transferencia', 'boleto
 /** Controle financeiro: mensalidades, entradas, saidas e resultado do mes. */
 export default async function paginaFinanceiro() {
   const ehDono = sessao.papel === 'dono';
-  const estado = { competencia: competenciaAtual(), statusMensalidade: '' };
+  const estado = { competencia: competenciaAtual(), statusMensalidade: '', visaoPorTurma: false };
 
   const areaIndicadores = el('div');
   const areaGrafico = el('div');
   const areaCategorias = el('div');
   const areaMensalidades = el('div');
   const areaLancamentos = el('div');
+  const areaModalidades = el('div');
   const alunos = await api.obter('/alunos?status=ativo');
 
   async function carregarResumo() {
@@ -96,6 +99,18 @@ export default async function paginaFinanceiro() {
           mensalidade.pago_em ? `${dataBr(mensalidade.pago_em)} (${mensalidade.forma_pagamento || '-'})` : '-',
           celula([
             mensalidade.status === 'pendente' ? botao('Receber', () => receber(mensalidade), 'botao pequeno') : null,
+            mensalidade.atrasada && linkWhatsapp(mensalidade.telefone)
+              ? el('a', {
+                classe: 'botao pequeno secundario', target: '_blank', rel: 'noopener', texto: 'Cobrar',
+                href: linkWhatsapp(mensalidade.telefone, mensagemCobranca({
+                  aluno: mensalidade.aluno,
+                  competencia: competenciaBr(mensalidade.competencia),
+                  valor: moeda(mensalidade.valor),
+                  vencimento: dataBr(mensalidade.vencimento),
+                  academia: marca.nome,
+                })),
+              })
+              : null,
             ehDono && mensalidade.status === 'pendente'
               ? botao('Cancelar', async () => {
                 if (!confirmar('Cancelar esta mensalidade?')) return;
@@ -224,8 +239,64 @@ export default async function paginaFinanceiro() {
     });
   }
 
+  /**
+   * Monitoramento das mensalidades por arte marcial e por turma.
+   * Quem treina duas modalidades tem a mensalidade rateada entre elas,
+   * entao a soma das linhas fecha com o total do mes.
+   */
+  async function carregarPorModalidade() {
+    const dados = await api.obter(`/financeiro/por-modalidade${consulta({ competencia: estado.competencia })}`);
+    const linhas = estado.visaoPorTurma ? dados.turmas : dados.modalidades;
+
+    areaModalidades.replaceChildren(el('div', {}, [
+      el('div', { classe: 'filtros' }, [
+        el('div', { classe: 'campo' }, [
+          el('label', { texto: 'Ver por' }),
+          el('select', {
+            aoMudar: (evento) => { estado.visaoPorTurma = evento.target.value === 'turma'; carregarPorModalidade(); },
+          }, [
+            el('option', { value: 'modalidade', texto: 'Arte marcial', selected: !estado.visaoPorTurma }),
+            el('option', { value: 'turma', texto: 'Turma', selected: estado.visaoPorTurma }),
+          ]),
+        ]),
+        el('span', { classe: 'dica', texto: 'Aluno em mais de uma modalidade tem o valor rateado entre elas.' }),
+      ]),
+      linhas.length
+        ? el('div', {}, [
+          barrasHorizontais({
+            dados: linhas.map((linha) => ({
+              rotulo: estado.visaoPorTurma ? linha.turma : linha.modalidade,
+              valor: linha.previsto,
+              cor: linha.cor || undefined,
+              legenda: 'previsto no mes',
+            })),
+            formatar: moeda,
+          }),
+          tabela(
+            [estado.visaoPorTurma ? 'Turma' : 'Arte marcial', 'Alunos', 'Previsto', 'Recebido', 'Em aberto', 'Atrasado', 'Inadimplentes'],
+            linhas.map((linha) => [
+              celula([
+                el('strong', { texto: estado.visaoPorTurma ? linha.turma : linha.modalidade }),
+                estado.visaoPorTurma ? el('div', { classe: 'dica', texto: linha.modalidade }) : null,
+              ]),
+              String(linha.alunos),
+              moeda(linha.previsto),
+              moeda(linha.recebido),
+              moeda(linha.em_aberto),
+              celula([linha.atrasado ? etiqueta(moeda(linha.atrasado), 'critico') : etiqueta('em dia', 'bom')]),
+              String(linha.inadimplentes),
+            ]),
+          ),
+        ])
+        : vazio('Sem mensalidades neste mes para dividir entre as modalidades.', '\u{1F94B}'),
+      dados.sem_turma
+        ? el('p', { classe: 'dica', texto: `${dados.sem_turma.alunos} aluno(s) sem turma definida somam ${moeda(dados.sem_turma.previsto)} e ficam fora da divisao acima.` })
+        : null,
+    ]));
+  }
+
   async function atualizarTudo() {
-    await Promise.all([carregarResumo(), carregarMensalidades(), carregarLancamentos()]);
+    await Promise.all([carregarResumo(), carregarMensalidades(), carregarLancamentos(), carregarPorModalidade()]);
   }
 
   const seletorCompetencia = el('input', {
@@ -256,6 +327,7 @@ export default async function paginaFinanceiro() {
     areaIndicadores,
     ehDono ? cartao('Entradas e saidas dos ultimos meses', areaGrafico) : null,
     ehDono ? cartao('Para onde o dinheiro vai', areaCategorias) : null,
+    cartao('Mensalidades por arte marcial', areaModalidades),
     cartao('Mensalidades', [
       el('div', { classe: 'filtros' }, [
         el('div', { classe: 'campo' }, [el('label', { texto: 'Filtrar' }), seletorStatus]),

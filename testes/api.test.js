@@ -51,7 +51,7 @@ test('rota protegida exige token', async () => {
 test('pagina publica da academia funciona sem login', async () => {
   const { status, dados } = await chamar('GET', '/api/publico/academia');
   assert.equal(status, 200);
-  assert.ok(dados.modalidades.length >= 5, 'modalidades iniciais criadas');
+  assert.ok(dados.modalidades.length >= 6, 'modalidades iniciais criadas');
   assert.ok(dados.grade.length > 0, 'grade de horarios inicial');
   assert.ok(dados.planos.length > 0, 'planos iniciais');
 });
@@ -76,7 +76,7 @@ test('cadastro nao aceita e-mail repetido', async () => {
 
 test('dono cadastra modalidade, turma e horario', async () => {
   const modalidade = await chamar('POST', '/api/modalidades', {
-    token: estado.tokenDono, corpo: { nome: 'Boxe', descricao: 'Trocacao de maos', cor: '#000000' },
+    token: estado.tokenDono, corpo: { nome: 'Judo', descricao: 'Quedas e imobilizacoes', cor: '#4a3aa7' },
   });
   assert.equal(modalidade.status, 201);
   estado.modalidadeId = modalidade.dados.id;
@@ -84,7 +84,7 @@ test('dono cadastra modalidade, turma e horario', async () => {
   const turma = await chamar('POST', '/api/turmas', {
     token: estado.tokenDono,
     corpo: {
-      nome: 'Boxe Noite', modalidade_id: estado.modalidadeId, categoria: 'adulto', capacidade: 2,
+      nome: 'Judo Noite', modalidade_id: estado.modalidadeId, categoria: 'adulto', capacidade: 2,
       horarios: [{ dia_semana: 2, hora_inicio: '19:00', hora_fim: '20:00' }],
     },
   });
@@ -233,18 +233,18 @@ test('chamada salva e atualiza a presenca', async () => {
 test('aviso por turma so aparece para quem esta na turma', async () => {
   const aviso = await chamar('POST', '/api/avisos', {
     token: estado.tokenDono,
-    corpo: { titulo: 'Treino extra de Boxe', mensagem: 'Sabado as 10h', tipo: 'evento', publico: 'turma', turma_id: estado.turmaId },
+    corpo: { titulo: 'Treino extra de Judo', mensagem: 'Sabado as 10h', tipo: 'evento', publico: 'turma', turma_id: estado.turmaId },
   });
   assert.equal(aviso.status, 201);
 
   const doAluno = await chamar('GET', '/api/avisos', { token: estado.tokenAluno });
-  assert.ok(doAluno.dados.some((a) => a.titulo === 'Treino extra de Boxe'));
+  assert.ok(doAluno.dados.some((a) => a.titulo === 'Treino extra de Judo'));
 
   const outro = await chamar('POST', '/api/auth/registrar', {
     corpo: { nome: 'Fora da turma', email: 'fora@teste.com', senha: 'aluno123' },
   });
   const deFora = await chamar('GET', '/api/avisos', { token: outro.dados.token });
-  assert.ok(!deFora.dados.some((a) => a.titulo === 'Treino extra de Boxe'));
+  assert.ok(!deFora.dados.some((a) => a.titulo === 'Treino extra de Judo'));
 });
 
 test('area do aluno mostra plano, horarios e mensalidades', async () => {
@@ -277,4 +277,101 @@ test('sistema mantem ao menos um dono ativo', async () => {
     token: estado.tokenDono, corpo: { ativo: 0 },
   });
   assert.equal(status, 409);
+});
+
+/* ---------------------------------------------------------------------------
+   Avaliacoes, certificados e monitoramento por arte marcial
+   --------------------------------------------------------------------------- */
+
+test('visitante avalia pelo site e a nota so aparece depois de aprovada', async () => {
+  const enviada = await chamar('POST', '/api/publico/avaliacoes', {
+    corpo: { autor_nome: 'Vizinho Curioso', nota: 5, comentario: 'Fiz aula experimental e adorei.' },
+  });
+  assert.equal(enviada.status, 201);
+
+  const antes = await chamar('GET', '/api/publico/academia');
+  assert.equal(antes.dados.avaliacoes.length, 0, 'pendente nao aparece na vitrine');
+
+  const naFila = await chamar('GET', '/api/avaliacoes?status=pendente', { token: estado.tokenDono });
+  const pendente = naFila.dados.avaliacoes.find((a) => a.autor_nome === 'Vizinho Curioso');
+  assert.ok(pendente, 'avaliacao entra na fila de moderacao');
+
+  const aprovada = await chamar('PUT', `/api/avaliacoes/${pendente.id}`, {
+    token: estado.tokenDono, corpo: { status: 'aprovada', resposta: 'Obrigado! Te esperamos no tatame.' },
+  });
+  assert.equal(aprovada.dados.status, 'aprovada');
+
+  const depois = await chamar('GET', '/api/publico/academia');
+  assert.equal(depois.dados.avaliacoes.length, 1);
+  assert.equal(depois.dados.resumo_avaliacoes.media, 5);
+});
+
+test('nota fora de 1 a 5 e recusada', async () => {
+  const zero = await chamar('POST', '/api/publico/avaliacoes', { corpo: { autor_nome: 'Teste', nota: 0 } });
+  assert.equal(zero.status, 400);
+  const seis = await chamar('POST', '/api/publico/avaliacoes', { corpo: { autor_nome: 'Teste', nota: 6 } });
+  assert.equal(seis.status, 400);
+});
+
+test('aluno avalia e acompanha a propria avaliacao', async () => {
+  const enviada = await chamar('POST', '/api/avaliacoes', {
+    token: estado.tokenAluno, corpo: { nota: 4, comentario: 'Turma da noite muito boa.' },
+  });
+  assert.equal(enviada.status, 201);
+
+  const minhas = await chamar('GET', '/api/avaliacoes/minhas', { token: estado.tokenAluno });
+  assert.equal(minhas.dados.length, 1);
+  assert.equal(minhas.dados[0].status, 'pendente');
+  assert.equal(minhas.dados[0].origem, 'aluno');
+});
+
+test('somente o dono publica certificados', async () => {
+  const recepcao = await chamar('POST', '/api/certificados', {
+    token: estado.tokenRecepcao,
+    corpo: { titulo: 'Faixa preta', pessoa_nome: 'Alguem' },
+  });
+  assert.equal(recepcao.status, 403);
+
+  const criado = await chamar('POST', '/api/certificados', {
+    token: estado.tokenDono,
+    corpo: {
+      titulo: 'Faixa preta de Jiu-Jitsu', pessoa_nome: 'Mestre Teste', tipo: 'mestre',
+      entidade: 'CBJJ', registro: 'CBJJ-0001', publicar_site: 1,
+    },
+  });
+  assert.equal(criado.status, 201);
+
+  const naVitrine = await chamar('GET', '/api/publico/academia');
+  assert.ok(naVitrine.dados.certificados.some((c) => c.registro === 'CBJJ-0001'));
+
+  const escondido = await chamar('PUT', `/api/certificados/${criado.dados.id}`, {
+    token: estado.tokenDono, corpo: { publicar_site: 0 },
+  });
+  assert.equal(escondido.dados.publicar_site, 0);
+  const semEle = await chamar('GET', '/api/publico/academia');
+  assert.ok(!semEle.dados.certificados.some((c) => c.registro === 'CBJJ-0001'), 'sai do site quando desmarcado');
+});
+
+test('upload aceita imagem e recusa formato estranho', async () => {
+  const png = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+  const ok = await chamar('POST', '/api/arquivos', { token: estado.tokenDono, corpo: { conteudo: png } });
+  assert.equal(ok.status, 201);
+  assert.match(ok.dados.url, /^\/arquivos\/[\w-]+\.png$/);
+
+  const ruim = await chamar('POST', '/api/arquivos', {
+    token: estado.tokenDono, corpo: { conteudo: 'data:application/x-msdownload;base64,QQ==' },
+  });
+  assert.equal(ruim.status, 400);
+});
+
+test('mensalidades divididas por arte marcial fecham com o total do mes', async () => {
+  const dados = await chamar('GET', '/api/financeiro/por-modalidade', { token: estado.tokenDono });
+  assert.equal(dados.status, 200);
+  const somaFatias = dados.dados.modalidades.reduce((soma, linha) => soma + linha.previsto, 0);
+  const semTurma = dados.dados.sem_turma?.previsto ?? 0;
+  assert.equal(
+    Number((somaFatias + semTurma).toFixed(2)),
+    Number(dados.dados.total_previsto.toFixed(2)),
+    'o rateio nao pode inventar nem perder dinheiro',
+  );
 });
