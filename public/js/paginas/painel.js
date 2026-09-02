@@ -2,6 +2,7 @@ import { api, sessao } from '../api.js';
 import { el, cartao, indicador, moeda, dataBr, tabela, vazio, etiqueta, competenciaBr } from '../ui.js';
 import { barrasHorizontais, rosca, evolucao, sparkline, corDaSerie } from '../graficos.js';
 import { linkWhatsapp } from '../whatsapp.js';
+import { icone } from '../icones.js';
 import { topo, irPara } from '../app.js';
 
 /** Painel inicial, com os numeros que cada papel precisa ver primeiro. */
@@ -13,16 +14,23 @@ export default async function paginaPainel() {
   raiz.append(topo(
     `Bom treino, ${primeiroNome}`,
     `${dados.dia_semana}, ${dataBr(dados.hoje)}`,
-    sessao.ehUm('dono', 'recepção')
+    sessao.ehUm('dono', 'recepcao')
       ? [el('button', { classe: 'botao secundario', texto: 'Ver financeiro', aoClicar: () => irPara('financeiro') })]
       : [],
   ));
 
-  if (sessao.ehUm('dono', 'recepção')) raiz.append(...painelGestao(dados));
+  raiz.append(el('p', { classe: 'explicacao' }, [
+    icone('painel', 16),
+    sessao.papel === 'aluno'
+      ? 'Este é o resumo do seu treino: as aulas de hoje, a sua frequência e o que a academia precisa te avisar.'
+      : 'Este é o retrato do dia da academia: quem treina hoje, o que entrou no caixa, quem está devendo e o que precisa da sua atenção agora.',
+  ]));
+
+  if (sessao.ehUm('dono', 'recepcao')) raiz.append(...painelGestao(dados));
   if (sessao.papel === 'mestre') raiz.append(...painelMestre(dados));
   if (sessao.papel === 'aluno') raiz.append(painelAluno(dados));
 
-  if (sessao.ehUm('dono', 'recepção') && (dados.aniversariantes || []).length) {
+  if (sessao.ehUm('dono', 'recepcao') && (dados.aniversariantes || []).length) {
     raiz.append(cartao('Aniversariantes do mês', listaAniversariantes(dados.aniversariantes)));
   }
 
@@ -158,7 +166,7 @@ function listaAulasHoje(aulas) {
   }, [
     el('div', { estilo: 'display:flex;justify-content:space-between;gap:.5rem;align-items:center' }, [
       el('span', { classe: 'hora', texto: `${aula.hora_inicio} - ${aula.hora_fim}` }),
-      sessao.ehUm('dono', 'mestre', 'recepção')
+      sessao.ehUm('dono', 'mestre', 'recepcao')
         ? etiqueta(`${aula.presentes}/${aula.total_alunos} presentes`, aula.presentes ? 'bom' : 'neutra')
         : null,
     ]),

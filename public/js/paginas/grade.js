@@ -2,6 +2,7 @@ import { api, sessao } from '../api.js';
 import {
   el, cartao, botao, etiqueta, vazio, esqueleto, abrirFormulario, aviso, confirmar, DIAS_SEMANA,
 } from '../ui.js';
+import { icone } from '../icones.js';
 import { topo } from '../app.js';
 
 const ABERTURA_PADRAO = 6 * 60;   // 06:00
@@ -260,6 +261,10 @@ export default async function paginaGrade() {
         ? 'Monte a agenda da academia: clique num espaço livre para criar a aula e num bloco para editar.'
         : 'Agenda completa das aulas da semana',
       podeEditar ? [botao('+ Nova aula', () => formularioAula())] : []),
+    el('p', { classe: 'explicacao' }, [
+      icone('calendario', 16),
+      'Esta é a grade real da semana. Clique num espaço vazio para criar uma aula naquele horário, ou num bloco para editar. O rótulo permite separar, por exemplo, No-Gi às 19h e Gi às 20h.',
+    ]),
 
     el('div', { classe: 'filtros' }, [
       el('div', { classe: 'campo' }, [

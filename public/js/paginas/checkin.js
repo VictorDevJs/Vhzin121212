@@ -2,6 +2,7 @@ import { api, sessao } from '../api.js';
 import {
   el, cartao, indicador, botao, etiqueta, tabela, celula, vazio, aviso, esqueleto, dataBr,
 } from '../ui.js';
+import { icone } from '../icones.js';
 import { barrasHorizontais, evolucao } from '../graficos.js';
 import { topo } from '../app.js';
 
@@ -120,6 +121,10 @@ async function telaDoAluno() {
 
   return el('div', {}, [
     topo('Check-in do treino', 'Chegou na academia? Confirme sua presença e registre o treino no seu histórico.'),
+    el('p', { classe: 'explicacao' }, [
+      icone('raio', 16),
+      'O aluno abre o aplicativo na hora da aula e confirma a presença. A janela abre 30 minutos antes e fecha 15 minutos depois do início, então o registro reflete quem realmente treinou.',
+    ]),
     area,
   ]);
 }
@@ -136,6 +141,11 @@ async function telaDaAcademia() {
 
   return el('div', {}, [
     topo('Check-ins', 'Quem está realmente aparecendo para treinar, aula por aula'),
+    el('p', { classe: 'explicacao' }, [
+      icone('raio', 16),
+      'O aluno confirma a presença pelo celular na hora da aula. Estes números mostram quantos apareceram '
+      + 'em cada turma, quais modalidades estão cheias e quem está sumindo do tatame.',
+    ]),
 
     el('div', { classe: 'grade col-4', estilo: 'margin-bottom:1rem' }, [
       indicador({

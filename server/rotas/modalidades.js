@@ -89,7 +89,7 @@ function exigirGraduador(req, modalidadeId) {
 }
 
 /** Catálogo oficial disponível para copiar dentro do sistema. */
-roteador.get('/catalogo-graduacoes', exigirPapel(...EQUIPE), rota((_req, res) => {
+roteador.get('/catalogo-graduacoes', exigirPapel(...EQUIPE, 'aluno'), rota((_req, res) => {
   res.json(Object.entries(GRADUACOES_PADRAO).map(([nome, dados]) => ({
     modalidade: nome,
     federacao: dados.federacao,

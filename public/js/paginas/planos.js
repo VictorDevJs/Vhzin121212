@@ -1,5 +1,6 @@
 import { api, sessao } from '../api.js';
 import { el, cartao, botao, etiqueta, moeda, abrirFormulario, aviso, confirmar, vazio } from '../ui.js';
+import { icone } from '../icones.js';
 import { topo } from '../app.js';
 
 const PERIODICIDADES = [
@@ -82,6 +83,10 @@ export default async function paginaPlanos() {
   return el('div', {}, [
     topo('Planos', 'Valores, periodicidade e modalidades de cada plano',
       ehDono ? [botao('+ Novo plano', () => formulario())] : []),
+    el('p', { classe: 'explicacao' }, [
+      icone('cartao', 16),
+      'Os planos definem o valor da mensalidade e quais modalidades o aluno pode treinar. O que estiver ativo aparece na página pública com o preço para quem visita o site.',
+    ]),
     cartao(null, area),
   ]);
 }

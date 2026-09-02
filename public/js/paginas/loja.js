@@ -3,6 +3,7 @@ import {
   el, cartao, indicador, botao, etiqueta, tabela, celula, moeda, dataBr, vazio, esqueleto,
   abrirFormulario, abrirModal, aviso, confirmar,
 } from '../ui.js';
+import { icone } from '../icones.js';
 import { topo } from '../app.js';
 
 const ROTULO_CATEGORIA = {
@@ -269,6 +270,10 @@ export default async function paginaLoja() {
       ? 'Kimonos, faixas, luvas e a linha Atak. Fale com a recepção para comprar.'
       : 'Equipamento por luta, acessórios e controle de estoque. A venda entra direto no caixa.',
     acoes),
+    el('p', { classe: 'explicacao' }, [
+      icone('sacola', 16),
+      'Os produtos são separados por arte marcial: kimonos, faixas, luvas, caneleiras e os acessórios que servem para todo mundo. Cada venda baixa o estoque e entra como receita no caixa.',
+    ]),
 
     el('div', { classe: 'filtros' }, [
       el('div', { classe: 'campo' }, [

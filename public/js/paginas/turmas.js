@@ -3,6 +3,7 @@ import {
   el, cartao, tabela, celula, botao, etiqueta, abrirFormulario, abrirModal, aviso, confirmar,
   vazio, DIAS_SEMANA,
 } from '../ui.js';
+import { icone } from '../icones.js';
 import { topo } from '../app.js';
 
 /** Modalidades, faixas, turmas e horarios - o cadastro base da academia. */
@@ -251,6 +252,10 @@ export default async function paginaTurmas() {
         botao('+ Modalidade', () => formularioModalidade(), 'botao secundario'),
         botao('+ Turma', () => formularioTurma()),
       ] : []),
+    el('p', { classe: 'explicacao' }, [
+      icone('luva', 16),
+      'Modalidade é a arte marcial; turma é o grupo que treina num horário. Tudo que aparece no site — nome, descrição, cor, foto e a frase de destaque — é editado aqui.',
+    ]),
     cartao('Modalidades', areaModalidades),
     cartao('Turmas', areaTurmas),
   ]);

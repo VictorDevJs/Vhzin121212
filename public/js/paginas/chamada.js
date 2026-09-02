@@ -1,5 +1,6 @@
 import { api, sessao } from '../api.js';
 import { el, cartao, botao, etiqueta, aviso, vazio, hojeISO, dataBr, tabela, celula } from '../ui.js';
+import { icone } from '../icones.js';
 import { topo } from '../app.js';
 
 /** Chamada das aulas: marca presenca e falta de cada aluno da turma. */
@@ -129,6 +130,10 @@ export default async function paginaChamada() {
 
   return el('div', {}, [
     topo('Chamada', 'Registre presenças e faltas de cada aula'),
+    el('p', { classe: 'explicacao' }, [
+      icone('chamada', 16),
+      'A chamada marca quem esteve no tatame em cada aula. O check-in feito pelo aluno no celular já entra aqui automaticamente, então normalmente você só confirma quem faltou.',
+    ]),
     el('div', { classe: 'filtros' }, [
       el('div', { classe: 'campo' }, [el('label', { texto: 'Turma' }), seletorTurma]),
       el('div', { classe: 'campo' }, [el('label', { texto: 'Data da aula' }), seletorData]),

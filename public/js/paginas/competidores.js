@@ -63,6 +63,9 @@ export default async function paginaCompetidores() {
   function cartaoEquipe(equipe) {
     return el('article', { classe: 'cartao equipe tilt', estilo: `--cor-equipe:${equipe.cor || 'var(--marca-1)'}` }, [
       el('div', { classe: 'faixa-equipe' }),
+      equipe.imagem
+        ? el('img', { classe: 'cartaz', src: equipe.imagem, alt: `Equipe ${equipe.nome}`, loading: 'lazy' })
+        : null,
       el('div', { classe: 'acoes', estilo: 'margin-bottom:.5rem' }, [
         equipe.modalidade ? etiquetaCor(equipe.modalidade, equipe.modalidade_cor) : null,
         etiqueta(CATEGORIAS.find((c) => c.valor === equipe.categoria)?.rotulo || equipe.categoria, 'neutra'),
@@ -196,12 +199,21 @@ export default async function paginaCompetidores() {
         { nome: 'descricao', rotulo: 'Sobre a equipe', tipo: 'textarea',
           placeholder: 'Dias de treino, exigências e objetivo do time.' },
         { nome: 'cor', rotulo: 'Cor da equipe', tipo: 'color', valor: '#f5b301' },
+        { nome: 'imagem_nova', rotulo: 'Foto da equipe', tipo: 'arquivo', aceita: 'image/*',
+          dica: 'Uma foto do time no tatame deixa a página pública muito melhor.' },
         { nome: 'ativo', rotulo: 'Equipe ativa', tipo: 'checkbox', valor: 1 },
       ],
       valores: equipe || { categoria: 'adulto', ativo: 1, cor: '#f5b301' },
       aoSalvar: async (dados) => {
-        if (equipe) await api.atualizar(`/equipes/${equipe.id}`, dados);
-        else await api.criar('/equipes', dados);
+        const { imagem_nova: imagemNova, ...corpo } = dados;
+        if (imagemNova) {
+          const enviada = await api.criar('/arquivos', { conteudo: imagemNova });
+          corpo.imagem = enviada.url;
+        } else if (equipe?.imagem) {
+          corpo.imagem = equipe.imagem;
+        }
+        if (equipe) await api.atualizar(`/equipes/${equipe.id}`, corpo);
+        else await api.criar('/equipes', corpo);
         aviso('Equipe salva.');
         await carregar();
       },

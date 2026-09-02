@@ -361,6 +361,9 @@ function secaoCompeticoes(competicoes, equipes, medalhas) {
     el('div', { classe: 'grade col-2' }, competicoes.map((competicao) => el('article', {
       classe: 'cartao competicao tilt',
     }, [
+      competicao.cartaz
+        ? el('img', { classe: 'cartaz', src: competicao.cartaz, alt: `Cartaz de ${competicao.nome}`, loading: 'lazy' })
+        : null,
       el('div', { classe: 'acoes', estilo: 'margin-bottom:.5rem' }, [
         competicao.modalidade ? etiquetaCor(competicao.modalidade, competicao.modalidade_cor) : null,
         etiqueta(competicao.nivel, 'neutra'),
@@ -385,6 +388,9 @@ function secaoCompeticoes(competicoes, equipes, medalhas) {
           classe: 'cartao equipe', estilo: `--cor-equipe:${equipe.cor || 'var(--marca-1)'}`,
         }, [
           el('div', { classe: 'faixa-equipe' }),
+          equipe.imagem
+            ? el('img', { classe: 'cartaz', src: equipe.imagem, alt: `Equipe ${equipe.nome}`, loading: 'lazy' })
+            : null,
           el('h3', { texto: equipe.nome }),
           el('p', { classe: 'dica', texto: equipe.descricao || '' }),
           el('div', { classe: 'numeros-equipe' }, [

@@ -1091,3 +1091,14 @@ td.acoes-celula { display: flex; gap: var(--esp-1); }
   .degrau { grid-template-columns: 1.4rem 56px 1fr; }
   .acoes-degrau { grid-column: 1 / -1; }
 }
+
+/* Cartaz de competição e foto de equipe dentro do cartão */
+.cartao .cartaz {
+  display: block;
+  width: calc(100% + 2 * var(--esp-4, 1.1rem));
+  margin: calc(-1 * var(--esp-4, 1.1rem)) calc(-1 * var(--esp-4, 1.1rem)) .9rem;
+  max-height: 190px;
+  object-fit: cover;
+  border-radius: var(--raio-2) var(--raio-2) 0 0;
+  background: var(--superficie-2);
+}

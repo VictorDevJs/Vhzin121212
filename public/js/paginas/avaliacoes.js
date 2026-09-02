@@ -3,6 +3,7 @@ import {
   el, cartao, botao, etiqueta, estrelas, abrirFormulario, aviso, confirmar,
   vazio, dataHoraBr, dataBr, esqueleto,
 } from '../ui.js';
+import { icone } from '../icones.js';
 import { topo } from '../app.js';
 
 const COR_STATUS = { aprovada: 'bom', pendente: 'atencao', recusada: 'critico' };
@@ -112,6 +113,10 @@ async function telaDaEquipe() {
     topo('Avaliações', 'Estrelas e comentários de alunos e visitantes do site', [
       botao('Deixar minha avaliação', () => formularioInterno(modalidades, carregar), 'botao secundario'),
     ]),
+    el('p', { classe: 'explicacao' }, [
+      icone('estrela', 16),
+      'As avaliações que chegam pelo site entram como pendentes: elas só aparecem para o público depois que a academia aprovar. Você também pode responder cada comentário.',
+    ]),
     cartao('Reputação da academia', areaResumo),
     el('div', { classe: 'filtros' }, [
       el('div', { classe: 'campo' }, [
@@ -174,10 +179,15 @@ async function telaDoAluno() {
   desenhar(minhas);
 
   return el('div', {}, [
-    topo('Minhas avaliações', 'Conte como esta sendo treinar no CT Atak', [
+    topo('Minhas avaliações', 'Conte como está sendo treinar no CT Atak', [
       botao('Avaliar a academia', () => formularioInterno(modalidades, async () => {
         desenhar(await api.obter('/avaliacoes/minhas'));
       })),
+    ]),
+    el('p', { classe: 'explicacao' }, [
+      icone('estrela', 16),
+      'Sua avaliação ajuda quem está pensando em treinar aqui. Ela passa por aprovação da academia '
+      + 'antes de aparecer no site, e a equipe pode responder o seu comentário.',
     ]),
     area,
   ]);

@@ -2,6 +2,7 @@ import { api, sessao } from '../api.js';
 import {
   el, cartao, botao, etiqueta, abrirFormulario, aviso, confirmar, vazio, dataBr, esqueleto,
 } from '../ui.js';
+import { icone } from '../icones.js';
 import { topo } from '../app.js';
 
 const TIPOS = [
@@ -114,6 +115,10 @@ export default async function paginaCertificados() {
     topo('Certificados e titulações',
       'Faixas pretas, titulações dos mestres, registros em federação e cursos da equipe',
       ehDono ? [botao('+ Publicar certificado', () => formulario())] : []),
+    el('p', { classe: 'explicacao' }, [
+      icone('medalha', 16),
+      'Aqui ficam guardadas as titulações da academia e dos mestres: faixas pretas, registros de federação, cursos e premiações. O que estiver marcado como público aparece no site para os alunos verem.',
+    ]),
     el('div', { classe: 'filtros' }, [
       el('div', { classe: 'campo' }, [
         el('label', { texto: 'Tipo' }),

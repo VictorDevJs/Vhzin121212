@@ -101,6 +101,9 @@ export default async function paginaCompeticoes() {
   function cartaoCompeticao(item) {
     const passada = item.status === 'realizada';
     return el('article', { classe: 'cartao competicao tilt' }, [
+      item.cartaz
+        ? el('img', { classe: 'cartaz', src: item.cartaz, alt: `Cartaz de ${item.nome}`, loading: 'lazy' })
+        : null,
       el('div', { classe: 'acoes', estilo: 'margin-bottom:.6rem' }, [
         item.modalidade ? etiquetaCor(item.modalidade, item.modalidade_cor) : etiqueta('Geral', 'neutra'),
         etiqueta(SITUACOES.find((s) => s.valor === item.status)?.rotulo || item.status,
@@ -311,12 +314,21 @@ export default async function paginaCompeticoes() {
         { nome: 'descricao', rotulo: 'Descrição', tipo: 'textarea' },
         { nome: 'regulamento', rotulo: 'Regras e observações', tipo: 'textarea' },
         { nome: 'link', rotulo: 'Link da inscrição oficial' },
+        { nome: 'cartaz_novo', rotulo: 'Cartaz do evento', tipo: 'arquivo', aceita: 'image/*',
+          dica: 'A imagem aparece no site junto com a competição.' },
         { nome: 'publicar_site', rotulo: 'Mostrar na página pública', tipo: 'checkbox', valor: 1 },
       ],
       valores: item || { tipo: 'campeonato', nivel: 'estadual', status: 'agendada', publicar_site: 1, taxa: 0 },
       aoSalvar: async (dados) => {
-        if (item) await api.atualizar(`/competicoes/${item.id}`, dados);
-        else await api.criar('/competicoes', dados);
+        const { cartaz_novo: cartazNovo, ...corpo } = dados;
+        if (cartazNovo) {
+          const enviado = await api.criar('/arquivos', { conteudo: cartazNovo });
+          corpo.cartaz = enviado.url;
+        } else if (item?.cartaz) {
+          corpo.cartaz = item.cartaz;
+        }
+        if (item) await api.atualizar(`/competicoes/${item.id}`, corpo);
+        else await api.criar('/competicoes', corpo);
         aviso('Competição salva.');
         agenda.proximas = (await api.obter('/competicoes/agenda')).proximas;
         await carregar();

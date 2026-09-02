@@ -3,6 +3,7 @@ import {
   el, cartao, tabela, celula, botao, indicador, etiqueta, etiquetaStatus, moeda, dataBr, competenciaBr,
   abrirFormulario, aviso, confirmar, vazio, hojeISO, competenciaAtual,
 } from '../ui.js';
+import { icone } from '../icones.js';
 import { barrasHorizontais, evolucao } from '../graficos.js';
 import { linkWhatsapp, mensagemCobranca } from '../whatsapp.js';
 import { marca } from '../marca.js';
@@ -321,6 +322,10 @@ export default async function paginaFinanceiro() {
       botao('+ Entrada', () => novoLancamento('receita'), 'botao secundario'),
       ehDono ? botao('+ Saída', () => novoLancamento('despesa'), 'botao secundario') : null,
     ].filter(Boolean)),
+    el('p', { classe: 'explicacao' }, [
+      icone('dinheiro', 16),
+      'Todo dinheiro que entra e sai passa por aqui: mensalidades, vendas da loja e despesas. A receita de cada arte marcial é rateada quando o aluno treina mais de uma modalidade.',
+    ]),
     el('div', { classe: 'filtros' }, [
       el('div', { classe: 'campo' }, [el('label', { texto: 'Mês de referência' }), seletorCompetencia]),
     ]),

@@ -3,6 +3,7 @@ import {
   el, cartao, tabela, celula, botao, etiqueta, etiquetaStatus, moeda, dataBr, competenciaBr,
   abrirFormulario, abrirModal, aviso, confirmar, vazio, idade, hojeISO,
 } from '../ui.js';
+import { icone } from '../icones.js';
 import { linkWhatsapp, mensagemCobranca } from '../whatsapp.js';
 import { marca } from '../marca.js';
 import { topo } from '../app.js';
@@ -144,7 +145,7 @@ export default async function paginaAlunos() {
               desenharFicha(await api.obter(`/alunos/${dados.id}`));
             }, 'botao pequeno perigo')])))
             : vazio('Ainda não esta em nenhuma turma.'),
-          sessao.ehUm('dono', 'recepção', 'mestre')
+          sessao.ehUm('dono', 'recepcao', 'mestre')
             ? botao('Incluir em uma turma', () => incluirEmTurma(dados), 'botao pequeno')
             : null,
         ]),
@@ -238,7 +239,11 @@ export default async function paginaAlunos() {
 
   return el('div', {}, [
     topo('Alunos', 'Cadastro, matrícula, turmas e histórico de cada aluno',
-      sessao.ehUm('dono', 'recepção') ? [botao('+ Novo aluno', () => formularioAluno())] : []),
+      sessao.ehUm('dono', 'recepcao') ? [botao('+ Novo aluno', () => formularioAluno())] : []),
+    el('p', { classe: 'explicacao' }, [
+      icone('alunos', 16),
+      'Cada aluno tem ficha completa: plano, turmas, mensalidades, graduações e frequência. Use os filtros para achar quem está devendo, quem sumiu do treino ou quem acabou de chegar.',
+    ]),
     el('div', { classe: 'filtros' }, [
       el('div', { classe: 'campo' }, [el('label', { texto: 'Buscar' }), campoBusca]),
       seletor('Situação', ['', 'ativo', 'pendente', 'trancado', 'inativo'], (valor) => { filtros.status = valor; carregar(); }),
