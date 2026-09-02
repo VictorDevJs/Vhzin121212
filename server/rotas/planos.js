@@ -56,7 +56,7 @@ roteador.post('/', exigirPapel('dono'), rota((req, res) => {
 roteador.put('/:id', exigirPapel('dono'), rota((req, res) => {
   const id = inteiro(req.params.id);
   const atual = um('SELECT * FROM planos WHERE id = :id', { id });
-  if (!atual) throw new ErroApi('Plano nao encontrado.', 404);
+  if (!atual) throw new ErroApi('Plano não encontrado.', 404);
 
   transacao(() => {
     executar(`
@@ -80,9 +80,9 @@ roteador.put('/:id', exigirPapel('dono'), rota((req, res) => {
 roteador.delete('/:id', exigirPapel('dono'), rota((req, res) => {
   const id = inteiro(req.params.id);
   const emUso = um('SELECT COUNT(*) AS total FROM matriculas WHERE plano_id = :id', { id });
-  if (emUso.total > 0) throw new ErroApi('Ha matriculas usando este plano. Desative-o em vez de excluir.', 409);
+  if (emUso.total > 0) throw new ErroApi('Ha matrículas usando este plano. Desative-o em vez de excluir.', 409);
   const apagado = executar('DELETE FROM planos WHERE id = :id', { id });
-  if (!apagado.changes) throw new ErroApi('Plano nao encontrado.', 404);
+  if (!apagado.changes) throw new ErroApi('Plano não encontrado.', 404);
   res.json({ mensagem: 'Plano removido.' });
 }));
 

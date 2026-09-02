@@ -375,3 +375,87 @@ test('mensalidades divididas por arte marcial fecham com o total do mes', async 
     'o rateio nao pode inventar nem perder dinheiro',
   );
 });
+
+/* ---------------------------------------------------------------------------
+   Check-in do treino e loja
+   --------------------------------------------------------------------------- */
+
+test('check-in exige que a aula esteja na grade do aluno', async () => {
+  const fora = await chamar('POST', '/api/checkins', {
+    token: estado.tokenAluno, corpo: { horario_id: 999999 },
+  });
+  assert.equal(fora.status, 404);
+});
+
+test('aluno vê as aulas de hoje e os próprios números de treino', async () => {
+  const { status, dados } = await chamar('GET', '/api/checkins/agora', { token: estado.tokenAluno });
+  assert.equal(status, 200);
+  assert.ok(Array.isArray(dados.aulas));
+  assert.equal(typeof dados.totais.total, 'number');
+  assert.equal(dados.totais.dias.length, 7, 'a semana do aluno tem sete dias');
+});
+
+test('resumo de check-ins mostra as aulas do dia para a academia', async () => {
+  const { status, dados } = await chamar('GET', '/api/checkins/resumo', { token: estado.tokenDono });
+  assert.equal(status, 200);
+  assert.ok(Array.isArray(dados.aulas_hoje));
+  assert.equal(typeof dados.totais.media_por_aula, 'number');
+});
+
+test('aluno não enxerga o resumo da academia', async () => {
+  const { status } = await chamar('GET', '/api/checkins/resumo', { token: estado.tokenAluno });
+  assert.equal(status, 403);
+});
+
+test('somente o dono cadastra produto na loja', async () => {
+  const recusado = await chamar('POST', '/api/loja/produtos', {
+    token: estado.tokenRecepcao, corpo: { nome: 'Kimono', preco: 100 },
+  });
+  assert.equal(recusado.status, 403);
+
+  const criado = await chamar('POST', '/api/loja/produtos', {
+    token: estado.tokenDono,
+    corpo: { nome: 'Kimono de teste', preco: 400, categoria: 'kimono', estoque: 2, tamanhos: 'A2, A3' },
+  });
+  assert.equal(criado.status, 201);
+  estado.produtoId = criado.dados.id;
+});
+
+test('venda baixa o estoque e vira receita no caixa', async () => {
+  const antes = await chamar('GET', '/api/financeiro/resumo', { token: estado.tokenDono });
+
+  const venda = await chamar('POST', '/api/loja/vendas', {
+    token: estado.tokenRecepcao,
+    corpo: { cliente_nome: 'Cliente do teste', forma_pagamento: 'pix',
+      itens: [{ produto_id: estado.produtoId, quantidade: 2 }] },
+  });
+  assert.equal(venda.status, 201);
+  assert.equal(venda.dados.total, 800);
+
+  const catalogo = await chamar('GET', '/api/loja/produtos', { token: estado.tokenDono });
+  const produto = catalogo.dados.produtos.find((p) => p.id === estado.produtoId);
+  assert.equal(produto.estoque, 0, 'o estoque foi baixado');
+
+  const depois = await chamar('GET', '/api/financeiro/resumo', { token: estado.tokenDono });
+  assert.equal(depois.dados.receitas - antes.dados.receitas, 800, 'a venda entrou como receita');
+});
+
+test('venda sem estoque é recusada', async () => {
+  const { status, dados } = await chamar('POST', '/api/loja/vendas', {
+    token: estado.tokenDono,
+    corpo: { itens: [{ produto_id: estado.produtoId, quantidade: 1 }] },
+  });
+  assert.equal(status, 409);
+  assert.match(dados.erro, /[Ee]stoque/);
+});
+
+test('a loja da página pública mostra só o que está publicado', async () => {
+  const antes = await chamar('GET', '/api/publico/academia');
+  const quantidade = antes.dados.produtos.length;
+
+  await chamar('PUT', `/api/loja/produtos/${estado.produtoId}`, {
+    token: estado.tokenDono, corpo: { publicar_site: 0 },
+  });
+  const depois = await chamar('GET', '/api/publico/academia');
+  assert.equal(depois.dados.produtos.length, quantidade - 1);
+});

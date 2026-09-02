@@ -28,7 +28,7 @@ roteador.post('/registrar', rota((req, res) => {
   if (String(senha).length < 6) throw new ErroApi('A senha precisa ter pelo menos 6 caracteres.');
 
   const jaExiste = um('SELECT id FROM usuarios WHERE email = :email', { email: texto(email) });
-  if (jaExiste) throw new ErroApi('Ja existe uma conta com este e-mail.', 409);
+  if (jaExiste) throw new ErroApi('Já existe uma conta com este e-mail.', 409);
 
   const categoria = categoriaPorIdade(texto(data_nascimento));
 
@@ -67,7 +67,7 @@ roteador.post('/registrar', rota((req, res) => {
   res.status(201).json({
     token: gerarToken(usuario),
     usuario: perfilCompleto(usuario),
-    mensagem: 'Cadastro realizado! A recepcao vai confirmar sua matricula e liberar seu plano.',
+    mensagem: 'Cadastro realizado! A recepção vai confirmar sua matrícula e liberar seu plano.',
   });
 }));
 
@@ -79,7 +79,7 @@ roteador.post('/login', rota((req, res) => {
   if (!usuario || !conferirSenha(String(senha), usuario.senha_hash)) {
     throw new ErroApi('E-mail ou senha incorretos.', 401);
   }
-  if (!usuario.ativo) throw new ErroApi('Sua conta esta desativada. Fale com a recepcao.', 403);
+  if (!usuario.ativo) throw new ErroApi('Sua conta esta desativada. Fale com a recepção.', 403);
 
   const { senha_hash, ...publico } = usuario;
   res.json({ token: gerarToken(usuario), usuario: perfilCompleto(publico) });

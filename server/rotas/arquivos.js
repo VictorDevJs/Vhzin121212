@@ -27,7 +27,7 @@ roteador.post('/', exigirPapel('dono'), rota((req, res) => {
   if (!conteudo) throw new ErroApi('Envie o arquivo no campo "conteudo".');
 
   const partes = /^data:([\w/+.-]+);base64,(.+)$/s.exec(conteudo);
-  if (!partes) throw new ErroApi('Formato de arquivo invalido.');
+  if (!partes) throw new ErroApi('Formato de arquivo inválido.');
 
   const [, tipo, base64] = partes;
   const extensao = TIPOS_ACEITOS[tipo];

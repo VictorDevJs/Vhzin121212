@@ -284,6 +284,59 @@ function criarEsquema(banco) {
       criado_em     TEXT NOT NULL DEFAULT (datetime('now','localtime'))
     );
 
+    -- Check-in do treino: o aluno confirma presenca na janela da aula
+    CREATE TABLE IF NOT EXISTS checkins (
+      id         INTEGER PRIMARY KEY AUTOINCREMENT,
+      aluno_id   INTEGER NOT NULL REFERENCES alunos(id) ON DELETE CASCADE,
+      turma_id   INTEGER NOT NULL REFERENCES turmas(id) ON DELETE CASCADE,
+      horario_id INTEGER REFERENCES horarios(id) ON DELETE SET NULL,
+      data       TEXT NOT NULL,
+      hora       TEXT NOT NULL,
+      origem     TEXT NOT NULL DEFAULT 'aluno' CHECK (origem IN ('aluno','recepcao','mestre')),
+      criado_em  TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+      UNIQUE (aluno_id, turma_id, data)
+    );
+
+    -- Loja: produtos por modalidade e acessorios
+    CREATE TABLE IF NOT EXISTS produtos (
+      id            INTEGER PRIMARY KEY AUTOINCREMENT,
+      nome          TEXT NOT NULL,
+      descricao     TEXT,
+      categoria     TEXT NOT NULL DEFAULT 'acessorio',
+      modalidade_id INTEGER REFERENCES modalidades(id) ON DELETE SET NULL,
+      preco         REAL NOT NULL DEFAULT 0,
+      custo         REAL NOT NULL DEFAULT 0,
+      estoque       INTEGER NOT NULL DEFAULT 0,
+      tamanhos      TEXT,
+      imagem        TEXT,
+      ativo         INTEGER NOT NULL DEFAULT 1,
+      publicar_site INTEGER NOT NULL DEFAULT 1,
+      criado_em     TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+    );
+
+    CREATE TABLE IF NOT EXISTS vendas (
+      id              INTEGER PRIMARY KEY AUTOINCREMENT,
+      aluno_id        INTEGER REFERENCES alunos(id) ON DELETE SET NULL,
+      cliente_nome    TEXT,
+      total           REAL NOT NULL,
+      forma_pagamento TEXT,
+      data            TEXT NOT NULL,
+      observacao      TEXT,
+      lancamento_id   INTEGER REFERENCES lancamentos(id) ON DELETE SET NULL,
+      registrado_por  INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
+      criado_em       TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+    );
+
+    CREATE TABLE IF NOT EXISTS venda_itens (
+      id             INTEGER PRIMARY KEY AUTOINCREMENT,
+      venda_id       INTEGER NOT NULL REFERENCES vendas(id) ON DELETE CASCADE,
+      produto_id     INTEGER REFERENCES produtos(id) ON DELETE SET NULL,
+      nome           TEXT NOT NULL,
+      tamanho        TEXT,
+      quantidade     INTEGER NOT NULL DEFAULT 1,
+      preco_unitario REAL NOT NULL
+    );
+
     -- Dados institucionais mostrados na pagina publica da academia
     CREATE TABLE IF NOT EXISTS configuracoes (
       chave TEXT PRIMARY KEY,
@@ -298,5 +351,9 @@ function criarEsquema(banco) {
     CREATE INDEX IF NOT EXISTS idx_avisos_criado ON avisos(criado_em DESC);
     CREATE INDEX IF NOT EXISTS idx_avaliacoes_status ON avaliacoes(status, criado_em DESC);
     CREATE INDEX IF NOT EXISTS idx_certificados_tipo ON certificados(tipo, data_emissao DESC);
+    CREATE INDEX IF NOT EXISTS idx_checkins_data ON checkins(data DESC);
+    CREATE INDEX IF NOT EXISTS idx_checkins_turma ON checkins(turma_id, data);
+    CREATE INDEX IF NOT EXISTS idx_produtos_modalidade ON produtos(modalidade_id, ativo);
+    CREATE INDEX IF NOT EXISTS idx_vendas_data ON vendas(data DESC);
   `);
 }

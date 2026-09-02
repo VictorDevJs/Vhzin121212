@@ -52,7 +52,7 @@ function numeroCurto(valor) {
   return n.toLocaleString('pt-BR', { maximumFractionDigits: 0 });
 }
 
-/** Legenda padrao: marcador colorido + nome em cor de texto. */
+/** Legenda padrão: marcador colorido + nome em cor de texto. */
 export function legenda(series, formato = 'quadro') {
   return el('div', { classe: 'legenda' }, series.map((serie) => el('span', { classe: 'chave' }, [
     el('span', { classe: formato, estilo: `background:${serie.cor}` }),
@@ -90,13 +90,13 @@ function criarDica(container) {
           el('strong', { texto: linha.valor }),
         ])),
       );
-      dica.classList.add('visivel');
+      dica.classList.add('visível');
       const larguraCaixa = dica.offsetWidth || 160;
       const limite = container.clientWidth - larguraCaixa - 8;
       dica.style.left = `${Math.max(4, Math.min(x + 14, limite))}px`;
       dica.style.top = `${Math.max(4, y - 12)}px`;
     },
-    esconder() { dica.classList.remove('visivel'); },
+    esconder() { dica.classList.remove('visível'); },
   };
 }
 
@@ -110,7 +110,7 @@ export function barrasHorizontais({ dados, formatar = numeroCurto }) {
 
   const maximo = Math.max(...itens.map((d) => d.valor));
 
-  // Montado em HTML (nao em SVG) para o texto nunca esticar junto com a barra.
+  // Montado em HTML (não em SVG) para o texto nunca esticar junto com a barra.
   const lista = el('div', { classe: 'barras' }, itens.map((item, indice) => {
     const cor = item.cor || corDaSerie(indice);
     return el('div', {
@@ -201,7 +201,7 @@ export function rosca({ dados, titulo = 'total', formatar = numeroCurto }) {
 
   return comTabela(
     el('div', {}, [container, legenda(series)]),
-    () => tabelaSimples(['Categoria', 'Valor', 'Participacao'],
+    () => tabelaSimples(['Categoria', 'Valor', 'Participação'],
       itens.map((i) => [i.rotulo, formatar(i.valor), `${Math.round((i.valor / total) * 100)}%`])),
   );
 }
@@ -217,7 +217,7 @@ function arco(cx, cy, raio, grauInicio, grauFim) {
 }
 
 /* ------------------------------------------------------------------------
-   Linha + area - evolucao no tempo, com mira e leitura das duas series
+   Linha + área - evolução no tempo, com mira e leitura das duas series
    ------------------------------------------------------------------------ */
 
 export function evolucao({ pontos, series, formatar = moeda }) {
@@ -238,10 +238,10 @@ export function evolucao({ pontos, series, formatar = moeda }) {
   const dica = criarDica(container);
   const svg = svgEl('svg', {
     viewBox: `0 0 ${largura} ${altura}`, role: 'img',
-    'aria-label': `Evolucao de ${series.map((s) => s.nome).join(' e ')} ao longo de ${pontos.length} meses`,
+    'aria-label': `Evolução de ${series.map((s) => s.nome).join(' e ')} ao longo de ${pontos.length} meses`,
   });
 
-  // Grade e eixo Y em numeros redondos
+  // Grade e eixo Y em números redondos
   for (let valor = 0; valor <= topo + 0.001; valor += passo) {
     const py = y(valor);
     svg.append(svgEl('line', {
@@ -251,12 +251,15 @@ export function evolucao({ pontos, series, formatar = moeda }) {
     svg.append(texto(numeroCurto(valor), { x: margem.esquerda - 8, y: py + 4, 'text-anchor': 'end', class: 'eixo-texto' }));
   }
 
+  // Com muitos pontos, mostra um rótulo a cada N para os textos não se sobreporem.
+  const passoRotulo = Math.max(1, Math.ceil(pontos.length / 10));
   pontos.forEach((ponto, indice) => {
+    if (indice % passoRotulo !== 0 && indice !== pontos.length - 1) return;
     svg.append(texto(ponto.x, { x: x(indice), y: altura - 8, 'text-anchor': 'middle', class: 'eixo-texto' }));
   });
 
   // Com duas ou mais series o preenchimento seria sobreposto e embaralharia as cores:
-  // nesse caso ficam so as linhas.
+  // nesse caso ficam só as linhas.
   const preencherArea = series.length === 1;
 
   series.forEach((serie, indiceSerie) => {
@@ -271,18 +274,18 @@ export function evolucao({ pontos, series, formatar = moeda }) {
     }));
 
     const ultimo = pontos.length - 1;
-    // Marcador final com anel na cor da superficie, para nao sumir sobre a outra linha.
+    // Marcador final com anel na cor da superficie, para não sumir sobre a outra linha.
     svg.append(svgEl('circle', {
       cx: x(ultimo), cy: y(pontos[ultimo].valores[indiceSerie]), r: 4.5,
       fill: serie.cor, stroke: 'var(--superficie)', 'stroke-width': 2,
     }));
-    // Rotulo direto so no ultimo ponto de cada serie.
+    // Rotulo direto só no último ponto de cada serie.
     svg.append(texto(numeroCurto(pontos[ultimo].valores[indiceSerie]), {
       x: x(ultimo) + 10, y: y(pontos[ultimo].valores[indiceSerie]) + 4, class: 'rotulo-direto',
     }));
   });
 
-  // Mira: encontra o mes mais proximo do ponteiro e mostra as duas series juntas.
+  // Mira: encontra o mês mais próximo do ponteiro e mostra as duas series juntas.
   const mira = svgEl('line', { y1: margem.topo, y2: margem.topo + areaA, class: 'grade-linha', opacity: '0', style: 'stroke:var(--tinta-3)' });
   svg.append(mira);
   const captura = svgEl('rect', {
@@ -317,7 +320,7 @@ export function evolucao({ pontos, series, formatar = moeda }) {
   container.append(svg);
   return comTabela(
     el('div', {}, [legenda(series, 'traco'), container]),
-    () => tabelaSimples(['Mes', ...series.map((s) => s.nome)],
+    () => tabelaSimples(['Mês', ...series.map((s) => s.nome)],
       pontos.map((p) => [p.x, ...p.valores.map((v) => formatar(v))])),
   );
 }

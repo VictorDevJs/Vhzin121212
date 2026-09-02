@@ -8,7 +8,7 @@ import { topo } from '../app.js';
 const COR_STATUS = { aprovada: 'bom', pendente: 'atencao', recusada: 'critico' };
 
 /**
- * Avaliacoes com estrelas e comentario.
+ * Avaliações com estrelas e comentario.
  * A equipe modera e responde; o aluno envia a dele e acompanha o resultado.
  */
 export default async function paginaAvaliacoes() {
@@ -30,7 +30,7 @@ async function telaDaEquipe() {
     desenharResumo(dados.resumo, dados.pendentes);
     area.replaceChildren(dados.avaliacoes.length
       ? el('div', { classe: 'grade col-2' }, dados.avaliacoes.map(cartaoAvaliacao))
-      : vazio('Nenhuma avaliacao com esse filtro.', '★'));
+      : vazio('Nenhuma avaliação com esse filtro.', '★'));
   }
 
   function desenharResumo(resumo, pendentes) {
@@ -40,7 +40,7 @@ async function telaDaEquipe() {
         el('div', { classe: 'media', texto: resumo.media.toFixed(1).replace('.', ',') }),
         estrelas(resumo.media, { tamanho: 18 }),
         el('div', { classe: 'dica', texto: `${resumo.total} avaliacao(oes) publicada(s)` }),
-        pendentes ? el('div', { estilo: 'margin-top:.5rem' }, [etiqueta(`${pendentes} aguardando aprovacao`, 'atencao')]) : null,
+        pendentes ? el('div', { estilo: 'margin-top:.5rem' }, [etiqueta(`${pendentes} aguardando aprovacao`, 'atenção')]) : null,
       ]),
       el('div', { classe: 'distribuicao' }, resumo.distribuicao.map((linha) => el('div', { classe: 'faixa-nota' }, [
         el('span', { texto: `${linha.nota}★`, estilo: 'width:26px' }),
@@ -62,7 +62,7 @@ async function telaDaEquipe() {
           item.modalidade ? etiqueta(item.modalidade, 'info') : null,
         ]),
       ]),
-      item.comentario ? el('p', { classe: 'texto', texto: item.comentario }) : el('p', { classe: 'dica', texto: 'Sem comentario.' }),
+      item.comentario ? el('p', { classe: 'texto', texto: item.comentario }) : el('p', { classe: 'dica', texto: 'Sem comentário.' }),
       el('div', { classe: 'autor' }, [
         el('strong', { texto: item.autor_nome }),
         el('span', { texto: `· ${dataHoraBr(item.criado_em)}` }),
@@ -81,14 +81,14 @@ async function telaDaEquipe() {
 
   async function mudarStatus(item, status) {
     await api.atualizar(`/avaliacoes/${item.id}`, { status });
-    aviso(status === 'aprovada' ? 'Avaliacao publicada no site.' : 'Avaliacao recusada.');
+    aviso(status === 'aprovada' ? 'Avaliação publicada no site.' : 'Avaliação recusada.');
     await carregar();
   }
 
   function responder(item) {
     abrirFormulario({
       titulo: `Responder ${item.autor_nome}`,
-      aviso: 'A resposta aparece junto do comentario na pagina publica.',
+      aviso: 'A resposta aparece junto do comentário na pagina publica.',
       campos: [{ nome: 'resposta', rotulo: 'Resposta da academia', tipo: 'textarea', obrigatorio: true }],
       valores: item,
       aoSalvar: async (dados) => {
@@ -100,22 +100,22 @@ async function telaDaEquipe() {
   }
 
   async function excluir(item) {
-    if (!confirmar('Excluir esta avaliacao definitivamente?')) return;
+    if (!confirmar('Excluir esta avaliação definitivamente?')) return;
     await api.remover(`/avaliacoes/${item.id}`);
-    aviso('Avaliacao removida.');
+    aviso('Avaliação removida.');
     await carregar();
   }
 
   await carregar();
 
   return el('div', {}, [
-    topo('Avaliacoes', 'Estrelas e comentarios de alunos e visitantes do site', [
-      botao('Deixar minha avaliacao', () => formularioInterno(modalidades, carregar), 'botao secundario'),
+    topo('Avaliações', 'Estrelas e comentários de alunos e visitantes do site', [
+      botao('Deixar minha avaliação', () => formularioInterno(modalidades, carregar), 'botao secundario'),
     ]),
-    cartao('Reputacao da academia', areaResumo),
+    cartao('Reputação da academia', areaResumo),
     el('div', { classe: 'filtros' }, [
       el('div', { classe: 'campo' }, [
-        el('label', { texto: 'Situacao' }),
+        el('label', { texto: 'Situação' }),
         el('select', { aoMudar: (evento) => { filtro.status = evento.target.value; carregar(); } }, [
           el('option', { value: '', texto: 'Todas' }),
           el('option', { value: 'pendente', texto: 'Aguardando aprovacao' }),
@@ -130,11 +130,11 @@ async function telaDaEquipe() {
 
 function formularioInterno(modalidades, aoTerminar) {
   abrirFormulario({
-    titulo: 'Deixar uma avaliacao',
+    titulo: 'Deixar uma avaliação',
     aviso: 'Ela entra na fila de aprovacao antes de aparecer no site.',
     campos: [
       { nome: 'nota', rotulo: 'Nota', tipo: 'estrelas', valor: 5 },
-      { nome: 'comentario', rotulo: 'Comentario', tipo: 'textarea' },
+      { nome: 'comentario', rotulo: 'Comentário', tipo: 'textarea' },
       { nome: 'modalidade_id', rotulo: 'Sobre qual modalidade? (opcional)', tipo: 'select',
         opcoes: [{ valor: '', rotulo: 'A academia em geral' }, ...modalidades.map((m) => ({ valor: m.id, rotulo: m.nome }))] },
     ],
@@ -168,13 +168,13 @@ async function telaDoAluno() {
           el('strong', { texto: 'Resposta da academia: ' }), item.resposta,
         ]) : null,
       ])))
-      : vazio('Voce ainda nao avaliou a academia. Sua opiniao ajuda muito!', '★'));
+      : vazio('Você ainda não avaliou a academia. Sua opiniao ajuda muito!', '★'));
   }
 
   desenhar(minhas);
 
   return el('div', {}, [
-    topo('Minhas avaliacoes', 'Conte como esta sendo treinar no CT Atak', [
+    topo('Minhas avaliações', 'Conte como esta sendo treinar no CT Atak', [
       botao('Avaliar a academia', () => formularioInterno(modalidades, async () => {
         desenhar(await api.obter('/avaliacoes/minhas'));
       })),

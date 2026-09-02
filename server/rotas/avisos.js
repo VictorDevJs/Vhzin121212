@@ -88,10 +88,10 @@ roteador.post('/', exigirPapel(...EQUIPE), rota((req, res) => {
 roteador.put('/:id', exigirPapel(...EQUIPE), rota((req, res) => {
   const id = inteiro(req.params.id);
   const atual = um('SELECT * FROM avisos WHERE id = :id', { id });
-  if (!atual) throw new ErroApi('Aviso nao encontrado.', 404);
+  if (!atual) throw new ErroApi('Aviso não encontrado.', 404);
   // O mestre so mexe nos avisos que ele mesmo publicou.
   if (req.usuario.papel === 'mestre' && atual.autor_id !== req.usuario.id) {
-    throw new ErroApi('Voce so pode editar os avisos publicados por voce.', 403);
+    throw new ErroApi('Você só pode editar os avisos publicados por você.', 403);
   }
 
   executar(`
@@ -119,9 +119,9 @@ roteador.put('/:id', exigirPapel(...EQUIPE), rota((req, res) => {
 roteador.delete('/:id', exigirPapel(...EQUIPE), rota((req, res) => {
   const id = inteiro(req.params.id);
   const atual = um('SELECT * FROM avisos WHERE id = :id', { id });
-  if (!atual) throw new ErroApi('Aviso nao encontrado.', 404);
+  if (!atual) throw new ErroApi('Aviso não encontrado.', 404);
   if (req.usuario.papel === 'mestre' && atual.autor_id !== req.usuario.id) {
-    throw new ErroApi('Voce so pode remover os avisos publicados por voce.', 403);
+    throw new ErroApi('Você só pode remover os avisos publicados por você.', 403);
   }
   executar('DELETE FROM avisos WHERE id = :id', { id });
   res.json({ mensagem: 'Aviso removido.' });

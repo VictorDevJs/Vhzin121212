@@ -21,7 +21,7 @@ export default async function paginaPlanos() {
       ? el('div', { classe: 'grade col-3' }, planos.map((plano) => el('article', { classe: 'cartao-plano' }, [
         el('h3', {}, [plano.nome, ' ', plano.ativo ? null : etiqueta('inativo', 'neutra')]),
         el('div', { classe: 'preco' }, [moeda(plano.valor), el('small', { texto: ` / ${plano.periodicidade}` })]),
-        el('p', { classe: 'dica', texto: plano.descricao || 'Sem descricao.' }),
+        el('p', { classe: 'dica', texto: plano.descricao || 'Sem descrição.' }),
         el('div', { classe: 'acoes', estilo: 'margin-bottom:.6rem' }, [
           etiqueta(plano.aulas_semana ? `${plano.aulas_semana}x por semana` : 'treinos livres', 'neutra'),
           etiqueta(`${plano.alunos_ativos} aluno(s)`, 'info'),
@@ -44,7 +44,7 @@ export default async function paginaPlanos() {
       titulo: plano ? `Editar ${plano.nome}` : 'Novo plano',
       campos: [
         { nome: 'nome', rotulo: 'Nome do plano', obrigatorio: true, placeholder: 'Passe Livre, Kids Mensal...' },
-        { nome: 'descricao', rotulo: 'Descricao', tipo: 'textarea' },
+        { nome: 'descricao', rotulo: 'Descrição', tipo: 'textarea' },
         { nome: 'valor', rotulo: 'Valor (R$)', tipo: 'number', passo: '0.01', obrigatorio: true },
         { nome: 'periodicidade', rotulo: 'Cobranca', tipo: 'select', opcoes: PERIODICIDADES },
         { nome: 'aulas_semana', rotulo: 'Aulas por semana', tipo: 'number', min: 0, valor: 0,
@@ -52,7 +52,7 @@ export default async function paginaPlanos() {
         { nome: 'modalidades', rotulo: 'Modalidades incluidas', tipo: 'multi',
           opcoes: modalidades.map((m) => ({ valor: m.id, rotulo: m.nome })),
           dica: 'Sem nenhuma marcada, o plano vale para todas as modalidades.' },
-        { nome: 'ativo', rotulo: 'Plano disponivel para venda', tipo: 'checkbox', valor: 1 },
+        { nome: 'ativo', rotulo: 'Plano disponível para venda', tipo: 'checkbox', valor: 1 },
       ],
       valores: plano
         ? { ...plano, modalidades: plano.modalidades.map((m) => m.id) }

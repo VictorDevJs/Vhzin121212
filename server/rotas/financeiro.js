@@ -78,7 +78,7 @@ roteador.post('/lancamentos', exigirPapel(...GESTAO), rota((req, res) => {
 roteador.delete('/lancamentos/:id', exigirPapel('dono'), rota((req, res) => {
   const id = inteiro(req.params.id);
   const lancamento = um('SELECT * FROM lancamentos WHERE id = :id', { id });
-  if (!lancamento) throw new ErroApi('Lancamento nao encontrado.', 404);
+  if (!lancamento) throw new ErroApi('Lançamento não encontrado.', 404);
   transacao(() => {
     // Estornar o pagamento devolve a mensalidade para o estado pendente.
     if (lancamento.mensalidade_id) {
@@ -87,7 +87,7 @@ roteador.delete('/lancamentos/:id', exigirPapel('dono'), rota((req, res) => {
     }
     executar('DELETE FROM lancamentos WHERE id = :id', { id });
   });
-  res.json({ mensagem: 'Lancamento removido.' });
+  res.json({ mensagem: 'Lançamento removido.' });
 }));
 
 // ----------------- Mensalidades -----------------
@@ -120,7 +120,7 @@ roteador.get('/mensalidades', exigirPapel(...GESTAO), rota((req, res) => {
 /** Gera as mensalidades do mes para todas as matriculas ativas. */
 roteador.post('/mensalidades/gerar', exigirPapel(...GESTAO), rota((req, res) => {
   const competencia = texto(req.body?.competencia, competenciaAtual());
-  if (!/^\d{4}-\d{2}$/.test(competencia)) throw new ErroApi('Competencia invalida. Use AAAA-MM.');
+  if (!/^\d{4}-\d{2}$/.test(competencia)) throw new ErroApi('Competência inválida. Use AAAA-MM.');
 
   const matriculas = todos(`SELECT * FROM matriculas WHERE status = 'ativa'`);
   let criadas = 0;
@@ -149,9 +149,9 @@ roteador.post('/mensalidades', exigirPapel(...GESTAO), rota((req, res) => {
   exigirCampos(req.body, ['aluno_id', 'competencia', 'valor']);
   const alunoId = inteiro(req.body.aluno_id);
   const competencia = texto(req.body.competencia);
-  if (!/^\d{4}-\d{2}$/.test(competencia)) throw new ErroApi('Competencia invalida. Use AAAA-MM.');
+  if (!/^\d{4}-\d{2}$/.test(competencia)) throw new ErroApi('Competência inválida. Use AAAA-MM.');
   if (um('SELECT id FROM mensalidades WHERE aluno_id = :a AND competencia = :c', { a: alunoId, c: competencia })) {
-    throw new ErroApi('Este aluno ja tem mensalidade nesta competencia.', 409);
+    throw new ErroApi('Este aluno já tem mensalidade nesta competência.', 409);
   }
   const matricula = um(`SELECT id FROM matriculas WHERE aluno_id = :a AND status = 'ativa' ORDER BY id DESC LIMIT 1`,
     { a: alunoId });
@@ -173,8 +173,8 @@ roteador.post('/mensalidades', exigirPapel(...GESTAO), rota((req, res) => {
 roteador.post('/mensalidades/:id/pagar', exigirPapel(...GESTAO), rota((req, res) => {
   const id = inteiro(req.params.id);
   const mensalidade = um('SELECT * FROM mensalidades WHERE id = :id', { id });
-  if (!mensalidade) throw new ErroApi('Mensalidade nao encontrada.', 404);
-  if (mensalidade.status === 'pago') throw new ErroApi('Esta mensalidade ja foi paga.', 409);
+  if (!mensalidade) throw new ErroApi('Mensalidade não encontrada.', 404);
+  if (mensalidade.status === 'pago') throw new ErroApi('Esta mensalidade já foi paga.', 409);
 
   const pagoEm = data(req.body?.pago_em, hoje());
   const valor = numero(req.body?.valor, mensalidade.valor);
@@ -203,7 +203,7 @@ roteador.post('/mensalidades/:id/pagar', exigirPapel(...GESTAO), rota((req, res)
 roteador.delete('/mensalidades/:id', exigirPapel('dono'), rota((req, res) => {
   const id = inteiro(req.params.id);
   const apagada = executar(`UPDATE mensalidades SET status = 'cancelado' WHERE id = :id`, { id });
-  if (!apagada.changes) throw new ErroApi('Mensalidade nao encontrada.', 404);
+  if (!apagada.changes) throw new ErroApi('Mensalidade não encontrada.', 404);
   res.json({ mensagem: 'Mensalidade cancelada.' });
 }));
 

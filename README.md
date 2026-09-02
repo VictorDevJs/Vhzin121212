@@ -57,6 +57,15 @@ os planos e os avisos liberados para o site. É por ali que o aluno também **cr
 - **Avisos** — campeonatos, eventos, exames de faixa, cancelamento de aula e recados gerais,
   com público-alvo (todos, kids, adultos, uma modalidade, uma turma ou só a equipe) e opção de
   publicar também na página pública.
+- **Check-in do treino** — na hora da aula o aluno abre o app e confirma presença com um toque.
+  A janela abre 30 minutos antes e fecha 15 minutos depois do fim. Cada check-in entra no
+  histórico do aluno (total de treinos, treinos do mês, sequência de semanas) e alimenta a
+  chamada automaticamente. O dono acompanha, aula por aula, **quantos confirmaram de quantos
+  matriculados**, a média por aula, o movimento dia a dia e quem mais treinou.
+- **Loja** — kimonos, faixas, luvas, rashguards, camisas e casacos separados **por luta**
+  (Jiu-Jitsu, Muay Thai, Karatê, Boxe, Kickboxing, MMA) e uma linha de acessórios que serve para
+  todo mundo. Controle de estoque, foto do produto, vitrine na página pública e venda registrada
+  em um clique — que já entra como receita no caixa e baixa o estoque.
 - **Chamada** — lista de presença por turma e por data, com resumo de frequência do mês e
   **ranking dos alunos mais presentes**.
 - **Mensalidades por arte marcial** — quanto cada modalidade e cada turma faturou, recebeu e tem
@@ -211,6 +220,8 @@ Todas as rotas ficam sob `/api` e usam `Authorization: Bearer <token>`, exceto a
 | `/api/financeiro` | mensalidades, lançamentos e `GET /api/financeiro/resumo` |
 | `/api/avisos` | mural de avisos (filtrado pelo público-alvo de cada aluno) |
 | `/api/presencas` | chamada, resumo de frequência e `GET /api/presencas/ranking` |
+| `/api/checkins` | check-in do treino: `agora`, `meus`, `resumo` e `aula` |
+| `/api/loja` | produtos, estoque e vendas |
 | `/api/avaliacoes` | moderação, resposta e envio de avaliações |
 | `POST /api/publico/avaliacoes` | avaliação enviada por quem visita o site (pública) |
 | `/api/certificados` | certificados e titulações |

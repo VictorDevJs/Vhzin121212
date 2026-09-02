@@ -6,58 +6,58 @@ import { hoje, competenciaAtual, somarMeses } from './util.js';
 const MODALIDADES = [
   {
     nome: 'Jiu-Jitsu', cor: '#2a78d6',
-    descricao: 'Arte suave focada em luta de solo, quedas, raspagens e finalizacoes.',
+    descricao: 'Arte suave focada em luta de solo, quedas, raspagens e finalizações.',
     faixas: ['Branca', 'Cinza', 'Amarela', 'Laranja', 'Verde', 'Azul', 'Roxa', 'Marrom', 'Preta'],
   },
   {
     nome: 'Muay Thai', cor: '#eb6834',
-    descricao: 'Boxe tailandes: socos, chutes, joelhadas, cotoveladas e clinch.',
+    descricao: 'Boxe tailandês: socos, chutes, joelhadas, cotoveladas e clinch.',
     faixas: ['Branca', 'Vermelha', 'Rosa', 'Amarela', 'Laranja', 'Verde', 'Azul', 'Marrom', 'Preta'],
   },
   {
-    nome: 'Karate', cor: '#1baf7a',
+    nome: 'Karatê', cor: '#1baf7a',
     descricao: 'Arte marcial japonesa com katas, golpes tradicionais e disciplina.',
     faixas: ['Branca', 'Amarela', 'Vermelha', 'Laranja', 'Verde', 'Roxa', 'Marrom', 'Preta'],
   },
   {
     nome: 'Kickboxing', cor: '#eda100',
-    descricao: 'Combinacao de boxe e chutes, muito condicionamento e ritmo.',
+    descricao: 'Combinação de boxe e chutes, muito condicionamento e ritmo.',
     faixas: ['Branca', 'Amarela', 'Laranja', 'Verde', 'Azul', 'Marrom', 'Preta'],
   },
   {
     nome: 'Boxe', cor: '#4a3aa7',
-    descricao: 'Jogo de maos, esquiva e ritmo: a base da trocacao em qualquer luta.',
+    descricao: 'Jogo de maos, esquiva e ritmo: a base da trocação em qualquer luta.',
     faixas: ['Iniciante', 'Intermediario', 'Avancado', 'Competicao'],
   },
   {
     nome: 'MMA', cor: '#e87ba4',
-    descricao: 'Artes marciais mistas: trocacao, quedas e solo em um so treino.',
+    descricao: 'Artes marciais mistas: trocação, quedas e solo em um só treino.',
     faixas: ['Iniciante', 'Intermediario', 'Avancado', 'Competicao'],
   },
 ];
 
 const PLANOS = [
-  { nome: 'Kids Mensal', descricao: 'Aulas infantis (ate 15 anos), 2x por semana.', valor: 120, periodicidade: 'mensal', aulas_semana: 2 },
-  { nome: 'Uma Modalidade', descricao: 'Escolha 1 modalidade, treinos livres nos horarios da turma.', valor: 150, periodicidade: 'mensal', aulas_semana: 3 },
-  { nome: 'Duas Modalidades', descricao: 'Combine 2 modalidades no mesmo mes.', valor: 210, periodicidade: 'mensal', aulas_semana: 5 },
-  { nome: 'Passe Livre', descricao: 'Acesso a todas as modalidades e horarios.', valor: 260, periodicidade: 'mensal', aulas_semana: 0 },
+  { nome: 'Kids Mensal', descricao: 'Aulas infantis (até 15 anos), 2x por semana.', valor: 120, periodicidade: 'mensal', aulas_semana: 2 },
+  { nome: 'Uma Modalidade', descricao: 'Escolha 1 modalidade, treinos livres nos horários da turma.', valor: 150, periodicidade: 'mensal', aulas_semana: 3 },
+  { nome: 'Duas Modalidades', descricao: 'Combine 2 modalidades no mesmo mês.', valor: 210, periodicidade: 'mensal', aulas_semana: 5 },
+  { nome: 'Passe Livre', descricao: 'Acesso a todas as modalidades e horários.', valor: 260, periodicidade: 'mensal', aulas_semana: 0 },
   { nome: 'Passe Livre Anual', descricao: 'Todas as modalidades com desconto no pagamento anual.', valor: 2600, periodicidade: 'anual', aulas_semana: 0 },
 ];
 
 /** turma: [modalidade, nome, categoria, nivel, horarios [dia, inicio, fim]] */
 const TURMAS = [
   ['Jiu-Jitsu', 'Jiu-Jitsu Kids', 'kids', 'todos', [[1, '17:00', '18:00'], [3, '17:00', '18:00'], [5, '17:00', '18:00']]],
-  ['Jiu-Jitsu', 'Jiu-Jitsu Adulto Manha', 'adulto', 'todos', [[1, '06:30', '08:00'], [3, '06:30', '08:00'], [5, '06:30', '08:00']]],
+  ['Jiu-Jitsu', 'Jiu-Jitsu Adulto Manhã', 'adulto', 'todos', [[1, '06:30', '08:00'], [3, '06:30', '08:00'], [5, '06:30', '08:00']]],
   ['Jiu-Jitsu', 'Jiu-Jitsu Adulto Noite', 'adulto', 'todos', [[1, '20:00', '21:30'], [2, '20:00', '21:30'], [4, '20:00', '21:30']]],
   ['Muay Thai', 'Muay Thai Kids', 'kids', 'iniciante', [[2, '17:00', '18:00'], [4, '17:00', '18:00']]],
   ['Muay Thai', 'Muay Thai Adulto', 'adulto', 'todos', [[1, '19:00', '20:00'], [3, '19:00', '20:00'], [5, '19:00', '20:00']]],
   ['Muay Thai', 'Muay Thai Feminino', 'feminino', 'todos', [[2, '09:00', '10:00'], [4, '09:00', '10:00']]],
-  ['Karate', 'Karate Kids', 'kids', 'todos', [[2, '16:00', '17:00'], [4, '16:00', '17:00']]],
-  ['Karate', 'Karate Adulto', 'adulto', 'todos', [[2, '18:00', '19:00'], [4, '18:00', '19:00']]],
+  ['Karatê', 'Karatê Kids', 'kids', 'todos', [[2, '16:00', '17:00'], [4, '16:00', '17:00']]],
+  ['Karatê', 'Karatê Adulto', 'adulto', 'todos', [[2, '18:00', '19:00'], [4, '18:00', '19:00']]],
   ['Kickboxing', 'Kickboxing Adulto', 'adulto', 'todos', [[1, '18:00', '19:00'], [3, '18:00', '19:00'], [5, '18:00', '19:00']]],
   ['Boxe', 'Boxe Adulto', 'adulto', 'todos', [[2, '19:00', '20:00'], [4, '19:00', '20:00']]],
   ['MMA', 'MMA Iniciante', 'adulto', 'iniciante', [[2, '21:00', '22:00'], [4, '21:00', '22:00']]],
-  ['MMA', 'MMA Competicao', 'adulto', 'avancado', [[3, '21:00', '22:30'], [6, '10:00', '12:00']]],
+  ['MMA', 'MMA Competição', 'adulto', 'avancado', [[3, '21:00', '22:30'], [6, '10:00', '12:00']]],
 ];
 
 const CONFIGURACOES = {
@@ -67,9 +67,9 @@ const CONFIGURACOES = {
   endereco: 'Rua Coronel Francisco Lobo, 145 - Pechincha, Rio de Janeiro - RJ, 22740-350',
   instagram: '@ctatak',
   chamada: 'Centro de treinamento de lutas',
-  sobre: 'O CT Atak Pechincha forma lutadores de Jiu-Jitsu, Muay Thai, Karate, Kickboxing, Boxe e MMA - do primeiro dia no tatame ate o podio, com turmas kids, adulto e feminino.',
-  historia: 'Sao mais de 15 anos formando atletas e mudando historias no Pechincha. O que comecou como um projeto de bairro virou um centro de treinamento com equipe de competicao, turmas kids e professores graduados.',
-  horario_funcionamento: 'Segunda a sexta, 06h as 22h · Sabado, 09h as 13h',
+  sobre: 'O CT Atak Pechincha forma lutadores de Jiu-Jitsu, Muay Thai, Karatê, Kickboxing, Boxe e MMA - do primeiro dia no tatame até o pódio, com turmas kids, adulto e feminino.',
+  historia: 'São mais de 15 anos formando atletas e mudando historias no Pechincha. O que comecou como um projeto de bairro virou um centro de treinamento com equipe de competição, turmas kids e professores graduados.',
+  horario_funcionamento: 'Segunda a sexta, 06h as 22h · Sábado, 09h as 13h',
   ano_fundacao: String(new Date().getFullYear() - 15),
   cor_primaria: '#f5b301',
 };
@@ -133,20 +133,65 @@ export function garantirDadosIniciais() {
               (SELECT id FROM usuarios WHERE papel = 'dono' LIMIT 1))
     `, {
       titulo: 'Bem-vindo ao sistema da Atak',
-      mensagem: 'Aqui voce acompanha os horarios das aulas, avisos de campeonatos, cancelamentos e a sua mensalidade.',
+      mensagem: 'Aqui você acompanha os horários das aulas, avisos de campeonatos, cancelamentos e a sua mensalidade.',
     });
   });
 
   return { criado: true, email, senha };
 }
 
-/** Dados de demonstracao: alunos, matriculas, mensalidades, caixa, avisos e chamada. */
+/**
+ * Gera 30 dias de check-in para a demonstração: cada aluno confirma presença
+ * nas aulas da turma dele, com frequência variando de pessoa para pessoa.
+ */
+function gerarCheckins() {
+  const vinculos = todos(`
+    SELECT at.aluno_id, h.id AS horario_id, h.dia_semana, h.hora_inicio, t.id AS turma_id
+    FROM aluno_turmas at
+    JOIN turmas t ON t.id = at.turma_id
+    JOIN horarios h ON h.turma_id = t.id
+    JOIN alunos a ON a.id = at.aluno_id
+    WHERE a.status = 'ativo'
+  `);
+
+  for (let atras = 29; atras >= 0; atras -= 1) {
+    const dia = new Date();
+    dia.setDate(dia.getDate() - atras);
+    const iso = dia.toLocaleDateString('sv-SE');
+    const registrados = new Set();
+
+    for (const vinculo of vinculos) {
+      if (vinculo.dia_semana !== dia.getDay()) continue;
+      const chave = `${vinculo.aluno_id}-${vinculo.turma_id}`;
+      if (registrados.has(chave)) continue;
+      // Frequência entre 45% e 85%, variando de aluno para aluno.
+      const propensao = 0.45 + ((vinculo.aluno_id * 7) % 40) / 100;
+      if (Math.random() > propensao) continue;
+      registrados.add(chave);
+
+      const [h, m] = vinculo.hora_inicio.split(':').map(Number);
+      const minuto = h * 60 + m - Math.floor(Math.random() * 12);
+      const hora = `${String(Math.floor(minuto / 60)).padStart(2, '0')}:${String(minuto % 60).padStart(2, '0')}`;
+
+      executar(`
+        INSERT OR IGNORE INTO checkins (aluno_id, turma_id, horario_id, data, hora, origem)
+        VALUES (:aluno, :turma, :horario, :data, :hora, 'aluno')
+      `, { aluno: vinculo.aluno_id, turma: vinculo.turma_id, horario: vinculo.horario_id, data: iso, hora });
+      executar(`
+        INSERT OR IGNORE INTO presencas (aluno_id, turma_id, data, presente)
+        VALUES (:aluno, :turma, :data, 1)
+      `, { aluno: vinculo.aluno_id, turma: vinculo.turma_id, data: iso });
+    }
+  }
+}
+
+/** Dados de demonstração: alunos, matrículas, mensalidades, caixa, avisos e chamada. */
 export function carregarDemonstracao() {
   // Turma de cada aluno define a categoria (kids ou adulto) e onde ele aparece na chamada.
-  const TURMAS_KIDS = ['Jiu-Jitsu Kids', 'Muay Thai Kids', 'Karate Kids'];
+  const TURMAS_KIDS = ['Jiu-Jitsu Kids', 'Muay Thai Kids', 'Karatê Kids'];
   const TURMAS_ADULTO = [
-    'Jiu-Jitsu Adulto Manha', 'Jiu-Jitsu Adulto Noite', 'Muay Thai Adulto', 'Muay Thai Feminino',
-    'Karate Adulto', 'Kickboxing Adulto', 'Boxe Adulto', 'MMA Iniciante', 'MMA Competicao',
+    'Jiu-Jitsu Adulto Manhã', 'Jiu-Jitsu Adulto Noite', 'Muay Thai Adulto', 'Muay Thai Feminino',
+    'Karatê Adulto', 'Kickboxing Adulto', 'Boxe Adulto', 'MMA Iniciante', 'MMA Competição',
   ];
   const NOMES = [
     'Lucas Ferreira', 'Mariana Costa', 'Rafael Mendes', 'Juliana Rocha', 'Carlos Eduardo Lima',
@@ -155,7 +200,7 @@ export function carregarDemonstracao() {
     'Gabriela Moraes', 'Rodrigo Farias', 'Aline Fontes', 'Pedro Henrique Alves', 'Ana Beatriz Souza',
     'Sofia Martins', 'Miguel Andrade', 'Helena Vasques', 'Davi Lucca Ramos',
   ];
-  // Os 5 ultimos sao kids; o ultimo da lista fica pendente, esperando a recepcao.
+  // Os 5 últimos são kids; o último da lista fica pendente, esperando a recepção.
   const alunosDemo = NOMES.map((nome, indice) => {
     const ehKids = indice >= NOMES.length - 5;
     const anoNascimento = ehKids ? 2013 + (indice % 5) : 1985 + (indice % 18);
@@ -168,7 +213,7 @@ export function carregarDemonstracao() {
   });
 
   if (um('SELECT COUNT(*) AS total FROM alunos').total > 0) {
-    return { mensagem: 'O banco ja tem alunos cadastrados; a demonstracao nao foi aplicada.' };
+    return { mensagem: 'O banco já tem alunos cadastrados; a demonstração não foi aplicada.' };
   }
 
   transacao(() => {
@@ -184,7 +229,7 @@ export function carregarDemonstracao() {
     });
 
     executar(`INSERT INTO usuarios (nome, email, senha_hash, papel) VALUES (:nome, :email, :hash, 'recepcao')`,
-      { nome: 'Recepcao', email: 'recepcao@atak.com', hash: gerarHashSenha('recepcao123') });
+      { nome: 'Recepção', email: 'recepcao@atak.com', hash: gerarHashSenha('recepcao123') });
 
     const turmas = todos('SELECT id, nome FROM turmas');
     turmas.forEach((turma, indice) => {
@@ -192,7 +237,7 @@ export function carregarDemonstracao() {
         { m: idsMestres[indice % idsMestres.length], id: turma.id });
     });
 
-    // A demonstracao usa apenas planos mensais, para o caixa do mes fazer sentido.
+    // A demonstração usa apenas planos mensais, para o caixa do mes fazer sentido.
     const planos = todos(`SELECT * FROM planos WHERE ativo = 1 AND periodicidade = 'mensal' ORDER BY valor`);
     const competencia = competenciaAtual();
 
@@ -220,7 +265,7 @@ export function carregarDemonstracao() {
         categoria,
         status: indice === alunosDemo.length - 1 ? 'pendente' : 'ativo',
         matriculado_em: somarMeses(hoje(), -indice),
-        responsavel: categoria === 'kids' ? 'Responsavel legal' : null,
+        responsavel: categoria === 'kids' ? 'Responsável legal' : null,
         tel_responsavel: categoria === 'kids' ? '(11) 97777-0000' : null,
       });
       const alunoId = Number(aluno.lastInsertRowid);
@@ -277,7 +322,7 @@ export function carregarDemonstracao() {
     const despesasFixas = [
       ['aluguel', 'Aluguel do galpao', 1500],
       ['salarios', 'Pagamento dos professores', 1600],
-      ['agua/luz/internet', 'Contas do mes', 320],
+      ['agua/luz/internet', 'Contas do mês', 320],
     ];
     for (let atras = 5; atras >= 0; atras -= 1) {
       const mes = somarMeses(hoje(), -atras).slice(0, 7);
@@ -291,7 +336,7 @@ export function carregarDemonstracao() {
       if (atras % 2 === 0) {
         executar(`
           INSERT INTO lancamentos (tipo, categoria, descricao, valor, data, forma_pagamento, registrado_por)
-          VALUES ('despesa', 'equipamentos', 'Reposicao de material de treino', :valor, :data, 'credito',
+          VALUES ('despesa', 'equipamentos', 'Reposição de material de treino', :valor, :data, 'credito',
                   (SELECT id FROM usuarios WHERE papel = 'dono' LIMIT 1))
         `, { valor: 420 + atras * 30, data: `${mes}-18` });
       }
@@ -304,9 +349,9 @@ export function carregarDemonstracao() {
 
     const avaliacoesDemo = [
       ['Lucas Ferreira', 5, 'Melhor CT da regiao. Professores atenciosos e turma unida. Entrei sem saber nada de Jiu-Jitsu e hoje compito.', 'aprovada', 'aluno'],
-      ['Mariana Costa', 5, 'As aulas de Muay Thai feminino sao maravilhosas, me sinto segura e evoluindo todo mes.', 'aprovada', 'aluno'],
-      ['Rodrigo Farias', 4, 'Estrutura muito boa e horarios que cabem no meu trabalho. So sinto falta de mais turmas de sabado.', 'aprovada', 'site'],
-      ['Patricia Gomes', 5, 'Coloquei meu filho no kids e a mudanca na disciplina dele foi visivel. Recomendo demais.', 'aprovada', 'site'],
+      ['Mariana Costa', 5, 'As aulas de Muay Thai feminino são maravilhosas, me sinto segura e evoluindo todo mês.', 'aprovada', 'aluno'],
+      ['Rodrigo Farias', 4, 'Estrutura muito boa e horários que cabem no meu trabalho. Só sinto falta de mais turmas de sábado.', 'aprovada', 'site'],
+      ['Patricia Gomes', 5, 'Coloquei meu filho no kids e a mudanca na disciplina dele foi visível. Recomendo demais.', 'aprovada', 'site'],
       ['Visitante', 5, 'Fiz aula experimental e fui muito bem recebido pela equipe.', 'pendente', 'site'],
     ];
     for (const [autor, nota, comentario, status, origem] of avaliacoesDemo) {
@@ -335,11 +380,51 @@ export function carregarDemonstracao() {
       `, { titulo, tipo, pessoa, modalidade, entidade, registro, data: somarMeses(hoje(), -12) });
     }
 
+    // Loja: uma linha por luta e os acessórios que servem para todo mundo.
+    const produtosDemo = [
+      ['Kimono Atak Trançado', 'Jiu-Jitsu', 'kimono', 549.9, 320, 8, 'A1, A2, A3, A4'],
+      ['Faixa oficial de Jiu-Jitsu', 'Jiu-Jitsu', 'faixa', 89.9, 42, 24, 'A1, A2, A3, A4'],
+      ['Rashguard Atak manga longa', 'Jiu-Jitsu', 'rashguard', 179.9, 92, 14, 'P, M, G, GG'],
+      ['Short de Muay Thai Atak', 'Muay Thai', 'short', 129.9, 62, 18, 'P, M, G, GG'],
+      ['Luva de Muay Thai 14oz', 'Muay Thai', 'luva', 289.9, 165, 10, '12oz, 14oz, 16oz'],
+      ['Caneleira profissional', 'Muay Thai', 'caneleira', 219.9, 128, 9, 'M, G'],
+      ['Kimono de Karatê Atak', 'Karatê', 'kimono', 329.9, 190, 6, '1, 2, 3, 4'],
+      ['Faixa de Karatê', 'Karatê', 'faixa', 69.9, 28, 20, 'Único'],
+      ['Luva de Boxe 12oz', 'Boxe', 'luva', 259.9, 148, 8, '10oz, 12oz, 14oz'],
+      ['Bandagem elástica 3m', 'Boxe', 'acessorio', 39.9, 14, 40, 'Único'],
+      ['Luva de Kickboxing', 'Kickboxing', 'luva', 269.9, 152, 7, '12oz, 14oz'],
+      ['Luva de MMA 4oz', 'MMA', 'luva', 199.9, 110, 12, 'P, M, G'],
+      ['Camisa de treino Atak', null, 'camisa', 89.9, 38, 30, 'P, M, G, GG'],
+      ['Casaco moletom Atak', null, 'casaco', 199.9, 105, 15, 'P, M, G, GG'],
+      ['Protetor bucal moldável', null, 'protetor', 49.9, 18, 35, 'Único'],
+      ['Mochila Atak', null, 'mochila', 159.9, 86, 12, 'Único'],
+      ['Garrafa térmica Atak 1L', null, 'acessorio', 79.9, 34, 22, 'Único'],
+    ];
+    for (const [nomeProduto, modalidade, categoria, preco, custo, estoque, tamanhos] of produtosDemo) {
+      executar(`
+        INSERT INTO produtos (nome, categoria, modalidade_id, preco, custo, estoque, tamanhos, descricao)
+        VALUES (:nome, :categoria,
+                (SELECT id FROM modalidades WHERE nome = :modalidade),
+                :preco, :custo, :estoque, :tamanhos, :descricao)
+      `, {
+        nome: nomeProduto,
+        categoria,
+        modalidade,
+        preco,
+        custo,
+        estoque,
+        tamanhos,
+        descricao: modalidade
+          ? `Equipamento de ${modalidade} com a marca da Atak.`
+          : 'Item da linha Atak, serve para qualquer modalidade.',
+      });
+    }
+
     const avisos = [
-      ['Campeonato Estadual de Jiu-Jitsu', 'Inscricoes abertas ate dia 20. Falar com a recepcao para confirmar a categoria e o peso.', 'campeonato', 'todos', somarMeses(hoje(), 1)],
-      ['Sem aula no feriado', 'Na proxima sexta-feira a academia estara fechada. As aulas voltam no sabado no horario normal.', 'cancelamento', 'todos', null],
-      ['Exame de faixa Kids', 'Alunos kids com frequencia acima de 75% ja podem se inscrever no proximo exame de faixa.', 'graduacao', 'kids', somarMeses(hoje(), 1)],
-      ['Treino extra de MMA', 'Sabado teremos treino aberto de MMA das 10h as 12h. Traga protetor bucal.', 'evento', 'adultos', null],
+      ['Campeonato Estadual de Jiu-Jitsu', 'Inscrições abertas até dia 20. Falar com a recepção para confirmar a categoria e o peso.', 'campeonato', 'todos', somarMeses(hoje(), 1)],
+      ['Sem aula no feriado', 'Na próxima sexta-feira a academia estará fechada. As aulas voltam no sábado no horário normal.', 'cancelamento', 'todos', null],
+      ['Exame de faixa Kids', 'Alunos kids com frequência acima de 75% já podem se inscrever no próximo exame de faixa.', 'graduacao', 'kids', somarMeses(hoje(), 1)],
+      ['Treino extra de MMA', 'Sábado teremos treino aberto de MMA das 10h as 12h. Traga protetor bucal.', 'evento', 'adultos', null],
     ];
     for (const [titulo, mensagem, tipo, publico, dataEvento] of avisos) {
       executar(`
@@ -348,9 +433,11 @@ export function carregarDemonstracao() {
                 (SELECT id FROM usuarios WHERE papel = 'dono' LIMIT 1))
       `, { titulo, mensagem, tipo, publico, data_evento: dataEvento });
     }
+
+    gerarCheckins();
   });
 
-  return { mensagem: 'Dados de demonstracao carregados.' };
+  return { mensagem: 'Dados de demonstração carregados.' };
 }
 
 const executadoDireto = process.argv[1] && import.meta.url === `file://${process.argv[1]}`;
@@ -360,10 +447,10 @@ if (executadoDireto) {
   if (inicial.criado) {
     console.log(`Dados iniciais criados. Login do dono: ${inicial.email} / ${inicial.senha}`);
   } else {
-    console.log('Banco ja inicializado.');
+    console.log('Banco já inicializado.');
   }
   if (process.argv.includes('--demo')) {
     console.log(carregarDemonstracao().mensagem);
-    console.log('Logins de demonstracao: ricardo@atak.com / mestre123 | recepcao@atak.com / recepcao123');
+    console.log('Logins de demonstração: ricardo@atak.com / mestre123 | recepcao@atak.com / recepcao123');
   }
 }

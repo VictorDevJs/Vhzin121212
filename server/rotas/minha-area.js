@@ -8,7 +8,7 @@ const roteador = Router();
 /** Painel do aluno: plano, turmas, horarios, pagamentos, presencas e avisos. */
 roteador.get('/', exigirPapel('aluno'), rota((req, res) => {
   const aluno = um('SELECT * FROM alunos WHERE usuario_id = :id', { id: req.usuario.id });
-  if (!aluno) throw new ErroApi('Cadastro de aluno nao encontrado. Fale com a recepcao.', 404);
+  if (!aluno) throw new ErroApi('Cadastro de aluno não encontrado. Fale com a recepção.', 404);
 
   const matricula = um(`
     SELECT mt.*, p.nome AS plano, p.periodicidade, p.aulas_semana, p.descricao AS plano_descricao

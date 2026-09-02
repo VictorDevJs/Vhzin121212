@@ -48,7 +48,7 @@ roteador.get('/', exigirPapel(...EQUIPE), rota((req, res) => {
 roteador.get('/:id', exigirPapel(...EQUIPE), rota((req, res) => {
   const id = inteiro(req.params.id);
   const aluno = um(`${SELECT_ALUNO} WHERE a.id = :id`, { id });
-  if (!aluno) throw new ErroApi('Aluno nao encontrado.', 404);
+  if (!aluno) throw new ErroApi('Aluno não encontrado.', 404);
 
   const turmas = todos(`
     SELECT t.id, t.nome, t.categoria, t.nivel, m.nome AS modalidade, m.cor AS modalidade_cor
@@ -95,7 +95,7 @@ roteador.post('/', exigirPapel(...GESTAO), rota((req, res) => {
     if (email && senha) {
       if (senha.length < 6) throw new ErroApi('A senha precisa ter pelo menos 6 caracteres.');
       if (um('SELECT id FROM usuarios WHERE email = :email', { email })) {
-        throw new ErroApi('Ja existe um usuario com este e-mail.', 409);
+        throw new ErroApi('Já existe um usuário com este e-mail.', 409);
       }
       const usuario = executar(
         `INSERT INTO usuarios (nome, email, senha_hash, papel, telefone)
@@ -131,7 +131,7 @@ roteador.post('/', exigirPapel(...GESTAO), rota((req, res) => {
 roteador.put('/:id', exigirPapel(...GESTAO), rota((req, res) => {
   const id = inteiro(req.params.id);
   const atual = um('SELECT * FROM alunos WHERE id = :id', { id });
-  if (!atual) throw new ErroApi('Aluno nao encontrado.', 404);
+  if (!atual) throw new ErroApi('Aluno não encontrado.', 404);
 
   const status = texto(req.body.status, atual.status);
   if (!STATUS.includes(status)) throw new ErroApi(`Status invalido. Use: ${STATUS.join(', ')}.`);
@@ -161,7 +161,7 @@ roteador.put('/:id', exigirPapel(...GESTAO), rota((req, res) => {
 roteador.delete('/:id', exigirPapel('dono'), rota((req, res) => {
   const id = inteiro(req.params.id);
   const aluno = um('SELECT * FROM alunos WHERE id = :id', { id });
-  if (!aluno) throw new ErroApi('Aluno nao encontrado.', 404);
+  if (!aluno) throw new ErroApi('Aluno não encontrado.', 404);
   transacao(() => {
     executar('DELETE FROM alunos WHERE id = :id', { id });
     if (aluno.usuario_id) executar('DELETE FROM usuarios WHERE id = :id', { id: aluno.usuario_id });
@@ -175,8 +175,8 @@ roteador.post('/:id/graduacoes', exigirPapel('dono', 'mestre'), rota((req, res) 
   const alunoId = inteiro(req.params.id);
   exigirCampos(req.body, ['graduacao_id']);
   const graduacao = um('SELECT * FROM graduacoes WHERE id = :id', { id: inteiro(req.body.graduacao_id) });
-  if (!graduacao) throw new ErroApi('Graduacao nao encontrada.', 404);
-  if (!um('SELECT id FROM alunos WHERE id = :id', { id: alunoId })) throw new ErroApi('Aluno nao encontrado.', 404);
+  if (!graduacao) throw new ErroApi('Graduação não encontrada.', 404);
+  if (!um('SELECT id FROM alunos WHERE id = :id', { id: alunoId })) throw new ErroApi('Aluno não encontrado.', 404);
 
   executar(`
     INSERT INTO aluno_graduacoes (aluno_id, modalidade_id, graduacao_id, data, observacao, registrado_por)

@@ -29,10 +29,10 @@ function comHorarios(turma) {
 /** O dono edita tudo; o mestre edita apenas as turmas em que ele leciona. */
 function garantirEdicao(req, turmaId) {
   const turma = um('SELECT * FROM turmas WHERE id = :id', { id: turmaId });
-  if (!turma) throw new ErroApi('Turma nao encontrada.', 404);
+  if (!turma) throw new ErroApi('Turma não encontrada.', 404);
   if (req.usuario.papel === 'dono') return turma;
   if (req.usuario.papel === 'mestre' && turma.mestre_id === req.usuario.id) return turma;
-  throw new ErroApi('Voce so pode alterar as turmas em que e o mestre responsavel.', 403);
+  throw new ErroApi('Você só pode alterar as turmas em que e o mestre responsável.', 403);
 }
 
 roteador.get('/', exigirPapel(...EQUIPE, 'aluno'), rota((req, res) => {
@@ -69,7 +69,7 @@ roteador.get('/grade', exigirPapel(...EQUIPE, 'aluno'), rota((_req, res) => {
 roteador.get('/:id', exigirPapel(...EQUIPE, 'aluno'), rota((req, res) => {
   const id = inteiro(req.params.id);
   const turma = um(`${SELECT_TURMA} WHERE t.id = :id`, { id });
-  if (!turma) throw new ErroApi('Turma nao encontrada.', 404);
+  if (!turma) throw new ErroApi('Turma não encontrada.', 404);
   const alunos = todos(`
     SELECT a.id, a.nome, a.categoria, a.status
     FROM aluno_turmas at JOIN alunos a ON a.id = at.aluno_id
@@ -82,7 +82,7 @@ roteador.post('/', exigirPapel('dono'), rota((req, res) => {
   exigirCampos(req.body, ['nome', 'modalidade_id']);
   const modalidadeId = inteiro(req.body.modalidade_id);
   if (!um('SELECT id FROM modalidades WHERE id = :id', { id: modalidadeId })) {
-    throw new ErroApi('Modalidade nao encontrada.', 404);
+    throw new ErroApi('Modalidade não encontrada.', 404);
   }
   const categoria = texto(req.body.categoria, 'adulto');
   if (!CATEGORIAS.includes(categoria)) throw new ErroApi(`Categoria invalida. Use: ${CATEGORIAS.join(', ')}.`);
@@ -140,7 +140,7 @@ roteador.put('/:id', exigirPapel('dono', 'mestre'), rota((req, res) => {
 
 roteador.delete('/:id', exigirPapel('dono'), rota((req, res) => {
   const apagada = executar('DELETE FROM turmas WHERE id = :id', { id: inteiro(req.params.id) });
-  if (!apagada.changes) throw new ErroApi('Turma nao encontrada.', 404);
+  if (!apagada.changes) throw new ErroApi('Turma não encontrada.', 404);
   res.json({ mensagem: 'Turma removida.' });
 }));
 
@@ -148,16 +148,16 @@ roteador.delete('/:id', exigirPapel('dono'), rota((req, res) => {
 
 function inserirHorario(turmaId, dados) {
   const dia = inteiro(dados.dia_semana, -1);
-  if (dia < 0 || dia > 6) throw new ErroApi('Dia da semana invalido (0 = domingo ... 6 = sabado).');
+  if (dia < 0 || dia > 6) throw new ErroApi('Dia da semana inválido (0 = domingo ... 6 = sábado).');
   const inicio = hora(dados.hora_inicio);
   const fim = hora(dados.hora_fim);
-  if (fim <= inicio) throw new ErroApi('O horario final precisa ser maior que o inicial.');
+  if (fim <= inicio) throw new ErroApi('O horário final precisa ser maior que o inicial.');
 
   const conflito = um(`
     SELECT h.id, t.nome AS turma FROM horarios h JOIN turmas t ON t.id = h.turma_id
     WHERE h.turma_id = :turma_id AND h.dia_semana = :dia AND h.hora_inicio = :inicio
   `, { turma_id: turmaId, dia, inicio });
-  if (conflito) throw new ErroApi('Esta turma ja tem uma aula neste dia e horario.', 409);
+  if (conflito) throw new ErroApi('Esta turma já tem uma aula neste dia e horário.', 409);
 
   const criado = executar(
     'INSERT INTO horarios (turma_id, dia_semana, hora_inicio, hora_fim, ativo) VALUES (:turma_id, :dia, :inicio, :fim, 1)',
@@ -179,8 +179,8 @@ roteador.delete('/:id/horarios/:horarioId', exigirPapel('dono', 'mestre'), rota(
   const apagado = executar('DELETE FROM horarios WHERE id = :id AND turma_id = :turma_id', {
     id: inteiro(req.params.horarioId), turma_id: turmaId,
   });
-  if (!apagado.changes) throw new ErroApi('Horario nao encontrado.', 404);
-  res.json({ mensagem: 'Horario removido.' });
+  if (!apagado.changes) throw new ErroApi('Horário não encontrado.', 404);
+  res.json({ mensagem: 'Horário removido.' });
 }));
 
 // ----- Alunos da turma -----
@@ -189,8 +189,8 @@ roteador.post('/:id/alunos', exigirPapel(...GESTAO, 'mestre'), rota((req, res) =
   const turmaId = inteiro(req.params.id);
   const alunoId = inteiro(req.body.aluno_id);
   const turma = um('SELECT * FROM turmas WHERE id = :id', { id: turmaId });
-  if (!turma) throw new ErroApi('Turma nao encontrada.', 404);
-  if (!um('SELECT id FROM alunos WHERE id = :id', { id: alunoId })) throw new ErroApi('Aluno nao encontrado.', 404);
+  if (!turma) throw new ErroApi('Turma não encontrada.', 404);
+  if (!um('SELECT id FROM alunos WHERE id = :id', { id: alunoId })) throw new ErroApi('Aluno não encontrado.', 404);
 
   const ocupacao = um('SELECT COUNT(*) AS total FROM aluno_turmas WHERE turma_id = :id', { id: turmaId });
   const jaEsta = um('SELECT 1 AS ok FROM aluno_turmas WHERE turma_id = :t AND aluno_id = :a', { t: turmaId, a: alunoId });

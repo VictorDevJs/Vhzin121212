@@ -14,7 +14,7 @@ roteador.get('/', exigirPapel(...EQUIPE), rota((req, res) => {
   const turma = um(`
     SELECT t.*, m.nome AS modalidade FROM turmas t JOIN modalidades m ON m.id = t.modalidade_id WHERE t.id = :id
   `, { id: turmaId });
-  if (!turma) throw new ErroApi('Turma nao encontrada.', 404);
+  if (!turma) throw new ErroApi('Turma não encontrada.', 404);
 
   const alunos = todos(`
     SELECT a.id, a.nome, a.categoria, a.status,
@@ -35,7 +35,7 @@ roteador.post('/', exigirPapel(...EQUIPE), rota((req, res) => {
   const turmaId = inteiro(req.body.turma_id);
   const dia = data(req.body.data, hoje());
   const marcacoes = Array.isArray(req.body.presencas) ? req.body.presencas : [];
-  if (!um('SELECT id FROM turmas WHERE id = :id', { id: turmaId })) throw new ErroApi('Turma nao encontrada.', 404);
+  if (!um('SELECT id FROM turmas WHERE id = :id', { id: turmaId })) throw new ErroApi('Turma não encontrada.', 404);
 
   transacao(() => {
     for (const marcacao of marcacoes) {

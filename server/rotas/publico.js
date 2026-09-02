@@ -75,6 +75,15 @@ roteador.get('/academia', rota((_req, res) => {
     ORDER BY c.data_emissao DESC, c.id DESC LIMIT 24
   `);
 
+  const produtos = todos(`
+    SELECT p.id, p.nome, p.descricao, p.categoria, p.preco, p.tamanhos, p.imagem, p.estoque,
+           m.nome AS modalidade, m.cor AS modalidade_cor
+    FROM produtos p
+    LEFT JOIN modalidades m ON m.id = p.modalidade_id
+    WHERE p.ativo = 1 AND p.publicar_site = 1
+    ORDER BY m.nome, p.nome
+  `);
+
   const avaliacoes = todos(`
     SELECT av.id, av.autor_nome, av.nota, av.comentario, av.resposta, av.criado_em, m.nome AS modalidade
     FROM avaliacoes av
@@ -107,6 +116,7 @@ roteador.get('/academia', rota((_req, res) => {
     planos,
     avisos,
     mestres,
+    produtos,
     certificados,
     avaliacoes,
     resumo_avaliacoes: resumoAvaliacoes(),
@@ -125,11 +135,11 @@ roteador.get('/academia', rota((_req, res) => {
  */
 roteador.post('/avaliacoes', rota((req, res) => {
   const comentario = String(req.body?.comentario || '');
-  if (comentario.length > 1200) throw new ErroApi('Comentario longo demais.');
+  if (comentario.length > 1200) throw new ErroApi('Comentário longo demais.');
   const id = registrarAvaliacao(req.body || {}, { origem: 'site' });
   res.status(201).json({
     id,
-    mensagem: 'Obrigado! Sua avaliacao foi enviada e aparece no site depois de aprovada.',
+    mensagem: 'Obrigado! Sua avaliação foi enviada e aparece no site depois de aprovada.',
   });
 }));
 

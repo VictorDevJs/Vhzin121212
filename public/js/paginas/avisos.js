@@ -7,7 +7,7 @@ const TIPOS = [
   { valor: 'campeonato', rotulo: 'Campeonato' },
   { valor: 'evento', rotulo: 'Evento / treino extra' },
   { valor: 'cancelamento', rotulo: 'Aula cancelada' },
-  { valor: 'manutencao', rotulo: 'Manutencao' },
+  { valor: 'manutencao', rotulo: 'Manutenção' },
   { valor: 'graduacao', rotulo: 'Exame de faixa' },
 ];
 
@@ -88,10 +88,10 @@ export default async function paginaAvisos() {
         { nome: 'titulo', rotulo: 'Titulo', obrigatorio: true, placeholder: 'Campeonato estadual, sem aula na sexta...' },
         { nome: 'mensagem', rotulo: 'Mensagem', tipo: 'textarea', obrigatorio: true },
         { nome: 'tipo', rotulo: 'Tipo do aviso', tipo: 'select', opcoes: TIPOS },
-        { nome: 'publico', rotulo: 'Quem deve ver', tipo: 'select', opcoes: PUBLICOS },
-        { nome: 'modalidade_id', rotulo: 'Modalidade (se o publico for modalidade)', tipo: 'select',
+        { nome: 'público', rotulo: 'Quem deve ver', tipo: 'select', opcoes: PUBLICOS },
+        { nome: 'modalidade_id', rotulo: 'Modalidade (se o público for modalidade)', tipo: 'select',
           opcoes: [{ valor: '', rotulo: '-' }, ...modalidades.map((m) => ({ valor: m.id, rotulo: m.nome }))] },
-        { nome: 'turma_id', rotulo: 'Turma (se o publico for turma)', tipo: 'select',
+        { nome: 'turma_id', rotulo: 'Turma (se o público for turma)', tipo: 'select',
           opcoes: [{ valor: '', rotulo: '-' }, ...turmas.map((t) => ({ valor: t.id, rotulo: `${t.modalidade} · ${t.nome}` }))] },
         { nome: 'data_evento', rotulo: 'Data do evento / campeonato', tipo: 'date' },
         { nome: 'local_evento', rotulo: 'Local' },

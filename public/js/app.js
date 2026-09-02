@@ -17,21 +17,25 @@ import paginaEquipe from './paginas/equipe.js';
 import paginaMinhaArea from './paginas/minha-area.js';
 import paginaAvaliacoes from './paginas/avaliacoes.js';
 import paginaCertificados from './paginas/certificados.js';
+import paginaCheckin from './paginas/checkin.js';
+import paginaLoja from './paginas/loja.js';
 
 const EQUIPE = ['dono', 'mestre', 'recepcao'];
 
 /** Cada rota diz quem entra, em que grupo do menu aparece e o que desenha. */
 const ROTAS = [
-  { caminho: 'painel', titulo: 'Painel', curto: 'Painel', icone: 'painel', grupo: 'Visao geral', papeis: [...EQUIPE, 'aluno'], render: paginaPainel, principal: true },
-  { caminho: 'minha-area', titulo: 'Minha area', curto: 'Meu treino', icone: 'aluno', grupo: 'Visao geral', papeis: ['aluno'], render: paginaMinhaArea, principal: true },
-  { caminho: 'grade', titulo: 'Horarios', curto: 'Horarios', icone: 'calendario', grupo: 'Rotina', papeis: [...EQUIPE, 'aluno'], render: paginaGrade, principal: true },
+  { caminho: 'painel', titulo: 'Painel', curto: 'Painel', icone: 'painel', grupo: 'Visão geral', papeis: [...EQUIPE, 'aluno'], render: paginaPainel, principal: true },
+  { caminho: 'minha-area', titulo: 'Minha área', curto: 'Meu treino', icone: 'aluno', grupo: 'Visão geral', papeis: ['aluno'], render: paginaMinhaArea, principal: true },
+  { caminho: 'checkin', titulo: 'Check-in', curto: 'Check-in', icone: 'raio', grupo: 'Rotina', papeis: [...EQUIPE, 'aluno'], render: paginaCheckin, principal: true },
+  { caminho: 'grade', titulo: 'Horários', curto: 'Horários', icone: 'calendario', grupo: 'Rotina', papeis: [...EQUIPE, 'aluno'], render: paginaGrade, principal: true },
   { caminho: 'chamada', titulo: 'Chamada', curto: 'Chamada', icone: 'chamada', grupo: 'Rotina', papeis: EQUIPE, render: paginaChamada, principal: true },
   { caminho: 'avisos', titulo: 'Avisos', curto: 'Avisos', icone: 'megafone', grupo: 'Rotina', papeis: [...EQUIPE, 'aluno'], render: paginaAvisos, principal: true },
-  { caminho: 'alunos', titulo: 'Alunos', curto: 'Alunos', icone: 'alunos', grupo: 'Gestao', papeis: EQUIPE, render: paginaAlunos, principal: true },
-  { caminho: 'turmas', titulo: 'Turmas e modalidades', curto: 'Turmas', icone: 'luva', grupo: 'Gestao', papeis: EQUIPE, render: paginaTurmas },
-  { caminho: 'planos', titulo: 'Planos', curto: 'Planos', icone: 'cartao', grupo: 'Gestao', papeis: EQUIPE, render: paginaPlanos },
-  { caminho: 'avaliacoes', titulo: 'Avaliacoes', curto: 'Avaliar', icone: 'estrela', grupo: 'Rotina', papeis: [...EQUIPE, 'aluno'], render: paginaAvaliacoes },
-  { caminho: 'certificados', titulo: 'Certificados', curto: 'Faixas', icone: 'medalha', grupo: 'Gestao', papeis: [...EQUIPE, 'aluno'], render: paginaCertificados },
+  { caminho: 'alunos', titulo: 'Alunos', curto: 'Alunos', icone: 'alunos', grupo: 'Gestão', papeis: EQUIPE, render: paginaAlunos, principal: true },
+  { caminho: 'turmas', titulo: 'Turmas e modalidades', curto: 'Turmas', icone: 'luva', grupo: 'Gestão', papeis: EQUIPE, render: paginaTurmas },
+  { caminho: 'planos', titulo: 'Planos', curto: 'Planos', icone: 'cartao', grupo: 'Gestão', papeis: EQUIPE, render: paginaPlanos },
+  { caminho: 'loja', titulo: 'Loja', curto: 'Loja', icone: 'sacola', grupo: 'Gestão', papeis: [...EQUIPE, 'aluno'], render: paginaLoja, principal: true },
+  { caminho: 'avaliacoes', titulo: 'Avaliações', curto: 'Avaliar', icone: 'estrela', grupo: 'Rotina', papeis: [...EQUIPE, 'aluno'], render: paginaAvaliacoes },
+  { caminho: 'certificados', titulo: 'Certificados', curto: 'Faixas', icone: 'medalha', grupo: 'Gestão', papeis: [...EQUIPE, 'aluno'], render: paginaCertificados },
   { caminho: 'financeiro', titulo: 'Financeiro', curto: 'Caixa', icone: 'dinheiro', grupo: 'Financeiro', papeis: ['dono', 'recepcao'], render: paginaFinanceiro, principal: true },
   { caminho: 'equipe', titulo: 'Equipe e academia', curto: 'Equipe', icone: 'engrenagem', grupo: 'Sistema', papeis: ['dono'], render: paginaEquipe },
 ];
@@ -48,7 +52,7 @@ export function irPara(caminho) {
 }
 
 function rotaInicial() {
-  return sessao.papel === 'aluno' ? 'minha-area' : 'painel';
+  return sessao.papel === 'aluno' ? 'minha-área' : 'painel';
 }
 
 function rotasPermitidas() {
@@ -56,7 +60,7 @@ function rotasPermitidas() {
 }
 
 export function traduzirPapel(papel) {
-  return { dono: 'Dono da academia', mestre: 'Mestre / professor', recepcao: 'Recepcao', aluno: 'Aluno' }[papel] || papel;
+  return { dono: 'Dono da academia', mestre: 'Mestre / professor', recepcao: 'Recepção', aluno: 'Aluno' }[papel] || papel;
 }
 
 /* ------------------------------------------------------------------ menu */
@@ -66,7 +70,7 @@ function barraLateral(caminhoAtivo) {
   const grupos = [...new Set(permitidas.map((rota) => rota.grupo))];
 
   return el('nav', { classe: 'lateral', id: 'lateral', 'aria-label': 'Menu principal' }, [
-    el('div', { classe: 'identidade' }, [logotipo(30)]),
+    el('div', { classe: 'identidade' }, [logotipo(40)]),
 
     ...grupos.flatMap((grupo) => [
       el('div', { classe: 'grupo-menu', texto: grupo }),
@@ -121,7 +125,7 @@ function barraSuperior() {
       classe: 'busca-global', 'aria-label': 'Buscar e navegar', aoClicar: abrirPaleta,
     }, [
       icone('busca', 16),
-      el('span', { texto: 'Buscar telas e acoes' }),
+      el('span', { texto: 'Buscar telas e ações' }),
       el('kbd', { texto: atalhoDoSistema() }),
     ]),
     el('div', { estilo: 'margin-left:auto;display:flex;gap:.5rem' }, [
@@ -152,7 +156,7 @@ function comandosDisponiveis() {
     icone: rota.icone, titulo: rota.titulo, atalho: rota.grupo, acao: () => irPara(rota.caminho),
   }));
   comandos.push(
-    { icone: 'lua', titulo: 'Alternar tema claro / escuro', atalho: 'Aparencia', acao: () => { alternarTema(); desenhar(); } },
+    { icone: 'lua', titulo: 'Alternar tema claro / escuro', atalho: 'Aparência', acao: () => { alternarTema(); desenhar(); } },
     { icone: 'chave', titulo: 'Trocar senha', atalho: 'Conta', acao: trocarSenha },
     { icone: 'sair', titulo: 'Sair do sistema', atalho: 'Conta', acao: () => { sessao.encerrar(); window.location.hash = ''; window.location.reload(); } },
   );
@@ -166,7 +170,7 @@ export function abrirPaleta() {
 
   const lista = el('div', { classe: 'lista' });
   const campo = el('input', {
-    type: 'text', placeholder: 'Para onde voce quer ir?', 'aria-label': 'Buscar comando',
+    type: 'text', placeholder: 'Para onde você quer ir?', 'aria-label': 'Buscar comando',
     aoDigitar: (evento) => {
       const termo = evento.target.value.toLowerCase().trim();
       filtrados = todos.filter((c) => c.titulo.toLowerCase().includes(termo) || c.atalho.toLowerCase().includes(termo));
@@ -215,7 +219,7 @@ function trocarSenha() {
     titulo: 'Trocar senha',
     campos: [
       { nome: 'senha_atual', rotulo: 'Senha atual', tipo: 'password', obrigatorio: true },
-      { nome: 'senha_nova', rotulo: 'Nova senha', tipo: 'password', obrigatorio: true, dica: 'Minimo de 6 caracteres.' },
+      { nome: 'senha_nova', rotulo: 'Nova senha', tipo: 'password', obrigatorio: true, dica: 'Mínimo de 6 caracteres.' },
     ],
     aoSalvar: async (dados) => {
       await api.atualizar('/auth/senha', dados);
@@ -242,7 +246,9 @@ async function desenhar() {
   const caminho = rotaAtual();
 
   if (!sessao.usuario) {
-    limpar(raiz).append(await paginaPublica());
+    const publica = await paginaPublica();
+    limpar(raiz).append(publica);
+    ligarProfundidade(publica);
     return;
   }
 
@@ -251,7 +257,7 @@ async function desenhar() {
   const rota = ROTAS.find((r) => r.caminho === caminho);
   if (!rota) return irPara(rotaInicial());
   if (!rota.papeis.includes(sessao.papel)) {
-    aviso('Voce nao tem acesso a essa area.', 'erro');
+    aviso('Você não tem acesso a essa área.', 'erro');
     return irPara(rotaInicial());
   }
 
@@ -280,9 +286,36 @@ async function desenhar() {
   }
 }
 
+/**
+ * Inclina levemente os cartões marcados com .tilt conforme o ponteiro,
+ * dando profundidade sem exagero. Desligado em telas de toque e quando
+ * a pessoa pediu menos movimento.
+ */
+function ligarProfundidade(raiz) {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  if (window.matchMedia('(hover: none)').matches) return;
+
+  for (const alvo of raiz.querySelectorAll('.tilt')) {
+    alvo.addEventListener('pointermove', (evento) => {
+      const caixa = alvo.getBoundingClientRect();
+      const x = (evento.clientX - caixa.left) / caixa.width - 0.5;
+      const y = (evento.clientY - caixa.top) / caixa.height - 0.5;
+      alvo.style.setProperty('--ry', `${x * 9}deg`);
+      alvo.style.setProperty('--rx', `${-y * 9}deg`);
+    });
+    alvo.addEventListener('pointerleave', () => {
+      alvo.style.setProperty('--ry', '0deg');
+      alvo.style.setProperty('--rx', '0deg');
+    });
+  }
+}
+
 /** Usa a View Transitions API quando o navegador tem suporte. */
 function trocarConteudo(container, conteudo) {
-  const aplicar = () => limpar(container).append(conteudo);
+  const aplicar = () => {
+    limpar(container).append(conteudo);
+    ligarProfundidade(container);
+  };
   if (document.startViewTransition) document.startViewTransition(aplicar);
   else aplicar();
 }

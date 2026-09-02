@@ -15,7 +15,7 @@ export const marca = {
 export function aplicarMarca(academia = {}) {
   if (academia.nome) marca.nome = academia.nome;
   if (academia.chamada) marca.chamada = academia.chamada;
-  document.title = `${marca.nome} · Sistema de gestao`;
+  document.title = `${marca.nome} · Sistema de gestão`;
   if (academia.cor_primaria) definirCorPrincipal(academia.cor_primaria);
 }
 
@@ -47,7 +47,7 @@ function clarear(cor, quanto) {
   return `#${ajustado.map((v) => v.toString(16).padStart(2, '0')).join('')}`;
 }
 
-/** Logo horizontal, com o nome em texto caso o arquivo nao exista. */
+/** Logo horizontal, com o nome em texto caso o arquivo não exista. */
 export function logotipo(altura = 32) {
   const imagem = el('img', { src: '/marca/logo.svg', alt: marca.nome, estilo: `height:${altura}px` });
   imagem.addEventListener('error', () => imagem.replaceWith(el('span', { classe: 'nome', texto: marca.nome })));

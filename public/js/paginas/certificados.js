@@ -6,11 +6,11 @@ import { topo } from '../app.js';
 
 const TIPOS = [
   { valor: 'faixa_preta', rotulo: 'Faixa preta' },
-  { valor: 'graduacao', rotulo: 'Graduacao / troca de faixa' },
-  { valor: 'mestre', rotulo: 'Titulacao de mestre' },
-  { valor: 'federacao', rotulo: 'Registro em federacao' },
-  { valor: 'curso', rotulo: 'Curso / formacao' },
-  { valor: 'premiacao', rotulo: 'Premiacao / titulo' },
+  { valor: 'graduacao', rotulo: 'Graduação / troca de faixa' },
+  { valor: 'mestre', rotulo: 'Titulação de mestre' },
+  { valor: 'federacao', rotulo: 'Registro em federação' },
+  { valor: 'curso', rotulo: 'Curso / formação' },
+  { valor: 'premiacao', rotulo: 'Premiação / titulo' },
   { valor: 'outro', rotulo: 'Outro documento' },
 ];
 
@@ -81,12 +81,12 @@ export default async function paginaCertificados() {
           opcoes: [{ valor: '', rotulo: '-' }, ...modalidades.map((m) => ({ valor: m.id, rotulo: m.nome }))] },
         ...(ehDono ? [{ nome: 'usuario_id', rotulo: 'Vincular a um mestre da equipe', tipo: 'select',
           opcoes: [{ valor: '', rotulo: '-' }, ...equipe.filter((u) => u.papel === 'mestre').map((u) => ({ valor: u.id, rotulo: u.nome }))] }] : []),
-        { nome: 'entidade', rotulo: 'Federacao / entidade emissora', placeholder: 'CBJJ, CBMT, IBJJF...' },
-        { nome: 'registro', rotulo: 'Numero de registro' },
-        { nome: 'data_emissao', rotulo: 'Data de emissao', tipo: 'date' },
-        { nome: 'descricao', rotulo: 'Observacoes', tipo: 'textarea' },
+        { nome: 'entidade', rotulo: 'Federação / entidade emissora', placeholder: 'CBJJ, CBMT, IBJJF...' },
+        { nome: 'registro', rotulo: 'Número de registro' },
+        { nome: 'data_emissao', rotulo: 'Data de emissão', tipo: 'date' },
+        { nome: 'descrição', rotulo: 'Observações', tipo: 'textarea' },
         { nome: 'arquivo_novo', rotulo: 'Imagem ou PDF do certificado', tipo: 'arquivo',
-          dica: 'JPG, PNG, WEBP ou PDF de ate 5 MB.' },
+          dica: 'JPG, PNG, WEBP ou PDF de até 5 MB.' },
         { nome: 'publicar_site', rotulo: 'Mostrar na pagina publica', tipo: 'checkbox', valor: 1 },
       ],
       valores: item || { tipo: 'faixa_preta', publicar_site: 1 },
@@ -116,8 +116,8 @@ export default async function paginaCertificados() {
   await carregar();
 
   return el('div', {}, [
-    topo('Certificados e titulacoes',
-      'Faixas pretas, titulacoes dos mestres, registros em federacao e cursos da equipe',
+    topo('Certificados e titulações',
+      'Faixas pretas, titulações dos mestres, registros em federação e cursos da equipe',
       ehDono ? [botao('+ Publicar certificado', () => formulario())] : []),
     el('div', { classe: 'filtros' }, [
       el('div', { classe: 'campo' }, [

@@ -25,7 +25,7 @@ export default async function paginaFinanceiro() {
 
   async function carregarResumo() {
     if (!ehDono) {
-      areaIndicadores.replaceChildren(el('p', { classe: 'dica', texto: 'O resultado consolidado da academia fica visivel apenas para o dono.' }));
+      areaIndicadores.replaceChildren(el('p', { classe: 'dica', texto: 'O resultado consolidado da academia fica visível apenas para o dono.' }));
       return;
     }
     const resumo = await api.obter(`/financeiro/resumo${consulta({ competencia: estado.competencia })}`);
@@ -33,13 +33,13 @@ export default async function paginaFinanceiro() {
       indicador({ rotulo: 'Receitas', valor: moeda(resumo.receitas), detalhe: competenciaBr(resumo.competencia), tipo: 'ok' }),
       indicador({ rotulo: 'Despesas', valor: moeda(resumo.despesas), detalhe: competenciaBr(resumo.competencia), tipo: 'erro' }),
       indicador({
-        rotulo: 'Saldo do mes', valor: moeda(resumo.saldo),
+        rotulo: 'Saldo do mês', valor: moeda(resumo.saldo),
         detalhe: resumo.saldo >= 0 ? 'Resultado positivo' : 'Resultado negativo',
         tipo: resumo.saldo >= 0 ? 'ok' : 'erro',
       }),
       indicador({ rotulo: 'A receber', valor: moeda(resumo.a_receber.total), detalhe: `${resumo.a_receber.quantidade} mensalidade(s)`, tipo: 'alerta' }),
       indicador({
-        rotulo: 'Inadimplencia', valor: moeda(resumo.inadimplencia.total),
+        rotulo: 'Inadimplência', valor: moeda(resumo.inadimplencia.total),
         detalhe: `${resumo.inadimplencia.quantidade} em atraso`,
         tipo: resumo.inadimplencia.quantidade ? 'erro' : '',
       }),
@@ -48,13 +48,13 @@ export default async function paginaFinanceiro() {
     areaGrafico.replaceChildren(resumo.evolucao.length
       ? evolucao({
         pontos: resumo.evolucao.map((mes) => ({ x: competenciaBr(mes.competencia), valores: [mes.receitas, mes.despesas] })),
-        series: [{ nome: 'Entradas', cor: 'var(--serie-1)' }, { nome: 'Saidas', cor: 'var(--serie-2)' }],
+        series: [{ nome: 'Entradas', cor: 'var(--serie-1)' }, { nome: 'Saídas', cor: 'var(--serie-2)' }],
       })
-      : vazio('Ainda nao ha movimentacao registrada.', '\u{1F4C8}'));
+      : vazio('Ainda não ha movimentacao registrada.', '\u{1F4C8}'));
 
     areaCategorias.replaceChildren(el('div', { classe: 'grade col-2' }, [
       blocoCategorias('Entradas por categoria', resumo.por_categoria.filter((c) => c.tipo === 'receita'), 'var(--serie-1)'),
-      blocoCategorias('Saidas por categoria', resumo.por_categoria.filter((c) => c.tipo === 'despesa'), 'var(--serie-2)'),
+      blocoCategorias('Saídas por categoria', resumo.por_categoria.filter((c) => c.tipo === 'despesa'), 'var(--serie-2)'),
     ]));
   }
 
@@ -63,10 +63,10 @@ export default async function paginaFinanceiro() {
       el('h4', { texto: titulo }),
       itens.length
         ? barrasHorizontais({
-          dados: itens.map((item) => ({ rotulo: item.categoria, valor: item.total, cor, legenda: 'total no mes' })),
+          dados: itens.map((item) => ({ rotulo: item.categoria, valor: item.total, cor, legenda: 'total no mês' })),
           formatar: moeda,
         })
-        : vazio('Sem lancamentos neste mes.', '\u{1F4B8}'),
+        : vazio('Sem lançamentos neste mês.', '\u{1F4B8}'),
     ]);
   }
 
@@ -86,7 +86,7 @@ export default async function paginaFinanceiro() {
         indicador({ rotulo: 'Atrasado', valor: moeda(totais.atrasado), tipo: totais.atrasado ? 'erro' : '' }),
       ]),
       tabela(
-        ['Aluno', 'Competencia', 'Vencimento', 'Valor', 'Situacao', 'Pagamento', 'Acoes'],
+        ['Aluno', 'Competência', 'Vencimento', 'Valor', 'Situação', 'Pagamento', 'Ações'],
         mensalidades.map((mensalidade) => [
           celula([
             el('strong', { texto: mensalidade.aluno }),
@@ -145,9 +145,9 @@ export default async function paginaFinanceiro() {
 
   function gerarMensalidades() {
     abrirFormulario({
-      titulo: 'Gerar mensalidades do mes',
-      aviso: 'Cria a cobranca de todos os alunos com matricula ativa. Quem ja tem mensalidade no mes e ignorado.',
-      campos: [{ nome: 'competencia', rotulo: 'Competencia', tipo: 'month', valor: estado.competencia, obrigatorio: true }],
+      titulo: 'Gerar mensalidades do mês',
+      aviso: 'Cria a cobranca de todos os alunos com matrícula ativa. Quem já tem mensalidade no mês e ignorado.',
+      campos: [{ nome: 'competência', rotulo: 'Competência', tipo: 'month', valor: estado.competencia, obrigatorio: true }],
       textoConfirmar: 'Gerar',
       aoSalvar: async (dados) => {
         const resposta = await api.criar('/financeiro/mensalidades/gerar', dados);
@@ -163,10 +163,10 @@ export default async function paginaFinanceiro() {
       campos: [
         { nome: 'aluno_id', rotulo: 'Aluno', tipo: 'select', obrigatorio: true,
           opcoes: alunos.map((a) => ({ valor: a.id, rotulo: a.nome })) },
-        { nome: 'competencia', rotulo: 'Competencia', tipo: 'month', valor: estado.competencia, obrigatorio: true },
+        { nome: 'competência', rotulo: 'Competência', tipo: 'month', valor: estado.competencia, obrigatorio: true },
         { nome: 'vencimento', rotulo: 'Vencimento', tipo: 'date', valor: `${estado.competencia}-10` },
         { nome: 'valor', rotulo: 'Valor', tipo: 'number', passo: '0.01', obrigatorio: true },
-        { nome: 'observacao', rotulo: 'Observacao' },
+        { nome: 'observação', rotulo: 'Observação' },
       ],
       aoSalvar: async (dados) => {
         await api.criar('/financeiro/mensalidades', dados);
@@ -176,21 +176,21 @@ export default async function paginaFinanceiro() {
     });
   }
 
-  // ---------- Lancamentos ----------
+  // ---------- Lançamentos ----------
 
   async function carregarLancamentos() {
     const { totais, lancamentos } = await api.obter(`/financeiro/lancamentos${consulta({
-      de: `${estado.competencia}-01`, ate: `${estado.competencia}-31`,
+      de: `${estado.competencia}-01`, até: `${estado.competencia}-31`,
     })}`);
 
     areaLancamentos.replaceChildren(el('div', {}, [
       el('div', { classe: 'grade col-3', estilo: 'margin-bottom:1rem' }, [
         indicador({ rotulo: 'Entradas', valor: moeda(totais.receitas), tipo: 'ok' }),
-        ehDono ? indicador({ rotulo: 'Saidas', valor: moeda(totais.despesas), tipo: 'erro' }) : null,
+        ehDono ? indicador({ rotulo: 'Saídas', valor: moeda(totais.despesas), tipo: 'erro' }) : null,
         ehDono ? indicador({ rotulo: 'Saldo', valor: moeda(totais.saldo), tipo: totais.saldo >= 0 ? 'ok' : 'erro' }) : null,
       ].filter(Boolean)),
       tabela(
-        ['Data', 'Tipo', 'Categoria', 'Descricao', 'Aluno', 'Forma', 'Valor', ''],
+        ['Data', 'Tipo', 'Categoria', 'Descrição', 'Aluno', 'Forma', 'Valor', ''],
         lancamentos.map((lancamento) => [
           dataBr(lancamento.data),
           celula([etiqueta(lancamento.tipo, lancamento.tipo === 'receita' ? 'ok' : 'erro')]),
@@ -201,14 +201,14 @@ export default async function paginaFinanceiro() {
           moeda(lancamento.valor),
           celula([ehDono
             ? botao('Estornar', async () => {
-              if (!confirmar('Remover este lancamento? Se for um pagamento de mensalidade, ela volta para pendente.')) return;
+              if (!confirmar('Remover este lançamento? Se for um pagamento de mensalidade, ela volta para pendente.')) return;
               await api.remover(`/financeiro/lancamentos/${lancamento.id}`);
-              aviso('Lancamento estornado.');
+              aviso('Lançamento estornado.');
               await atualizarTudo();
             }, 'botao pequeno perigo')
             : null]),
         ]),
-        'Nenhuma movimentacao neste mes.',
+        'Nenhuma movimentacao neste mês.',
       ),
     ]));
   }
@@ -219,10 +219,10 @@ export default async function paginaFinanceiro() {
       : ['aluguel', 'salarios', 'agua/luz/internet', 'equipamentos', 'manutencao', 'marketing', 'impostos', 'outros'];
 
     abrirFormulario({
-      titulo: tipo === 'receita' ? 'Nova entrada' : 'Nova saida',
+      titulo: tipo === 'receita' ? 'Nova entrada' : 'Nova saída',
       campos: [
         { nome: 'categoria', rotulo: 'Categoria', tipo: 'select', opcoes: categorias.map((c) => ({ valor: c, rotulo: c })) },
-        { nome: 'descricao', rotulo: 'Descricao', obrigatorio: true },
+        { nome: 'descricao', rotulo: 'Descrição', obrigatorio: true },
         { nome: 'valor', rotulo: 'Valor (R$)', tipo: 'number', passo: '0.01', obrigatorio: true },
         { nome: 'data', rotulo: 'Data', tipo: 'date', valor: hojeISO() },
         { nome: 'forma_pagamento', rotulo: 'Forma', tipo: 'select', opcoes: FORMAS.map((f) => ({ valor: f, rotulo: f })) },
@@ -233,7 +233,7 @@ export default async function paginaFinanceiro() {
       ],
       aoSalvar: async (dados) => {
         await api.criar('/financeiro/lancamentos', { ...dados, tipo });
-        aviso('Lancamento registrado.');
+        aviso('Lançamento registrado.');
         await atualizarTudo();
       },
     });
@@ -268,7 +268,7 @@ export default async function paginaFinanceiro() {
               rotulo: estado.visaoPorTurma ? linha.turma : linha.modalidade,
               valor: linha.previsto,
               cor: linha.cor || undefined,
-              legenda: 'previsto no mes',
+              legenda: 'previsto no mês',
             })),
             formatar: moeda,
           }),
@@ -288,7 +288,7 @@ export default async function paginaFinanceiro() {
             ]),
           ),
         ])
-        : vazio('Sem mensalidades neste mes para dividir entre as modalidades.', '\u{1F94B}'),
+        : vazio('Sem mensalidades neste mês para dividir entre as modalidades.', '\u{1F94B}'),
       dados.sem_turma
         ? el('p', { classe: 'dica', texto: `${dados.sem_turma.alunos} aluno(s) sem turma definida somam ${moeda(dados.sem_turma.previsto)} e ficam fora da divisao acima.` })
         : null,
@@ -307,7 +307,7 @@ export default async function paginaFinanceiro() {
   const seletorStatus = el('select', {
     aoMudar: (evento) => { estado.statusMensalidade = evento.target.value; carregarMensalidades(); },
   }, [
-    el('option', { value: '', texto: 'Todas do mes' }),
+    el('option', { value: '', texto: 'Todas do mês' }),
     el('option', { value: 'pendente', texto: 'Em aberto' }),
     el('option', { value: 'pago', texto: 'Pagas' }),
     el('option', { value: 'atrasadas', texto: 'Atrasadas (todos os meses)' }),
@@ -316,16 +316,16 @@ export default async function paginaFinanceiro() {
   await atualizarTudo();
 
   return el('div', {}, [
-    topo('Financeiro', 'Mensalidades, entradas, saidas e resultado da academia', [
+    topo('Financeiro', 'Mensalidades, entradas, saídas e resultado da academia', [
       botao('Gerar mensalidades', gerarMensalidades, 'botao secundario'),
       botao('+ Entrada', () => novoLancamento('receita'), 'botao secundario'),
-      ehDono ? botao('+ Saida', () => novoLancamento('despesa'), 'botao secundario') : null,
+      ehDono ? botao('+ Saída', () => novoLancamento('despesa'), 'botao secundario') : null,
     ].filter(Boolean)),
     el('div', { classe: 'filtros' }, [
-      el('div', { classe: 'campo' }, [el('label', { texto: 'Mes de referencia' }), seletorCompetencia]),
+      el('div', { classe: 'campo' }, [el('label', { texto: 'Mês de referencia' }), seletorCompetencia]),
     ]),
     areaIndicadores,
-    ehDono ? cartao('Entradas e saidas dos ultimos meses', areaGrafico) : null,
+    ehDono ? cartao('Entradas e saídas dos últimos meses', areaGrafico) : null,
     ehDono ? cartao('Para onde o dinheiro vai', areaCategorias) : null,
     cartao('Mensalidades por arte marcial', areaModalidades),
     cartao('Mensalidades', [
@@ -335,6 +335,6 @@ export default async function paginaFinanceiro() {
       ]),
       areaMensalidades,
     ]),
-    cartao('Movimentacoes do mes', areaLancamentos),
+    cartao('Movimentações do mês', areaLancamentos),
   ]);
 }

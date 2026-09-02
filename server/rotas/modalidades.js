@@ -21,7 +21,7 @@ roteador.post('/', exigirPapel('dono'), rota((req, res) => {
   exigirCampos(req.body, ['nome']);
   const nome = texto(req.body.nome);
   if (um('SELECT id FROM modalidades WHERE nome = :nome', { nome })) {
-    throw new ErroApi('Ja existe uma modalidade com este nome.', 409);
+    throw new ErroApi('Já existe uma modalidade com este nome.', 409);
   }
   const criada = executar(
     'INSERT INTO modalidades (nome, descricao, cor, ativo) VALUES (:nome, :descricao, :cor, :ativo)',
@@ -38,7 +38,7 @@ roteador.post('/', exigirPapel('dono'), rota((req, res) => {
 roteador.put('/:id', exigirPapel('dono'), rota((req, res) => {
   const id = inteiro(req.params.id);
   const atual = um('SELECT * FROM modalidades WHERE id = :id', { id });
-  if (!atual) throw new ErroApi('Modalidade nao encontrada.', 404);
+  if (!atual) throw new ErroApi('Modalidade não encontrada.', 404);
 
   executar(
     `UPDATE modalidades SET nome = :nome, descricao = :descricao, cor = :cor, ativo = :ativo WHERE id = :id`,
@@ -60,7 +60,7 @@ roteador.delete('/:id', exigirPapel('dono'), rota((req, res) => {
     throw new ErroApi('Existem turmas nesta modalidade. Desative a modalidade em vez de excluir.', 409);
   }
   const apagada = executar('DELETE FROM modalidades WHERE id = :id', { id });
-  if (!apagada.changes) throw new ErroApi('Modalidade nao encontrada.', 404);
+  if (!apagada.changes) throw new ErroApi('Modalidade não encontrada.', 404);
   res.json({ mensagem: 'Modalidade removida.' });
 }));
 
@@ -75,12 +75,12 @@ roteador.get('/:id/graduacoes', exigirPapel(...EQUIPE, 'aluno'), rota((req, res)
 roteador.post('/:id/graduacoes', exigirPapel('dono', 'mestre'), rota((req, res) => {
   const modalidadeId = inteiro(req.params.id);
   if (!um('SELECT id FROM modalidades WHERE id = :id', { id: modalidadeId })) {
-    throw new ErroApi('Modalidade nao encontrada.', 404);
+    throw new ErroApi('Modalidade não encontrada.', 404);
   }
   exigirCampos(req.body, ['nome']);
   const nome = texto(req.body.nome);
   if (um('SELECT id FROM graduacoes WHERE modalidade_id = :m AND nome = :nome', { m: modalidadeId, nome })) {
-    throw new ErroApi('Esta graduacao ja existe na modalidade.', 409);
+    throw new ErroApi('Esta graduação já existe na modalidade.', 409);
   }
   const criada = executar(
     'INSERT INTO graduacoes (modalidade_id, nome, ordem, cor) VALUES (:modalidade_id, :nome, :ordem, :cor)',
@@ -99,8 +99,8 @@ roteador.delete('/:id/graduacoes/:graduacaoId', exigirPapel('dono', 'mestre'), r
     id: inteiro(req.params.graduacaoId),
     m: inteiro(req.params.id),
   });
-  if (!apagada.changes) throw new ErroApi('Graduacao nao encontrada.', 404);
-  res.json({ mensagem: 'Graduacao removida.' });
+  if (!apagada.changes) throw new ErroApi('Graduação não encontrada.', 404);
+  res.json({ mensagem: 'Graduação removida.' });
 }));
 
 export default roteador;

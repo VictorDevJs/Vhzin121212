@@ -30,7 +30,7 @@ export default async function paginaTurmas() {
           estilo: `--cor-modalidade:${modalidade.cor || 'var(--marca-1)'}`,
         }, [
           el('h3', {}, [modalidade.nome, ' ', modalidade.ativo ? null : etiqueta('inativa', 'neutra')]),
-          el('p', { classe: 'dica', texto: modalidade.descricao || 'Sem descricao.' }),
+          el('p', { classe: 'dica', texto: modalidade.descricao || 'Sem descrição.' }),
           el('div', { classe: 'acoes', estilo: 'margin-bottom:.6rem' }, [
             etiqueta(`${modalidade.total_turmas} turma(s)`, 'info'),
             etiqueta(`${modalidade.total_graduacoes} faixa(s)`, 'neutra'),
@@ -51,8 +51,8 @@ export default async function paginaTurmas() {
     abrirFormulario({
       titulo: modalidade ? `Editar ${modalidade.nome}` : 'Nova modalidade',
       campos: [
-        { nome: 'nome', rotulo: 'Nome da modalidade', obrigatorio: true, placeholder: 'Jiu-Jitsu, Boxe, Judo...' },
-        { nome: 'descricao', rotulo: 'Descricao', tipo: 'textarea' },
+        { nome: 'nome', rotulo: 'Nome da modalidade', obrigatorio: true, placeholder: 'Jiu-Jitsu, Boxe, Judô...' },
+        { nome: 'descrição', rotulo: 'Descrição', tipo: 'textarea' },
         { nome: 'cor', rotulo: 'Cor de identificacao', tipo: 'color', valor: '#c62828' },
         { nome: 'ativo', rotulo: 'Modalidade ativa', tipo: 'checkbox', valor: 1 },
       ],
@@ -77,7 +77,7 @@ export default async function paginaTurmas() {
     }
   }
 
-  /** Faixas/graduacoes de uma modalidade, na ordem de evolucao. */
+  /** Faixas/graduações de uma modalidade, na ordem de evolução. */
   async function gerenciarFaixas(modalidade) {
     const conteudo = el('div');
     abrirModal({ titulo: `Faixas de ${modalidade.nome}`, conteudo });
@@ -102,7 +102,7 @@ export default async function paginaTurmas() {
             titulo: `Nova faixa de ${modalidade.nome}`,
             campos: [
               { nome: 'nome', rotulo: 'Nome da faixa', obrigatorio: true, placeholder: 'Branca, Azul, Preta...' },
-              { nome: 'ordem', rotulo: 'Ordem', tipo: 'number', valor: 0, dica: 'Menor numero aparece primeiro.' },
+              { nome: 'ordem', rotulo: 'Ordem', tipo: 'number', valor: 0, dica: 'Menor número aparece primeiro.' },
             ],
             aoSalvar: async (dados) => {
               await api.criar(`/modalidades/${modalidade.id}/graduacoes`, dados);
@@ -120,7 +120,7 @@ export default async function paginaTurmas() {
 
   function desenharTurmas(turmas) {
     areaTurmas.replaceChildren(tabela(
-      ['Turma', 'Modalidade', 'Categoria', 'Nivel', 'Mestre', 'Horarios', 'Alunos', 'Acoes'],
+      ['Turma', 'Modalidade', 'Categoria', 'Nível', 'Mestre', 'Horários', 'Alunos', 'Ações'],
       turmas.map((turma) => [
         celula([
           el('strong', { texto: turma.nome }),
@@ -135,10 +135,10 @@ export default async function paginaTurmas() {
           ? el('div', {}, turma.horarios.map((h) => el('div', {
             classe: 'dica', texto: `${DIAS_SEMANA[h.dia_semana]} ${h.hora_inicio}-${h.hora_fim}`,
           })))
-          : el('span', { classe: 'dica', texto: 'sem horario' })]),
+          : el('span', { classe: 'dica', texto: 'sem horário' })]),
         `${turma.total_alunos}/${turma.capacidade}`,
         celula([
-          botao('Horarios', () => gerenciarHorarios(turma), 'botao pequeno secundario'),
+          botao('Horários', () => gerenciarHorarios(turma), 'botao pequeno secundario'),
           podeEditar(turma) ? botao('Editar', () => formularioTurma(turma), 'botao pequeno secundario') : null,
           ehDono ? botao('Excluir', () => excluirTurma(turma), 'botao pequeno perigo') : null,
         ].filter(Boolean), 'acoes-celula'),
@@ -161,10 +161,10 @@ export default async function paginaTurmas() {
         { nome: 'categoria', rotulo: 'Categoria', tipo: 'select', opcoes: [
           { valor: 'adulto', rotulo: 'Adulto' }, { valor: 'kids', rotulo: 'Kids' },
           { valor: 'misto', rotulo: 'Misto' }, { valor: 'feminino', rotulo: 'Feminino' }] },
-        { nome: 'nivel', rotulo: 'Nivel', tipo: 'select', opcoes: [
+        { nome: 'nível', rotulo: 'Nível', tipo: 'select', opcoes: [
           { valor: 'todos', rotulo: 'Todos os niveis' }, { valor: 'iniciante', rotulo: 'Iniciante' },
-          { valor: 'intermediario', rotulo: 'Intermediario' }, { valor: 'avancado', rotulo: 'Avancado' }] },
-        { nome: 'mestre_id', rotulo: 'Mestre responsavel', tipo: 'select',
+          { valor: 'intermediário', rotulo: 'Intermediário' }, { valor: 'avançado', rotulo: 'Avançado' }] },
+        { nome: 'mestre_id', rotulo: 'Mestre responsável', tipo: 'select',
           opcoes: [{ valor: '', rotulo: 'Sem mestre definido' }, ...mestres.map((m) => ({ valor: m.id, rotulo: m.nome }))] },
         { nome: 'capacidade', rotulo: 'Capacidade (vagas)', tipo: 'number', min: 1, valor: 30 },
         { nome: 'local', rotulo: 'Local / tatame', placeholder: 'Tatame principal' },
@@ -176,7 +176,7 @@ export default async function paginaTurmas() {
       aoSalvar: async (dados) => {
         if (turma) await api.atualizar(`/turmas/${turma.id}`, dados);
         else await api.criar('/turmas', dados);
-        aviso('Turma salva. Agora cadastre os horarios dela.');
+        aviso('Turma salva. Agora cadastre os horários dela.');
         await carregar();
       },
     });
@@ -189,10 +189,10 @@ export default async function paginaTurmas() {
     await carregar();
   }
 
-  /** Cadastro dos dias e horarios em que a turma treina. */
+  /** Cadastro dos dias e horários em que a turma treina. */
   async function gerenciarHorarios(turma) {
     const conteudo = el('div');
-    abrirModal({ titulo: `Horarios de ${turma.nome}`, conteudo });
+    abrirModal({ titulo: `Horários de ${turma.nome}`, conteudo });
 
     async function desenhar() {
       const dados = await api.obter(`/turmas/${turma.id}`);
@@ -208,10 +208,10 @@ export default async function paginaTurmas() {
               }, 'botao pequeno perigo')
               : null]),
           ]))
-          : vazio('Nenhum horario cadastrado para esta turma.'),
+          : vazio('Nenhum horário cadastrado para esta turma.'),
         podeEditar(turma)
-          ? botao('+ Novo horario', () => abrirFormulario({
-            titulo: 'Novo horario',
+          ? botao('+ Novo horário', () => abrirFormulario({
+            titulo: 'Novo horário',
             campos: [
               { nome: 'dia_semana', rotulo: 'Dia da semana', tipo: 'select', obrigatorio: true,
                 opcoes: DIAS_SEMANA.map((dia, indice) => ({ valor: indice, rotulo: dia })) },
@@ -233,7 +233,7 @@ export default async function paginaTurmas() {
   await carregar();
 
   return el('div', {}, [
-    topo('Turmas e modalidades', 'Cadastre cada luta, as faixas, as turmas e os horarios',
+    topo('Turmas e modalidades', 'Cadastre cada luta, as faixas, as turmas e os horários',
       ehDono ? [
         botao('+ Modalidade', () => formularioModalidade(), 'botao secundario'),
         botao('+ Turma', () => formularioTurma()),

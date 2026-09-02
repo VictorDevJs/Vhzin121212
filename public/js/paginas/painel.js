@@ -13,30 +13,30 @@ export default async function paginaPainel() {
   raiz.append(topo(
     `Bom treino, ${primeiroNome}`,
     `${dados.dia_semana}, ${dataBr(dados.hoje)}`,
-    sessao.ehUm('dono', 'recepcao')
+    sessao.ehUm('dono', 'recepção')
       ? [el('button', { classe: 'botao secundario', texto: 'Ver financeiro', aoClicar: () => irPara('financeiro') })]
       : [],
   ));
 
-  if (sessao.ehUm('dono', 'recepcao')) raiz.append(...painelGestao(dados));
+  if (sessao.ehUm('dono', 'recepção')) raiz.append(...painelGestao(dados));
   if (sessao.papel === 'mestre') raiz.append(...painelMestre(dados));
   if (sessao.papel === 'aluno') raiz.append(painelAluno(dados));
 
-  if (sessao.ehUm('dono', 'recepcao') && (dados.aniversariantes || []).length) {
-    raiz.append(cartao('Aniversariantes do mes', listaAniversariantes(dados.aniversariantes)));
+  if (sessao.ehUm('dono', 'recepção') && (dados.aniversariantes || []).length) {
+    raiz.append(cartao('Aniversariantes do mês', listaAniversariantes(dados.aniversariantes)));
   }
 
   raiz.append(el('div', { classe: 'grade col-2' }, [
     cartao('Aulas de hoje', listaAulasHoje(dados.aulas_hoje),
       el('button', { classe: 'botao pequeno secundario', texto: 'Grade completa', aoClicar: () => irPara('grade') })),
-    cartao('Ultimos avisos', listaAvisos(dados.avisos_recentes),
+    cartao('Últimos avisos', listaAvisos(dados.avisos_recentes),
       el('button', { classe: 'botao pequeno secundario', texto: 'Ver todos', aoClicar: () => irPara('avisos') })),
   ]));
 
   return raiz;
 }
 
-/* ------------------------------------------------------- dono e recepcao */
+/* ------------------------------------------------------- dono e recepção */
 
 function painelGestao(dados) {
   const financeiro = dados.financeiro || {};
@@ -52,26 +52,26 @@ function painelGestao(dados) {
     }),
     indicador({
       rotulo: 'Pendentes', valor: String(dados.alunos.pendentes ?? 0),
-      detalhe: dados.alunos.pendentes ? 'Confirme a matricula' : 'Nada na fila',
-      tipo: dados.alunos.pendentes ? 'atencao' : '',
+      detalhe: dados.alunos.pendentes ? 'Confirme a matrícula' : 'Nada na fila',
+      tipo: dados.alunos.pendentes ? 'atenção' : '',
     }),
     indicador({ rotulo: 'Turmas ativas', valor: String(dados.turmas_ativas), detalhe: `${dados.aulas_hoje.length} aula(s) hoje`, tipo: 'destaque' }),
-    indicador({ rotulo: 'A receber', valor: moeda(financeiro.a_receber ?? 0), detalhe: 'Mensalidades em aberto', tipo: 'atencao' }),
+    indicador({ rotulo: 'A receber', valor: moeda(financeiro.a_receber ?? 0), detalhe: 'Mensalidades em aberto', tipo: 'atenção' }),
   ];
 
   if (ehDono) {
     const saldo = financeiro.saldo ?? 0;
     indicadores.push(
       indicador({
-        rotulo: 'Receitas do mes', valor: moeda(financeiro.receitas ?? 0), tipo: 'bom',
+        rotulo: 'Receitas do mês', valor: moeda(financeiro.receitas ?? 0), tipo: 'bom',
         extra: serieCaixa.length > 1 ? sparkline({ valores: serieCaixa.map((m) => m.receitas), cor: 'var(--serie-1)' }) : null,
       }),
       indicador({
-        rotulo: 'Despesas do mes', valor: moeda(financeiro.despesas ?? 0), tipo: 'critico',
+        rotulo: 'Despesas do mês', valor: moeda(financeiro.despesas ?? 0), tipo: 'critico',
         extra: serieCaixa.length > 1 ? sparkline({ valores: serieCaixa.map((m) => m.despesas), cor: 'var(--serie-2)' }) : null,
       }),
       indicador({
-        rotulo: 'Saldo do mes', valor: moeda(saldo), tipo: saldo >= 0 ? 'bom' : 'critico',
+        rotulo: 'Saldo do mês', valor: moeda(saldo), tipo: saldo >= 0 ? 'bom' : 'critico',
         delta: { valor: saldo >= 0 ? 'no azul' : 'no vermelho', sobe: saldo >= 0 },
       }),
     );
@@ -79,13 +79,13 @@ function painelGestao(dados) {
 
   if (dados.avaliacoes_pendentes) {
     indicadores.push(indicador({
-      rotulo: 'Avaliacoes na fila', valor: String(dados.avaliacoes_pendentes),
-      detalhe: 'Aprove para publicar no site', tipo: 'atencao',
+      rotulo: 'Avaliações na fila', valor: String(dados.avaliacoes_pendentes),
+      detalhe: 'Aprove para publicar no site', tipo: 'atenção',
     }));
   }
 
   indicadores.push(indicador({
-    rotulo: 'Inadimplencia', valor: moeda(financeiro.inadimplencia?.total ?? 0),
+    rotulo: 'Inadimplência', valor: moeda(financeiro.inadimplencia?.total ?? 0),
     detalhe: `${financeiro.inadimplencia?.quantidade ?? 0} mensalidade(s) em atraso`,
     tipo: (financeiro.inadimplencia?.quantidade ?? 0) > 0 ? 'critico' : '',
   }));
@@ -105,16 +105,16 @@ function painelGestao(dados) {
           formatar: (v) => `${v}`,
         })
         : vazio('Vincule alunos as turmas para ver a distribuicao.', '\u{1F4CA}')),
-      cartao('Composicao da base', (dados.alunos.ativos ?? 0)
+      cartao('Composição da base', (dados.alunos.ativos ?? 0)
         ? rosca({ dados: composicao, titulo: 'alunos ativos', formatar: (v) => `${v}` })
         : vazio('Nenhum aluno ativo ainda.', '\u{1F465}')),
     ]),
   ];
 
   if (ehDono && serieCaixa.length) {
-    blocos.push(cartao('Entradas e saidas dos ultimos meses', evolucao({
+    blocos.push(cartao('Entradas e saídas dos últimos meses', evolucao({
       pontos: serieCaixa.map((mes) => ({ x: competenciaBr(mes.competencia), valores: [mes.receitas, mes.despesas] })),
-      series: [{ nome: 'Entradas', cor: 'var(--serie-1)' }, { nome: 'Saidas', cor: 'var(--serie-2)' }],
+      series: [{ nome: 'Entradas', cor: 'var(--serie-1)' }, { nome: 'Saídas', cor: 'var(--serie-2)' }],
     })));
   }
 
@@ -133,7 +133,7 @@ function painelMestre(dados) {
     cartao('Minhas turmas', dados.minhas_turmas.length
       ? tabela(['Turma', 'Modalidade', 'Categoria', 'Alunos'],
         dados.minhas_turmas.map((t) => [t.nome, t.modalidade, t.categoria, String(t.total_alunos)]))
-      : vazio('Voce ainda nao e responsavel por nenhuma turma.', '\u{1F94B}'),
+      : vazio('Você ainda não e responsável por nenhuma turma.', '\u{1F94B}'),
     el('button', { classe: 'botao pequeno', texto: 'Fazer chamada', aoClicar: () => irPara('chamada') })),
   ];
 }
@@ -143,7 +143,7 @@ function painelMestre(dados) {
 function painelAluno(dados) {
   const aluno = dados.aluno || {};
   return el('div', { classe: 'grade col-4', estilo: 'margin-bottom:1rem' }, [
-    indicador({ rotulo: 'Situacao', valor: aluno.status ?? '-', tipo: aluno.status === 'ativo' ? 'bom' : 'atencao' }),
+    indicador({ rotulo: 'Situação', valor: aluno.status ?? '-', tipo: aluno.status === 'ativo' ? 'bom' : 'atencao' }),
     indicador({ rotulo: 'Categoria', valor: aluno.categoria ?? '-', tipo: 'destaque' }),
     indicador({ rotulo: 'Aulas hoje', valor: String(dados.aulas_hoje.length), detalhe: dados.dia_semana }),
   ]);
@@ -158,7 +158,7 @@ function listaAulasHoje(aulas) {
   }, [
     el('div', { estilo: 'display:flex;justify-content:space-between;gap:.5rem;align-items:center' }, [
       el('span', { classe: 'hora', texto: `${aula.hora_inicio} - ${aula.hora_fim}` }),
-      sessao.ehUm('dono', 'mestre', 'recepcao')
+      sessao.ehUm('dono', 'mestre', 'recepção')
         ? etiqueta(`${aula.presentes}/${aula.total_alunos} presentes`, aula.presentes ? 'bom' : 'neutra')
         : null,
     ]),
@@ -167,7 +167,7 @@ function listaAulasHoje(aulas) {
   ])));
 }
 
-/** Lembrete de relacionamento: quem faz aniversario este mes. */
+/** Lembrete de relacionamento: quem faz aniversário este mês. */
 function listaAniversariantes(lista) {
   const hoje = new Date().getDate();
   return el('div', { classe: 'acoes' }, lista.map((pessoa) => {
@@ -186,6 +186,11 @@ function listaAniversariantes(lista) {
   }));
 }
 
+const ROTULO_AVISO = {
+  geral: 'Aviso', campeonato: 'Campeonato', evento: 'Evento',
+  cancelamento: 'Sem aula', manutencao: 'Manutenção', graduacao: 'Exame de faixa',
+};
+
 function listaAvisos(avisos) {
   if (!avisos.length) return vazio('Nenhum aviso publicado.', '\u{1F4E2}');
   return el('div', {}, avisos.map((item) => el('div', {
@@ -193,7 +198,7 @@ function listaAvisos(avisos) {
   }, [
     el('div', { classe: 'acoes', estilo: 'margin-bottom:.25rem' }, [
       item.fixado ? etiqueta('fixado', 'atencao') : null,
-      etiqueta(item.tipo, 'info'),
+      etiqueta(ROTULO_AVISO[item.tipo] || item.tipo, 'marca'),
       item.data_evento ? etiqueta(dataBr(item.data_evento), 'neutra') : null,
     ]),
     el('strong', { texto: item.titulo }),

@@ -41,12 +41,12 @@ export default async function paginaGrade() {
   desenhar();
 
   return el('div', {}, [
-    topo('Horarios das aulas', 'Grade semanal completa da academia'),
+    topo('Horários das aulas', 'Grade semanal completa da academia'),
     el('div', { classe: 'filtros' }, [
       el('div', { classe: 'campo' }, [el('label', { texto: 'Modalidade' }), seletorModalidade]),
       el('div', { classe: 'campo' }, [el('label', { texto: 'Categoria' }), seletorCategoria]),
       sessao.ehUm('dono')
-        ? el('span', { classe: 'dica', texto: 'Para criar ou mudar horarios use a aba Turmas e modalidades.' })
+        ? el('span', { classe: 'dica', texto: 'Para criar ou mudar horários use a aba Turmas e modalidades.' })
         : null,
     ]),
     cartao(null, area),

@@ -54,7 +54,7 @@ roteador.post('/', exigirPapel('dono'), rota((req, res) => {
 roteador.put('/:id', exigirPapel('dono'), rota((req, res) => {
   const id = inteiro(req.params.id);
   const atual = um('SELECT * FROM certificados WHERE id = :id', { id });
-  if (!atual) throw new ErroApi('Certificado nao encontrado.', 404);
+  if (!atual) throw new ErroApi('Certificado não encontrado.', 404);
 
   executar(`
     UPDATE certificados SET titulo = :titulo, tipo = :tipo, pessoa_nome = :pessoa_nome,
@@ -80,7 +80,7 @@ roteador.put('/:id', exigirPapel('dono'), rota((req, res) => {
 
 roteador.delete('/:id', exigirPapel('dono'), rota((req, res) => {
   const apagado = executar('DELETE FROM certificados WHERE id = :id', { id: inteiro(req.params.id) });
-  if (!apagado.changes) throw new ErroApi('Certificado nao encontrado.', 404);
+  if (!apagado.changes) throw new ErroApi('Certificado não encontrado.', 404);
   res.json({ mensagem: 'Certificado removido.' });
 }));
 

@@ -56,7 +56,7 @@ export default async function paginaChamada() {
 
     area.replaceChildren(el('div', {}, [
       el('p', { classe: 'dica', texto: `${dados.turma.modalidade} · ${dados.turma.nome} · ${dataBr(dados.data)} · ${presentes}/${total} presentes` }),
-      tabela(['Aluno', 'Categoria', 'Situacao', 'Marcar'], linhas),
+      tabela(['Aluno', 'Categoria', 'Situação', 'Marcar'], linhas),
       el('div', { classe: 'acoes', estilo: 'margin-top:1rem' }, [
         botao('Marcar todos presentes', () => {
           for (const matriculado of dados.alunos) estado.marcacoes.set(matriculado.id, 1);
@@ -91,19 +91,19 @@ export default async function paginaChamada() {
   async function carregarRanking() {
     const { ranking } = await api.obter('/presencas/ranking');
     areaRanking.replaceChildren(ranking.length
-      ? tabela(['#', 'Aluno', 'Categoria', 'Presencas'], ranking.map((linha, indice) => [
+      ? tabela(['#', 'Aluno', 'Categoria', 'Presenças'], ranking.map((linha, indice) => [
         celula([indice < 3 ? etiqueta(['1o', '2o', '3o'][indice], 'bom') : String(indice + 1)]),
         linha.nome,
         linha.categoria,
         String(linha.presencas),
       ]))
-      : vazio('Ainda nao ha presencas registradas neste mes.', '\u{1F3C6}'));
+      : vazio('Ainda não ha presenças registradas neste mês.', '\u{1F3C6}'));
   }
 
   async function carregarResumo() {
     const { turmas: resumo, periodo } = await api.obter('/presencas/resumo');
     areaResumo.replaceChildren(resumo.length
-      ? tabela(['Turma', 'Modalidade', 'Aulas', 'Presencas', 'Faltas', 'Frequencia'],
+      ? tabela(['Turma', 'Modalidade', 'Aulas', 'Presenças', 'Faltas', 'Frequência'],
         resumo.map((linha) => [
           linha.turma, linha.modalidade, String(linha.aulas), String(linha.presencas), String(linha.faltas),
           celula([etiqueta(
@@ -128,15 +128,15 @@ export default async function paginaChamada() {
   await carregarRanking();
 
   return el('div', {}, [
-    topo('Chamada', 'Registre presencas e faltas de cada aula'),
+    topo('Chamada', 'Registre presenças e faltas de cada aula'),
     el('div', { classe: 'filtros' }, [
       el('div', { classe: 'campo' }, [el('label', { texto: 'Turma' }), seletorTurma]),
       el('div', { classe: 'campo' }, [el('label', { texto: 'Data da aula' }), seletorData]),
     ]),
-    cartao('Lista de presenca', area),
+    cartao('Lista de presença', area),
     el('div', { classe: 'grade col-2' }, [
-      cartao('Frequencia por turma no mes', areaResumo),
-      cartao('Ranking de presenca do mes', areaRanking),
+      cartao('Frequência por turma no mês', areaResumo),
+      cartao('Ranking de presença do mês', areaRanking),
     ]),
   ]);
 }

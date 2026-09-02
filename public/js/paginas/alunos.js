@@ -25,7 +25,7 @@ export default async function paginaAlunos() {
     area.replaceChildren(cartao(
       `${lista.length} aluno(s)`,
       tabela(
-        ['Aluno', 'Categoria', 'Situacao', 'Plano', 'Contato', 'Pagamento', 'Acoes'],
+        ['Aluno', 'Categoria', 'Situação', 'Plano', 'Contato', 'Pagamento', 'Ações'],
         lista.map((aluno) => [
           celula([
             el('strong', { texto: aluno.nome }),
@@ -46,7 +46,7 @@ export default async function paginaAlunos() {
                   aluno: aluno.nome,
                   competencia: 'em aberto',
                   valor: 'sua mensalidade',
-                  vencimento: 'ja',
+                  vencimento: 'já',
                   academia: marca.nome,
                 })),
               })
@@ -73,14 +73,14 @@ export default async function paginaAlunos() {
         { nome: 'data_nascimento', rotulo: 'Data de nascimento', tipo: 'date', max: hojeISO() },
         { nome: 'categoria', rotulo: 'Categoria', tipo: 'select', opcoes: [
           { valor: 'adulto', rotulo: 'Adulto' }, { valor: 'kids', rotulo: 'Kids' }] },
-        { nome: 'status', rotulo: 'Situacao', tipo: 'select', opcoes: [
+        { nome: 'status', rotulo: 'Situação', tipo: 'select', opcoes: [
           { valor: 'ativo', rotulo: 'Ativo' }, { valor: 'pendente', rotulo: 'Pendente' },
           { valor: 'trancado', rotulo: 'Trancado' }, { valor: 'inativo', rotulo: 'Inativo' }] },
-        { nome: 'responsavel_nome', rotulo: 'Responsavel (kids)' },
-        { nome: 'responsavel_telefone', rotulo: 'Telefone do responsavel' },
-        { nome: 'observacoes', rotulo: 'Observacoes', tipo: 'textarea' },
+        { nome: 'responsavel_nome', rotulo: 'Responsável (kids)' },
+        { nome: 'responsavel_telefone', rotulo: 'Telefone do responsável' },
+        { nome: 'observações', rotulo: 'Observações', tipo: 'textarea' },
         ...(aluno ? [] : [{ nome: 'senha', rotulo: 'Senha de acesso (opcional)', tipo: 'password',
-          dica: 'Informe e-mail e senha para ja criar o login do aluno.' }]),
+          dica: 'Informe e-mail e senha para já criar o login do aluno.' }]),
       ],
       valores: aluno || { categoria: 'adulto', status: 'ativo' },
       aoSalvar: async (dados) => {
@@ -97,7 +97,7 @@ export default async function paginaAlunos() {
     if (!ativos.length) return aviso('Cadastre um plano antes de matricular.', 'erro');
     abrirFormulario({
       titulo: `Matricular ${aluno.nome}`,
-      aviso: 'A matricula ativa o aluno, encerra o plano anterior e ja gera a primeira mensalidade.',
+      aviso: 'A matrícula ativa o aluno, encerra o plano anterior e já gera a primeira mensalidade.',
       campos: [
         { nome: 'plano_id', rotulo: 'Plano', tipo: 'select', obrigatorio: true,
           opcoes: ativos.map((p) => ({ valor: p.id, rotulo: `${p.nome} - ${moeda(p.valor)} (${p.periodicidade})` })) },
@@ -108,8 +108,8 @@ export default async function paginaAlunos() {
       ],
       aoSalvar: async (dados) => {
         if (!dados.valor) delete dados.valor;
-        await api.criar('/matriculas', { ...dados, aluno_id: aluno.id });
-        aviso('Matricula realizada.');
+        await api.criar('/matrículas', { ...dados, aluno_id: aluno.id });
+        aviso('Matrícula realizada.');
         await carregar();
       },
     });
@@ -123,7 +123,7 @@ export default async function paginaAlunos() {
     function desenharFicha(dados) {
       conteudo.replaceChildren(
         el('div', { classe: 'grade col-3', estilo: 'margin-bottom:1rem' }, [
-          bloco('Situacao', etiquetaStatus(dados.status)),
+          bloco('Situação', etiquetaStatus(dados.status)),
           bloco('Categoria', dados.categoria),
           bloco('Idade', dados.data_nascimento ? `${idade(dados.data_nascimento)} anos` : '-'),
           bloco('Plano atual', dados.plano || 'sem plano'),
@@ -131,9 +131,9 @@ export default async function paginaAlunos() {
           bloco('Contato', dados.telefone || dados.email || '-'),
         ]),
         dados.responsavel_nome
-          ? el('p', { classe: 'dica', texto: `Responsavel: ${dados.responsavel_nome} · ${dados.responsavel_telefone || ''}` })
+          ? el('p', { classe: 'dica', texto: `Responsável: ${dados.responsavel_nome} · ${dados.responsavel_telefone || ''}` })
           : null,
-        dados.observacoes ? el('p', { classe: 'dica', texto: `Observacoes: ${dados.observacoes}` }) : null,
+        dados.observacoes ? el('p', { classe: 'dica', texto: `Observações: ${dados.observacoes}` }) : null,
 
         cartao('Turmas', [
           dados.turmas.length
@@ -143,24 +143,24 @@ export default async function paginaAlunos() {
               await api.remover(`/turmas/${t.id}/alunos/${dados.id}`);
               desenharFicha(await api.obter(`/alunos/${dados.id}`));
             }, 'botao pequeno perigo')])))
-            : vazio('Ainda nao esta em nenhuma turma.'),
-          sessao.ehUm('dono', 'recepcao', 'mestre')
+            : vazio('Ainda não esta em nenhuma turma.'),
+          sessao.ehUm('dono', 'recepção', 'mestre')
             ? botao('Incluir em uma turma', () => incluirEmTurma(dados), 'botao pequeno')
             : null,
         ]),
 
-        cartao('Graduacoes', [
+        cartao('Graduações', [
           dados.graduacoes.length
-            ? tabela(['Data', 'Modalidade', 'Graduacao'],
+            ? tabela(['Data', 'Modalidade', 'Graduação'],
               dados.graduacoes.map((g) => [dataBr(g.data), g.modalidade, g.graduacao]))
-            : vazio('Nenhuma graduacao registrada.'),
+            : vazio('Nenhuma graduação registrada.'),
           sessao.ehUm('dono', 'mestre')
-            ? botao('Registrar graduacao', () => registrarGraduacao(dados), 'botao pequeno')
+            ? botao('Registrar graduação', () => registrarGraduacao(dados), 'botao pequeno')
             : null,
         ]),
 
         cartao('Mensalidades', dados.mensalidades.length
-          ? tabela(['Competencia', 'Vencimento', 'Valor', 'Situacao'],
+          ? tabela(['Competência', 'Vencimento', 'Valor', 'Situação'],
             dados.mensalidades.map((m) => [
               competenciaBr(m.competencia), dataBr(m.vencimento), moeda(m.valor),
               celula([m.status === 'pendente' && m.vencimento < hojeISO()
@@ -168,8 +168,8 @@ export default async function paginaAlunos() {
             ]))
           : vazio('Sem mensalidades geradas.')),
 
-        cartao('Ultimas presencas', dados.presencas.length
-          ? tabela(['Data', 'Turma', 'Presenca'],
+        cartao('Últimas presenças', dados.presencas.length
+          ? tabela(['Data', 'Turma', 'Presença'],
             dados.presencas.map((p) => [
               dataBr(p.data), `${p.modalidade} · ${p.turma}`,
               celula([p.presente ? etiqueta('presente', 'ok') : etiqueta('falta', 'erro')]),
@@ -205,17 +205,17 @@ export default async function paginaAlunos() {
 
     async function registrarGraduacao(dados) {
       abrirFormulario({
-        titulo: 'Registrar graduacao',
+        titulo: 'Registrar graduação',
         aviso: 'A lista de faixas segue a modalidade escolhida em Turmas e modalidades.',
         campos: [
-          { nome: 'graduacao_id', rotulo: 'Graduacao', tipo: 'select', obrigatorio: true,
+          { nome: 'graduacao_id', rotulo: 'Graduação', tipo: 'select', obrigatorio: true,
             opcoes: await opcoesGraduacoes(modalidades) },
           { nome: 'data', rotulo: 'Data', tipo: 'date', valor: hojeISO() },
-          { nome: 'observacao', rotulo: 'Observacao' },
+          { nome: 'observação', rotulo: 'Observação' },
         ],
         aoSalvar: async (valores) => {
           await api.criar(`/alunos/${dados.id}/graduacoes`, valores);
-          aviso('Graduacao registrada.');
+          aviso('Graduação registrada.');
           desenharFicha(await api.obter(`/alunos/${dados.id}`));
         },
       });
@@ -237,11 +237,11 @@ export default async function paginaAlunos() {
   await carregar();
 
   return el('div', {}, [
-    topo('Alunos', 'Cadastro, matricula, turmas e historico de cada aluno',
-      sessao.ehUm('dono', 'recepcao') ? [botao('+ Novo aluno', () => formularioAluno())] : []),
+    topo('Alunos', 'Cadastro, matrícula, turmas e histórico de cada aluno',
+      sessao.ehUm('dono', 'recepção') ? [botao('+ Novo aluno', () => formularioAluno())] : []),
     el('div', { classe: 'filtros' }, [
       el('div', { classe: 'campo' }, [el('label', { texto: 'Buscar' }), campoBusca]),
-      seletor('Situacao', ['', 'ativo', 'pendente', 'trancado', 'inativo'], (valor) => { filtros.status = valor; carregar(); }),
+      seletor('Situação', ['', 'ativo', 'pendente', 'trancado', 'inativo'], (valor) => { filtros.status = valor; carregar(); }),
       seletor('Categoria', ['', 'kids', 'adulto'], (valor) => { filtros.categoria = valor; carregar(); }),
       el('div', { classe: 'campo' }, [
         el('label', { texto: 'Pagamento' }),

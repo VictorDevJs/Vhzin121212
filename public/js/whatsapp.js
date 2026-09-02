@@ -21,7 +21,7 @@ export function mensagemCobranca({ aluno, competencia, valor, vencimento, academ
   return [
     `Oi, ${aluno.split(' ')[0]}! Aqui e da ${academia}.`,
     `Sua mensalidade de ${competencia} (${valor}) venceu em ${vencimento}.`,
-    'Quando puder, passa aqui na recepcao ou me chama por aqui para acertar. Bons treinos!',
+    'Quando puder, passa aqui na recepção ou me chama por aqui para acertar. Bons treinos!',
   ].join(' ');
 }
 

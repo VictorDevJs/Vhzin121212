@@ -22,6 +22,8 @@ import rotasMinhaArea from './rotas/minha-area.js';
 import rotasAvaliacoes from './rotas/avaliacoes.js';
 import rotasCertificados from './rotas/certificados.js';
 import rotasArquivos, { PASTA_ARQUIVOS } from './rotas/arquivos.js';
+import rotasCheckins from './rotas/checkins.js';
+import rotasLoja from './rotas/loja.js';
 
 const raiz = dirname(dirname(fileURLToPath(import.meta.url)));
 
@@ -52,8 +54,10 @@ export function criarApp() {
   app.use('/api/avaliacoes', rotasAvaliacoes);
   app.use('/api/certificados', rotasCertificados);
   app.use('/api/arquivos', rotasArquivos);
+  app.use('/api/checkins', rotasCheckins);
+  app.use('/api/loja', rotasLoja);
 
-  app.use('/api', (_req, res) => res.status(404).json({ erro: 'Endpoint nao encontrado.' }));
+  app.use('/api', (_req, res) => res.status(404).json({ erro: 'Endpoint não encontrado.' }));
 
   // Certificados e imagens enviados pelo dono
   app.use('/arquivos', express.static(PASTA_ARQUIVOS, { maxAge: '7d' }));

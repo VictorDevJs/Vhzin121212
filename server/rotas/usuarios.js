@@ -29,7 +29,7 @@ roteador.post('/', exigirPapel('dono'), rota((req, res) => {
   if (!PAPEIS.includes(papel)) throw new ErroApi(`Papel invalido. Use: ${PAPEIS.join(', ')}.`);
   if (String(req.body.senha).length < 6) throw new ErroApi('A senha precisa ter pelo menos 6 caracteres.');
   if (um('SELECT id FROM usuarios WHERE email = :email', { email })) {
-    throw new ErroApi('Ja existe um usuario com este e-mail.', 409);
+    throw new ErroApi('Já existe um usuário com este e-mail.', 409);
   }
 
   const criado = executar(`
@@ -50,10 +50,10 @@ roteador.post('/', exigirPapel('dono'), rota((req, res) => {
 roteador.put('/:id', exigirPapel('dono'), rota((req, res) => {
   const id = inteiro(req.params.id);
   const atual = um('SELECT * FROM usuarios WHERE id = :id', { id });
-  if (!atual) throw new ErroApi('Usuario nao encontrado.', 404);
+  if (!atual) throw new ErroApi('Usuário não encontrado.', 404);
 
   const papel = texto(req.body.papel, atual.papel);
-  if (!PAPEIS.includes(papel)) throw new ErroApi('Papel invalido.');
+  if (!PAPEIS.includes(papel)) throw new ErroApi('Papel inválido.');
   const ativo = booleano(req.body.ativo, atual.ativo);
   // Sem essa trava a academia pode ficar sem nenhum dono ativo no sistema.
   if (atual.papel === 'dono' && (papel !== 'dono' || !ativo)) {
@@ -83,10 +83,10 @@ roteador.put('/:id', exigirPapel('dono'), rota((req, res) => {
 
 roteador.delete('/:id', exigirPapel('dono'), rota((req, res) => {
   const id = inteiro(req.params.id);
-  if (id === req.usuario.id) throw new ErroApi('Voce nao pode excluir o proprio usuario.', 409);
+  if (id === req.usuario.id) throw new ErroApi('Você não pode excluir o proprio usuário.', 409);
   const apagado = executar('DELETE FROM usuarios WHERE id = :id', { id });
-  if (!apagado.changes) throw new ErroApi('Usuario nao encontrado.', 404);
-  res.json({ mensagem: 'Usuario removido.' });
+  if (!apagado.changes) throw new ErroApi('Usuário não encontrado.', 404);
+  res.json({ mensagem: 'Usuário removido.' });
 }));
 
 export default roteador;

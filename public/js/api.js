@@ -48,12 +48,12 @@ async function requisicao(metodo, caminho, corpo) {
   const dados = await resposta.json().catch(() => ({}));
 
   if (!resposta.ok) {
-    // Token expirado ou invalido: derruba a sessao e volta para o login.
+    // Token expirado ou inválido: derruba a sessão e volta para o login.
     if (resposta.status === 401 && sessao.token) {
       sessao.encerrar();
       window.location.hash = '#/entrar';
     }
-    throw new ErroApi(dados.erro || 'Nao foi possivel completar a operacao.', resposta.status);
+    throw new ErroApi(dados.erro || 'Não foi possível completar a operacao.', resposta.status);
   }
   return dados;
 }

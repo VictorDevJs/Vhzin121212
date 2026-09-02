@@ -73,7 +73,7 @@ export function emailValido(valor) {
   return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(valor || '').trim());
 }
 
-export const DIAS_SEMANA = ['Domingo', 'Segunda', 'Terca', 'Quarta', 'Quinta', 'Sexta', 'Sabado'];
+export const DIAS_SEMANA = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
 
 /** Soma meses a uma data AAAA-MM-DD. */
 export function somarMeses(dataISO, meses) {

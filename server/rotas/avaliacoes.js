@@ -31,7 +31,7 @@ export function registrarAvaliacao(corpo, { alunoId = null, origem = 'site' } = 
   const nota = inteiro(corpo.nota);
   if (!nota || nota < 1 || nota > 5) throw new ErroApi('A nota precisa ser de 1 a 5 estrelas.');
   const comentario = texto(corpo.comentario);
-  if (comentario && comentario.length > 1200) throw new ErroApi('O comentario ficou longo demais (max. 1200 caracteres).');
+  if (comentario && comentario.length > 1200) throw new ErroApi('O comentário ficou longo demais (max. 1200 caracteres).');
 
   const criada = executar(`
     INSERT INTO avaliacoes (aluno_id, autor_nome, autor_contato, nota, comentario, modalidade_id, mestre_id, origem)
@@ -70,24 +70,24 @@ roteador.post('/', exigirPapel(...EQUIPE, 'aluno'), rota((req, res) => {
   let autorNome = req.usuario.nome;
   if (req.usuario.papel === 'aluno') {
     const aluno = um('SELECT id, nome FROM alunos WHERE usuario_id = :id', { id: req.usuario.id });
-    if (!aluno) throw new ErroApi('Cadastro de aluno nao encontrado.', 404);
+    if (!aluno) throw new ErroApi('Cadastro de aluno não encontrado.', 404);
     alunoId = aluno.id;
     autorNome = aluno.nome;
   }
   const id = registrarAvaliacao({ ...req.body, autor_nome: autorNome }, { alunoId, origem: 'aluno' });
   res.status(201).json({
     id,
-    mensagem: 'Avaliacao enviada! Ela aparece no site assim que a academia aprovar.',
+    mensagem: 'Avaliação enviada! Ela aparece no site assim que a academia aprovar.',
   });
 }));
 
 roteador.put('/:id', exigirPapel('dono', 'recepcao'), rota((req, res) => {
   const id = inteiro(req.params.id);
   const atual = um('SELECT * FROM avaliacoes WHERE id = :id', { id });
-  if (!atual) throw new ErroApi('Avaliacao nao encontrada.', 404);
+  if (!atual) throw new ErroApi('Avaliação não encontrada.', 404);
 
   const status = texto(req.body.status, atual.status);
-  if (!['pendente', 'aprovada', 'recusada'].includes(status)) throw new ErroApi('Status invalido.');
+  if (!['pendente', 'aprovada', 'recusada'].includes(status)) throw new ErroApi('Status inválido.');
   const resposta = texto(req.body.resposta, atual.resposta);
 
   executar(`
@@ -100,8 +100,8 @@ roteador.put('/:id', exigirPapel('dono', 'recepcao'), rota((req, res) => {
 
 roteador.delete('/:id', exigirPapel('dono'), rota((req, res) => {
   const apagada = executar('DELETE FROM avaliacoes WHERE id = :id', { id: inteiro(req.params.id) });
-  if (!apagada.changes) throw new ErroApi('Avaliacao nao encontrada.', 404);
-  res.json({ mensagem: 'Avaliacao removida.' });
+  if (!apagada.changes) throw new ErroApi('Avaliação não encontrada.', 404);
+  res.json({ mensagem: 'Avaliação removida.' });
 }));
 
 /** Avaliacoes do proprio aluno, para ele acompanhar o que enviou. */

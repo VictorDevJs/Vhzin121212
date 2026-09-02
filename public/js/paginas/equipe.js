@@ -5,7 +5,7 @@ import { topo, traduzirPapel } from '../app.js';
 
 const PAPEIS = [
   { valor: 'mestre', rotulo: 'Mestre / professor' },
-  { valor: 'recepcao', rotulo: 'Recepcao' },
+  { valor: 'recepcao', rotulo: 'Recepção' },
   { valor: 'dono', rotulo: 'Dono da academia' },
 ];
 
@@ -17,7 +17,7 @@ export default async function paginaEquipe() {
   async function carregarEquipe() {
     const usuarios = await api.obter('/usuarios');
     areaEquipe.replaceChildren(tabela(
-      ['Nome', 'Funcao', 'E-mail', 'Telefone', 'Turmas', 'Situacao', 'Acoes'],
+      ['Nome', 'Funcao', 'E-mail', 'Telefone', 'Turmas', 'Situação', 'Ações'],
       usuarios.map((usuario) => [
         usuario.nome,
         celula([etiqueta(traduzirPapel(usuario.papel), usuario.papel === 'dono' ? 'alerta' : 'info')]),
@@ -31,7 +31,7 @@ export default async function paginaEquipe() {
             if (!confirmar(`Excluir o acesso de ${usuario.nome}?`)) return;
             try {
               await api.remover(`/usuarios/${usuario.id}`);
-              aviso('Usuario removido.');
+              aviso('Usuário removido.');
               await carregarEquipe();
             } catch (erro) {
               aviso(erro.message, 'erro');
@@ -53,7 +53,7 @@ export default async function paginaEquipe() {
         { nome: 'telefone', rotulo: 'Telefone' },
         { nome: 'papel', rotulo: 'Funcao', tipo: 'select', opcoes: PAPEIS },
         { nome: 'senha', rotulo: usuario ? 'Nova senha (opcional)' : 'Senha', tipo: 'password',
-          obrigatorio: !usuario, dica: 'Minimo de 6 caracteres.' },
+          obrigatorio: !usuario, dica: 'Mínimo de 6 caracteres.' },
         { nome: 'ativo', rotulo: 'Acesso liberado', tipo: 'checkbox', valor: 1 },
       ],
       valores: usuario || { papel: 'mestre' },
@@ -86,18 +86,18 @@ export default async function paginaEquipe() {
       ]),
       el('div', { classe: 'linha' }, [
         campo('telefone', 'Telefone', config.telefone),
-        campo('whatsapp', 'WhatsApp (so numeros, com DDD)', config.whatsapp),
+        campo('whatsapp', 'WhatsApp (só números, com DDD)', config.whatsapp),
       ]),
       el('div', { classe: 'linha' }, [
-        campo('endereco', 'Endereco', config.endereco),
+        campo('endereco', 'Endereço', config.endereco),
         campo('instagram', 'Instagram', config.instagram),
       ]),
       el('div', { classe: 'linha' }, [
         campo('ano_fundacao', 'Ano de fundacao', config.ano_fundacao),
-        campo('horario_funcionamento', 'Horario de funcionamento', config.horario_funcionamento),
+        campo('horario_funcionamento', 'Horário de funcionamento', config.horario_funcionamento),
       ]),
       el('div', { classe: 'campo' }, [
-        el('label', { texto: 'Nossa historia (secao da pagina publica)' }),
+        el('label', { texto: 'Nossa história (secao da pagina publica)' }),
         el('textarea', { name: 'historia', value: config.historia || '' }),
       ]),
       el('div', { classe: 'campo' }, [
@@ -108,7 +108,7 @@ export default async function paginaEquipe() {
         el('div', { classe: 'campo' }, [
           el('label', { texto: 'Cor principal da marca' }),
           entradaCor,
-          el('div', { classe: 'dica', texto: 'A tela inteira muda junto enquanto voce escolhe.' }),
+          el('div', { classe: 'dica', texto: 'A tela inteira muda junto enquanto você escolhe.' }),
         ]),
         el('div', { classe: 'campo' }, [
           el('label', { texto: 'Previa' }),
@@ -149,7 +149,7 @@ export default async function paginaEquipe() {
   await Promise.all([carregarEquipe(), carregarConfiguracoes()]);
 
   return el('div', {}, [
-    topo('Equipe e academia', 'Acessos de mestres e recepcao, e os dados que aparecem na pagina publica',
+    topo('Equipe e academia', 'Acessos de mestres e recepção, e os dados que aparecem na pagina publica',
       [botao('+ Novo acesso', () => formularioUsuario())]),
     cartao('Equipe', areaEquipe),
     cartao('Identidade visual e dados da academia', areaConfig),

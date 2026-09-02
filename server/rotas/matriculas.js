@@ -34,9 +34,9 @@ roteador.post('/', exigirPapel(...GESTAO), rota((req, res) => {
   const planoId = inteiro(req.body.plano_id);
 
   const aluno = um('SELECT * FROM alunos WHERE id = :id', { id: alunoId });
-  if (!aluno) throw new ErroApi('Aluno nao encontrado.', 404);
+  if (!aluno) throw new ErroApi('Aluno não encontrado.', 404);
   const plano = um('SELECT * FROM planos WHERE id = :id', { id: planoId });
-  if (!plano) throw new ErroApi('Plano nao encontrado.', 404);
+  if (!plano) throw new ErroApi('Plano não encontrado.', 404);
   if (!plano.ativo) throw new ErroApi('Este plano esta desativado.');
 
   const inicio = data(req.body.inicio, hoje());
@@ -89,10 +89,10 @@ roteador.post('/', exigirPapel(...GESTAO), rota((req, res) => {
 roteador.put('/:id', exigirPapel(...GESTAO), rota((req, res) => {
   const id = inteiro(req.params.id);
   const atual = um('SELECT * FROM matriculas WHERE id = :id', { id });
-  if (!atual) throw new ErroApi('Matricula nao encontrada.', 404);
+  if (!atual) throw new ErroApi('Matrícula não encontrada.', 404);
 
   const status = texto(req.body.status, atual.status);
-  if (!['ativa', 'suspensa', 'encerrada'].includes(status)) throw new ErroApi('Status invalido.');
+  if (!['ativa', 'suspensa', 'encerrada'].includes(status)) throw new ErroApi('Status inválido.');
 
   executar(`
     UPDATE matriculas SET status = :status, valor = :valor, dia_vencimento = :dia_vencimento,

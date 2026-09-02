@@ -75,7 +75,7 @@ export function idade(dataNascimento) {
 
 // ---------- Componentes ----------
 
-const MAPA_TIPO = { ok: 'bom', erro: 'critico', alerta: 'atencao', info: 'info', neutra: 'neutra', bom: 'bom', critico: 'critico', atencao: 'atencao', marca: 'marca' };
+const MAPA_TIPO = { ok: 'bom', erro: 'critico', alerta: 'atenção', info: 'info', neutra: 'neutra', bom: 'bom', critico: 'critico', atencao: 'atenção', marca: 'marca' };
 
 export function etiqueta(texto, tipo = 'neutra') {
   return el('span', { classe: `etiqueta ${MAPA_TIPO[tipo] || 'neutra'}`, texto });
@@ -104,11 +104,11 @@ export function cartao(titulo, filhos, acoes = null) {
   return el('section', { classe: 'cartao' }, [cabecalho, ...[].concat(filhos)]);
 }
 
-const MAPA_INDICADOR = { ok: 'bom', erro: 'critico', alerta: 'atencao', info: 'destaque', bom: 'bom', critico: 'critico', atencao: 'atencao', marca: 'destaque', destaque: 'destaque' };
+const MAPA_INDICADOR = { ok: 'bom', erro: 'critico', alerta: 'atenção', info: 'destaque', bom: 'bom', critico: 'critico', atencao: 'atenção', marca: 'destaque', destaque: 'destaque' };
 
 /**
- * Cartao de numero. `delta` recebe { valor: '+12%', sobe: true } e vem sempre
- * com seta + texto, para nunca depender so da cor.
+ * Cartao de número. `delta` recebe { valor: '+12%', sobe: true } e vem sempre
+ * com seta + texto, para nunca depender só da cor.
  */
 export function indicador({ rotulo, valor, detalhe, tipo = '', delta = null, extra = null }) {
   return el('div', { classe: `indicador ${MAPA_INDICADOR[tipo] || ''}` }, [
@@ -174,7 +174,7 @@ export function aviso(mensagem, tipo = 'ok') {
 
 /**
  * Monta um campo de formulario.
- * campo: { nome, rotulo, tipo, opcoes, obrigatorio, dica, placeholder, valor }
+ * campo: { nome, rotulo, tipo, opções, obrigatório, dica, placeholder, valor }
  */
 export function campoFormulario(campo, valor) {
   const valorAtual = valor ?? campo.valor ?? '';
@@ -338,8 +338,8 @@ export function abrirFormulario({ titulo, campos, valores = {}, textoConfirmar =
 }
 
 /**
- * Estrelas de avaliacao. A nota tambem vai por texto e por aria-label,
- * para nunca depender so do desenho.
+ * Estrelas de avaliação. A nota também vai por texto e por aria-label,
+ * para nunca depender só do desenho.
  */
 export function estrelas(nota, { tamanho = 16, mostrarNumero = false } = {}) {
   const valor = Math.round(Number(nota) || 0);
@@ -413,4 +413,4 @@ export function opcoesDe(lista, campoValor = 'id', campoRotulo = 'nome') {
   return lista.map((item) => ({ valor: item[campoValor], rotulo: item[campoRotulo] }));
 }
 
-export const DIAS_SEMANA = ['Domingo', 'Segunda', 'Terca', 'Quarta', 'Quinta', 'Sexta', 'Sabado'];
+export const DIAS_SEMANA = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];

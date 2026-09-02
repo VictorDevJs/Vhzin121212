@@ -1,114 +1,118 @@
 /* =========================================================================
-   ATAK · TOKENS DE MARCA E TEMA
-   Este e o unico arquivo que precisa mudar para aplicar a identidade visual.
-   Troque as cores em --marca-* e substitua os arquivos em /public/marca/.
+   CT ATAK · TOKENS DE MARCA E TEMA
+   Este é o único arquivo que precisa mudar para ajustar a identidade visual.
+   Cores oficiais em --marca-*; os arquivos de logo ficam em /public/marca/.
    ========================================================================= */
 
 :root {
-  /* ---- Marca (substitua pelas cores oficiais da Atak) ---- */
-  --marca-1: #f5b301;          /* amarelo Atak: botoes, destaques, item ativo */
-  --marca-2: #ff8a00;          /* laranja de apoio: gradientes e brilhos */
-  --marca-3: #e02020;          /* vermelho Rizzo: foco e detalhes */
-  --marca-contraste: #111111;  /* texto sobre a cor principal */
-  --marca-gradiente: linear-gradient(135deg, var(--marca-1), var(--marca-2));
+  /* ---- Marca ---- */
+  --marca-1: #f5b301;          /* dourado Atak: ação principal, destaques */
+  --marca-2: #ffd45e;          /* dourado claro: brilhos e gradientes */
+  --marca-3: #e02020;          /* vermelho Rizzo: foco e alertas de marca */
+  --marca-contraste: #101012;  /* texto sobre o dourado */
+  --marca-gradiente: linear-gradient(135deg, var(--marca-2), var(--marca-1) 55%, #c98f00);
 
   /* ---- Tipografia ---- */
-  --fonte-ui: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --fonte-titulo: 'Barlow Condensed', 'Inter', system-ui, sans-serif;
-  --peso-titulo: 700;
+  --fonte-titulo: 'Anton', 'Barlow Condensed', Impact, sans-serif;
+  --fonte-ui: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --fonte-rotulo: 'Barlow Condensed', 'Manrope', sans-serif;
 
-  /* ---- Escala de espaco e forma ---- */
+  /* ---- Espaço, forma e movimento ---- */
   --esp-1: .25rem;  --esp-2: .5rem;   --esp-3: .75rem;  --esp-4: 1rem;
-  --esp-5: 1.5rem;  --esp-6: 2rem;    --esp-7: 3rem;
-  --raio-1: 8px;    --raio-2: 12px;   --raio-3: 18px;   --raio-pilula: 999px;
-  --borda-fina: 1px;
+  --esp-5: 1.5rem;  --esp-6: 2rem;    --esp-7: 3.5rem;
+  --raio-1: 10px;   --raio-2: 16px;   --raio-3: 22px;   --raio-pilula: 999px;
+  --mov-rapido: 140ms cubic-bezier(.4, 0, .2, 1);
+  --mov-medio: 280ms cubic-bezier(.4, 0, .2, 1);
+  --mov-suave: 520ms cubic-bezier(.16, 1, .3, 1);
 
-  /* ---- Movimento ---- */
-  --mov-rapido: 120ms cubic-bezier(.4, 0, .2, 1);
-  --mov-medio: 240ms cubic-bezier(.4, 0, .2, 1);
-  --mov-suave: 420ms cubic-bezier(.16, 1, .3, 1);
+  /* ---- Tema escuro (padrão do sistema: é uma academia, o preto é a casa) ---- */
+  color-scheme: dark;
+  --plano: #0a0a0b;
+  --plano-2: #0e0e10;
+  --superficie: #141417;
+  --superficie-2: #1b1b20;
+  --superficie-3: #24242a;
+  --vidro: rgba(20, 20, 23, .78);
+  --borda: rgba(255, 255, 255, .08);
+  --borda-forte: rgba(255, 255, 255, .18);
+  --tinta: #f6f5f3;
+  --tinta-2: #a9a7a2;
+  --tinta-3: #78766f;
+  --grade: #232329;
+  --eixo: #33333b;
 
-  /* ---- Tema claro (padrao) ---- */
-  color-scheme: light;
-  --plano: #f4f5f7;            /* fundo da pagina */
-  --superficie: #ffffff;       /* cartoes */
-  --superficie-2: #f0f1f4;     /* campos, estados hover */
-  --superficie-3: #e6e8ec;
-  --vidro: rgba(255, 255, 255, .72);
-  --borda: rgba(11, 11, 11, .10);
-  --borda-forte: rgba(11, 11, 11, .18);
-  --tinta: #0b0d10;            /* texto principal */
-  --tinta-2: #52565e;          /* texto secundario */
-  --tinta-3: #83888f;          /* texto de apoio, eixos */
-  --grade: #e4e6ea;            /* linhas de grade dos graficos */
-  --eixo: #c8ccd2;
-  --sombra-1: 0 1px 2px rgba(11, 13, 16, .06), 0 1px 3px rgba(11, 13, 16, .04);
-  --sombra-2: 0 4px 12px rgba(11, 13, 16, .08), 0 2px 4px rgba(11, 13, 16, .04);
-  --sombra-3: 0 18px 48px rgba(11, 13, 16, .18);
-  --brilho-marca: 0 0 0 rgba(0, 0, 0, 0);
+  /* Sombras em camadas: é o que dá volume aos blocos */
+  --sombra-1: 0 1px 2px rgba(0, 0, 0, .6), 0 2px 6px rgba(0, 0, 0, .35);
+  --sombra-2: 0 8px 20px rgba(0, 0, 0, .5), 0 2px 6px rgba(0, 0, 0, .4);
+  --sombra-3: 0 28px 70px rgba(0, 0, 0, .65), 0 8px 20px rgba(0, 0, 0, .5);
+  --luz-topo: inset 0 1px 0 rgba(255, 255, 255, .07);
+  --brilho-marca: 0 0 36px rgba(245, 179, 1, .28);
 
-  /* ---- Estados (sempre acompanhados de icone ou texto) ---- */
-  --bom: #0ca30c;
-  --atencao: #fab219;
-  --alerta: #ec835a;
-  --critico: #d03b3b;
-  --bom-tinta: #006300;
-  --critico-tinta: #b02a2a;
+  /* ---- Estados (sempre com ícone ou texto junto) ---- */
+  --bom: #2fbf5b;
+  --atencao: #f0a824;
+  --critico: #ef4b4b;
+  --bom-tinta: #5ede86;
+  --critico-tinta: #ff8f8f;
 
-  /* ---- Series de graficos (paleta validada para daltonismo) ---- */
-  --serie-1: #2a78d6;  --serie-2: #eb6834;  --serie-3: #1baf7a;  --serie-4: #eda100;
-  --serie-5: #e87ba4;  --serie-6: #008300;  --serie-7: #4a3aa7;  --serie-8: #e34948;
-  --entrada: var(--serie-1);   /* receitas */
-  --saida: var(--serie-2);     /* despesas */
+  /* ---- Séries dos gráficos (paleta validada para daltonismo) ---- */
+  --serie-1: #3987e5;  --serie-2: #d95926;  --serie-3: #199e70;  --serie-4: #c98500;
+  --serie-5: #d55181;  --serie-6: #008300;  --serie-7: #9085e9;  --serie-8: #e66767;
+  --entrada: var(--serie-1);
+  --saida: var(--serie-2);
 }
 
-/* ---- Tema escuro: passos proprios, nao e inversao automatica ---- */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-tema="claro"]) {
-    color-scheme: dark;
-    --plano: #0a0c0e;
-    --superficie: #14171b;
-    --superficie-2: #1c2026;
-    --superficie-3: #262b33;
-    --vidro: rgba(20, 23, 27, .72);
-    --borda: rgba(255, 255, 255, .10);
-    --borda-forte: rgba(255, 255, 255, .20);
-    --tinta: #f2f4f7;
-    --tinta-2: #aeb5bf;
-    --tinta-3: #7d848e;
-    --grade: #23272e;
-    --eixo: #333941;
-    --sombra-1: 0 1px 2px rgba(0, 0, 0, .5);
-    --sombra-2: 0 6px 18px rgba(0, 0, 0, .45);
-    --sombra-3: 0 24px 60px rgba(0, 0, 0, .6);
-    --brilho-marca: 0 0 28px rgba(245, 179, 1, .25);
-    --bom-tinta: #4ade4a;
-    --critico-tinta: #ff8a8a;
-    --serie-1: #3987e5;  --serie-2: #d95926;  --serie-3: #199e70;  --serie-4: #c98500;
-    --serie-5: #d55181;  --serie-6: #008300;  --serie-7: #9085e9;  --serie-8: #e66767;
+/* ---- Tema claro: passos próprios, não é uma inversão automática ---- */
+@media (prefers-color-scheme: light) {
+  :root:not([data-tema="escuro"]) {
+    color-scheme: light;
+    --plano: #f2f1ee;
+    --plano-2: #ebeae6;
+    --superficie: #ffffff;
+    --superficie-2: #f4f3f0;
+    --superficie-3: #e7e5e0;
+    --vidro: rgba(255, 255, 255, .8);
+    --borda: rgba(16, 16, 18, .1);
+    --borda-forte: rgba(16, 16, 18, .22);
+    --tinta: #121214;
+    --tinta-2: #55534e;
+    --tinta-3: #83807a;
+    --grade: #e3e1dc;
+    --eixo: #c9c6c0;
+    --sombra-1: 0 1px 2px rgba(24, 22, 18, .07), 0 2px 6px rgba(24, 22, 18, .05);
+    --sombra-2: 0 10px 24px rgba(24, 22, 18, .1), 0 2px 6px rgba(24, 22, 18, .06);
+    --sombra-3: 0 30px 70px rgba(24, 22, 18, .18), 0 8px 20px rgba(24, 22, 18, .1);
+    --luz-topo: inset 0 1px 0 rgba(255, 255, 255, .9);
+    --brilho-marca: 0 0 30px rgba(245, 179, 1, .35);
+    --bom-tinta: #17843c;
+    --critico-tinta: #c02626;
+    --serie-1: #2a78d6;  --serie-2: #eb6834;  --serie-3: #1baf7a;  --serie-4: #eda100;
+    --serie-5: #e87ba4;  --serie-6: #008300;  --serie-7: #4a3aa7;  --serie-8: #e34948;
   }
 }
 
-:root[data-tema="escuro"] {
-  color-scheme: dark;
-  --plano: #0a0c0e;
-  --superficie: #14171b;
-  --superficie-2: #1c2026;
-  --superficie-3: #262b33;
-  --vidro: rgba(20, 23, 27, .72);
-  --borda: rgba(255, 255, 255, .10);
-  --borda-forte: rgba(255, 255, 255, .20);
-  --tinta: #f2f4f7;
-  --tinta-2: #aeb5bf;
-  --tinta-3: #7d848e;
-  --grade: #23272e;
-  --eixo: #333941;
-  --sombra-1: 0 1px 2px rgba(0, 0, 0, .5);
-  --sombra-2: 0 6px 18px rgba(0, 0, 0, .45);
-  --sombra-3: 0 24px 60px rgba(0, 0, 0, .6);
-  --brilho-marca: 0 0 28px rgba(245, 179, 1, .25);
-  --bom-tinta: #4ade4a;
-  --critico-tinta: #ff8a8a;
-  --serie-1: #3987e5;  --serie-2: #d95926;  --serie-3: #199e70;  --serie-4: #c98500;
-  --serie-5: #d55181;  --serie-6: #008300;  --serie-7: #9085e9;  --serie-8: #e66767;
+:root[data-tema="claro"] {
+  color-scheme: light;
+  --plano: #f2f1ee;
+  --plano-2: #ebeae6;
+  --superficie: #ffffff;
+  --superficie-2: #f4f3f0;
+  --superficie-3: #e7e5e0;
+  --vidro: rgba(255, 255, 255, .8);
+  --borda: rgba(16, 16, 18, .1);
+  --borda-forte: rgba(16, 16, 18, .22);
+  --tinta: #121214;
+  --tinta-2: #55534e;
+  --tinta-3: #83807a;
+  --grade: #e3e1dc;
+  --eixo: #c9c6c0;
+  --sombra-1: 0 1px 2px rgba(24, 22, 18, .07), 0 2px 6px rgba(24, 22, 18, .05);
+  --sombra-2: 0 10px 24px rgba(24, 22, 18, .1), 0 2px 6px rgba(24, 22, 18, .06);
+  --sombra-3: 0 30px 70px rgba(24, 22, 18, .18), 0 8px 20px rgba(24, 22, 18, .1);
+  --luz-topo: inset 0 1px 0 rgba(255, 255, 255, .9);
+  --brilho-marca: 0 0 30px rgba(245, 179, 1, .35);
+  --bom-tinta: #17843c;
+  --critico-tinta: #c02626;
+  --serie-1: #2a78d6;  --serie-2: #eb6834;  --serie-3: #1baf7a;  --serie-4: #eda100;
+  --serie-5: #e87ba4;  --serie-6: #008300;  --serie-7: #4a3aa7;  --serie-8: #e34948;
 }
