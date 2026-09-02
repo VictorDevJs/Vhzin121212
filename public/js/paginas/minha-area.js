@@ -34,7 +34,7 @@ export default async function paginaMinhaArea() {
       ? el('div', { classe: 'mensagem-erro', texto: 'Seu cadastro esta aguardando a recepção confirmar a matrícula e liberar o plano.' })
       : null,
     emAtraso.length
-      ? el('div', { classe: 'mensagem-erro', texto: `Voce tem ${emAtraso.length} mensalidade(s) em atraso. Procure a recepcao.` })
+      ? el('div', { classe: 'mensagem-erro', texto: `Você tem ${emAtraso.length} mensalidade(s) em atraso. Procure a recepcao.` })
       : null,
 
     el('div', { classe: 'grade col-4', estilo: 'margin-bottom:1rem' }, [
@@ -100,7 +100,7 @@ export default async function paginaMinhaArea() {
     ]),
 
     matricula
-      ? el('p', { classe: 'dica', texto: `Plano ${matricula.plano} (${matricula.periodicidade}) de ${dataBr(matricula.inicio)} ate ${dataBr(matricula.fim)} · vencimento todo dia ${matricula.dia_vencimento}. Hoje e ${dataBr(hojeISO())}.` })
+      ? el('p', { classe: 'dica', texto: `Plano ${matricula.plano} (${matricula.periodicidade}) de ${dataBr(matricula.inicio)} até ${dataBr(matricula.fim)} · vencimento todo dia ${matricula.dia_vencimento}. Hoje e ${dataBr(hojeISO())}.` })
       : null,
   ]);
 }

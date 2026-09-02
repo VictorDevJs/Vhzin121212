@@ -42,11 +42,16 @@ os planos e os avisos liberados para o site. É por ali que o aluno também **cr
   mensalidades e presenças.
 - **Cadastro aberto** — o aluno se cadastra sozinho pela página inicial e entra como *pendente*;
   a recepção confirma a matrícula e libera o plano.
-- **Modalidades e faixas** — Jiu-Jitsu, Muay Thai, Karatê, Kickboxing e MMA já vêm cadastrados
-  com as respectivas faixas, e o dono pode criar quantas modalidades quiser (Boxe, Judô, Capoeira...).
+- **Modalidades e faixas** — Jiu-Jitsu, Muay Thai, Karatê, Kickboxing, Boxe e MMA já vêm cadastrados
+  com as respectivas faixas, e o dono pode criar quantas quiser (Judô, Capoeira, Wrestling...).
+  Tudo é editável: nome, descrição, cor, foto, ordem no site e a **frase de destaque** que aparece
+  no cartão (no lugar da contagem automática de turmas).
 - **Turmas e horários** — cada turma tem modalidade, categoria (kids / adulto / misto / feminino),
   nível, mestre responsável, capacidade, local e vários horários na semana.
-- **Grade de horários** — visão semanal completa, com filtro por modalidade e categoria.
+- **Grade de horários** — agenda semanal com eixo de horas, como uma agenda de verdade. O dono monta
+  a grade ali mesmo: clica num espaço livre para criar a aula e num bloco para editar ou remover.
+  Cada horário tem **rótulo próprio** — é assim que o Jiu-Jitsu tem No-Gi às 19h e Gi às 20h na
+  mesma turma.
 - **Planos** — valor, periodicidade (mensal, trimestral, semestral, anual), aulas por semana e
   quais modalidades estão incluídas.
 - **Matrículas** — vincula aluno + plano, ativa o cadastro, define o dia de vencimento e já
@@ -156,7 +161,8 @@ Tudo o que é marca fica em **dois lugares**:
 |---|---|
 | Logo horizontal | `public/marca/logo.svg` (aparece no topo do site e do sistema) |
 | Símbolo quadrado | `public/marca/simbolo.svg` (ícone do app, favicon, avatar) |
-| Cores da marca | `public/css/tema.css` → `--marca-1` (amarelo), `--marca-2` (laranja), `--marca-3` (vermelho) |
+| Cores da marca | `public/css/tema.css` → `--marca-1` (amarelo), `--marca-2` (dourado claro), `--marca-3` (vermelho) |
+| **Enviar a arte oficial** | dentro do sistema, em **Equipe e academia → Identidade visual → Enviar logo / Enviar brasão** |
 | Nome, frase, contato e cor principal | dentro do sistema, em **Equipe e academia → Identidade visual** |
 
 Trocar a cor principal pelo sistema muda a interface inteira na hora (botões, menu, destaques) e

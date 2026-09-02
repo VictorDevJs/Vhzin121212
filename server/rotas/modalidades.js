@@ -12,7 +12,7 @@ roteador.get('/', exigirPapel(...EQUIPE, 'aluno'), rota((req, res) => {
            (SELECT COUNT(*) FROM turmas t WHERE t.modalidade_id = m.id AND t.ativo = 1) AS total_turmas,
            (SELECT COUNT(*) FROM graduacoes g WHERE g.modalidade_id = m.id) AS total_graduacoes
     FROM modalidades m
-    ORDER BY m.ativo DESC, m.nome
+    ORDER BY m.ativo DESC, m.ordem, m.nome
   `);
   res.json(lista);
 }));
@@ -23,15 +23,18 @@ roteador.post('/', exigirPapel('dono'), rota((req, res) => {
   if (um('SELECT id FROM modalidades WHERE nome = :nome', { nome })) {
     throw new ErroApi('Já existe uma modalidade com este nome.', 409);
   }
-  const criada = executar(
-    'INSERT INTO modalidades (nome, descricao, cor, ativo) VALUES (:nome, :descricao, :cor, :ativo)',
-    {
-      nome,
-      descricao: texto(req.body.descricao),
-      cor: texto(req.body.cor, '#2a78d6'),
-      ativo: booleano(req.body.ativo, 1),
-    },
-  );
+  const criada = executar(`
+    INSERT INTO modalidades (nome, descricao, cor, destaque, ordem, imagem, ativo)
+    VALUES (:nome, :descricao, :cor, :destaque, :ordem, :imagem, :ativo)
+  `, {
+    nome,
+    descricao: texto(req.body.descricao),
+    cor: texto(req.body.cor, '#2a78d6'),
+    destaque: texto(req.body.destaque),
+    ordem: inteiro(req.body.ordem, 0),
+    imagem: texto(req.body.imagem),
+    ativo: booleano(req.body.ativo, 1),
+  });
   res.status(201).json(um('SELECT * FROM modalidades WHERE id = :id', { id: Number(criada.lastInsertRowid) }));
 }));
 
@@ -40,16 +43,20 @@ roteador.put('/:id', exigirPapel('dono'), rota((req, res) => {
   const atual = um('SELECT * FROM modalidades WHERE id = :id', { id });
   if (!atual) throw new ErroApi('Modalidade não encontrada.', 404);
 
-  executar(
-    `UPDATE modalidades SET nome = :nome, descricao = :descricao, cor = :cor, ativo = :ativo WHERE id = :id`,
-    {
-      id,
-      nome: texto(req.body.nome, atual.nome),
-      descricao: texto(req.body.descricao, atual.descricao),
-      cor: texto(req.body.cor, atual.cor),
-      ativo: booleano(req.body.ativo, atual.ativo),
-    },
-  );
+  executar(`
+    UPDATE modalidades SET nome = :nome, descricao = :descricao, cor = :cor,
+           destaque = :destaque, ordem = :ordem, imagem = :imagem, ativo = :ativo
+    WHERE id = :id
+  `, {
+    id,
+    nome: texto(req.body.nome, atual.nome),
+    descricao: texto(req.body.descricao, atual.descricao),
+    cor: texto(req.body.cor, atual.cor),
+    destaque: texto(req.body.destaque, atual.destaque),
+    ordem: inteiro(req.body.ordem, atual.ordem),
+    imagem: texto(req.body.imagem, atual.imagem),
+    ativo: booleano(req.body.ativo, atual.ativo),
+  });
   res.json(um('SELECT * FROM modalidades WHERE id = :id', { id }));
 }));
 

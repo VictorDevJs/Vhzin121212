@@ -30,7 +30,7 @@ async function telaDaEquipe() {
     desenharResumo(dados.resumo, dados.pendentes);
     area.replaceChildren(dados.avaliacoes.length
       ? el('div', { classe: 'grade col-2' }, dados.avaliacoes.map(cartaoAvaliacao))
-      : vazio('Nenhuma avaliação com esse filtro.', '★'));
+      : vazio('Nenhuma avaliação com esse filtro.'));
   }
 
   function desenharResumo(resumo, pendentes) {
@@ -88,7 +88,7 @@ async function telaDaEquipe() {
   function responder(item) {
     abrirFormulario({
       titulo: `Responder ${item.autor_nome}`,
-      aviso: 'A resposta aparece junto do comentário na pagina publica.',
+      aviso: 'A resposta aparece junto do comentário na página pública.',
       campos: [{ nome: 'resposta', rotulo: 'Resposta da academia', tipo: 'textarea', obrigatorio: true }],
       valores: item,
       aoSalvar: async (dados) => {
@@ -168,7 +168,7 @@ async function telaDoAluno() {
           el('strong', { texto: 'Resposta da academia: ' }), item.resposta,
         ]) : null,
       ])))
-      : vazio('Você ainda não avaliou a academia. Sua opiniao ajuda muito!', '★'));
+      : vazio('Você ainda não avaliou a academia. Sua opiniao ajuda muito!'));
   }
 
   desenhar(minhas);

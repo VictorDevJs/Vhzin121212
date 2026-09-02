@@ -78,7 +78,7 @@ export default async function paginaAlunos() {
           { valor: 'trancado', rotulo: 'Trancado' }, { valor: 'inativo', rotulo: 'Inativo' }] },
         { nome: 'responsavel_nome', rotulo: 'Responsável (kids)' },
         { nome: 'responsavel_telefone', rotulo: 'Telefone do responsável' },
-        { nome: 'observações', rotulo: 'Observações', tipo: 'textarea' },
+        { nome: 'observacoes', rotulo: 'Observações', tipo: 'textarea' },
         ...(aluno ? [] : [{ nome: 'senha', rotulo: 'Senha de acesso (opcional)', tipo: 'password',
           dica: 'Informe e-mail e senha para já criar o login do aluno.' }]),
       ],
@@ -108,7 +108,7 @@ export default async function paginaAlunos() {
       ],
       aoSalvar: async (dados) => {
         if (!dados.valor) delete dados.valor;
-        await api.criar('/matrículas', { ...dados, aluno_id: aluno.id });
+        await api.criar('/matriculas', { ...dados, aluno_id: aluno.id });
         aviso('Matrícula realizada.');
         await carregar();
       },
@@ -178,9 +178,9 @@ export default async function paginaAlunos() {
 
         sessao.papel === 'dono'
           ? botao('Excluir aluno', async () => {
-            if (!confirmar(`Excluir ${dados.nome} e todo o historico? Essa acao nao pode ser desfeita.`)) return;
+            if (!confirmar(`Excluir ${dados.nome} e todo o historico? Essa ação não pode ser desfeita.`)) return;
             await api.remover(`/alunos/${dados.id}`);
-            aviso('Aluno excluido.');
+            aviso('Aluno excluído.');
             fechar();
             await carregar();
           }, 'botao perigo')
@@ -197,7 +197,7 @@ export default async function paginaAlunos() {
           })) }],
         aoSalvar: async ({ turma_id }) => {
           await api.criar(`/turmas/${turma_id}/alunos`, { aluno_id: dados.id });
-          aviso('Aluno incluido na turma.');
+          aviso('Aluno incluído na turma.');
           desenharFicha(await api.obter(`/alunos/${dados.id}`));
         },
       });
@@ -211,7 +211,7 @@ export default async function paginaAlunos() {
           { nome: 'graduacao_id', rotulo: 'Graduação', tipo: 'select', obrigatorio: true,
             opcoes: await opcoesGraduacoes(modalidades) },
           { nome: 'data', rotulo: 'Data', tipo: 'date', valor: hojeISO() },
-          { nome: 'observação', rotulo: 'Observação' },
+          { nome: 'observacao', rotulo: 'Observação' },
         ],
         aoSalvar: async (valores) => {
           await api.criar(`/alunos/${dados.id}/graduacoes`, valores);

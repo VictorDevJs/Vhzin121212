@@ -23,11 +23,6 @@ const CATEGORIA_PRODUTO = {
   bermuda: 'Bermuda', mochila: 'Mochila', acessorio: 'Acessório',
 };
 
-const ICONE_PRODUTO = {
-  kimono: '🥋', faixa: '🎗️', rashguard: '👕', short: '🩳', luva: '🥊', caneleira: '🦵',
-  protetor: '😁', camisa: '👕', casaco: '🧥', bermuda: '🩳', mochila: '🎒', acessorio: '🧴',
-};
-
 /** Página pública do CT Atak: vitrine da academia e porta de entrada do sistema. */
 export default async function paginaPublica() {
   const dados = await api.obter('/publico/academia');
@@ -109,12 +104,9 @@ function heroi(academia, numeros) {
           }),
           el('button', { classe: 'botao secundario grande', texto: 'Ver horários', aoClicar: rolarAte('horarios') }),
         ]),
-        el('div', { classe: 'numeros' }, [
-          numeros.anos_de_historia
-            ? numero(`+${numeros.anos_de_historia}`, 'anos de história')
-            : null,
-          numero(String(numeros.aulas_semana), 'aulas por semana'),
-        ].filter(Boolean)),
+        numeros.anos_de_historia
+          ? el('div', { classe: 'numeros' }, [numero(`+${numeros.anos_de_historia}`, 'anos de história')])
+          : null,
       ]),
 
       el('div', { estilo: 'display:grid;gap:1.5rem' }, [
@@ -201,7 +193,9 @@ function secaoModalidades(modalidades) {
     }, [
       el('h3', { texto: modalidade.nome }),
       el('p', { classe: 'dica', estilo: 'font-size:.92rem', texto: modalidade.descricao || '' }),
-      el('div', { classe: 'acoes' }, [etiqueta(`${modalidade.turmas} turma(s) na semana`, 'neutra')]),
+      modalidade.destaque
+        ? el('div', { classe: 'acoes' }, [etiqueta(modalidade.destaque, 'marca')])
+        : null,
     ]))),
   ]);
 }
@@ -221,7 +215,7 @@ function secaoHorarios(grade, modalidades) {
             classe: 'aula', estilo: `border-left-color:${aula.modalidade_cor || 'var(--marca-1)'}`,
           }, [
             el('div', { classe: 'hora', texto: `${aula.hora_inicio} – ${aula.hora_fim}` }),
-            el('div', { texto: aula.modalidade }),
+            el('div', {}, [aula.modalidade, aula.rotulo ? el('span', { classe: 'b-rotulo', estilo: 'margin-left:.35rem', texto: aula.rotulo }) : null]),
             el('div', { classe: 'info', texto: aula.turma }),
             el('div', { classe: 'info', texto: [aula.categoria, aula.mestre].filter(Boolean).join(' · ') }),
           ])))
@@ -262,7 +256,7 @@ function secaoProfessores(mestres) {
         mestre.modalidades.map((nome) => etiqueta(nome, 'marca'))),
       el('p', { classe: 'dica', texto: `${mestre.turmas} turma(s) na semana` }),
       ...mestre.titulos.map((titulo) => el('p', { classe: 'dica', estilo: 'margin:.2rem 0' }, [
-        `🎓 ${titulo.titulo}${titulo.entidade ? ` · ${titulo.entidade}` : ''}`,
+        `${titulo.titulo}${titulo.entidade ? ` · ${titulo.entidade}` : ''}`,
       ])),
     ]))),
   ]);
@@ -325,7 +319,7 @@ function secaoLoja(produtos) {
       el('div', { classe: 'capa' }, [
         produto.imagem
           ? el('img', { src: produto.imagem, alt: produto.nome, loading: 'lazy' })
-          : el('span', { texto: ICONE_PRODUTO[produto.categoria] || '🛍️' }),
+          : el('span', { classe: 'sem-foto', texto: (CATEGORIA_PRODUTO[produto.categoria] || 'Produto').slice(0, 2).toUpperCase() }),
         el('span', { classe: 'selo', texto: CATEGORIA_PRODUTO[produto.categoria] || produto.categoria }),
       ]),
       el('div', { classe: 'corpo-produto' }, [
@@ -369,7 +363,7 @@ function secaoCertificados(certificados) {
       el('div', { classe: 'miniatura' }, [
         item.arquivo && !item.arquivo.endsWith('.pdf')
           ? el('img', { src: item.arquivo, alt: `Certificado de ${item.pessoa_nome}`, loading: 'lazy' })
-          : el('span', { texto: '🏅' }),
+          : el('span', { classe: 'sem-foto', texto: 'CT' }),
       ]),
       el('div', { estilo: 'min-width:0' }, [
         el('div', { classe: 'selo-tipo', texto: rotulos[item.tipo] || item.tipo }),
@@ -479,10 +473,10 @@ function secaoAvisos(avisos) {
 
 function rodape(academia) {
   const contatos = [
-    academia.endereco && `📍 ${academia.endereco}`,
-    academia.telefone && `☎️ ${academia.telefone}`,
-    academia.instagram && `📷 ${academia.instagram}`,
-    academia.horario_funcionamento && `🕐 ${academia.horario_funcionamento}`,
+    academia.endereco,
+    academia.telefone,
+    academia.instagram,
+    academia.horario_funcionamento,
   ].filter(Boolean);
 
   return el('footer', { classe: 'rodape-site' }, [
@@ -549,7 +543,7 @@ function formularioLogin() {
   const retorno = el('div');
   const form = el('form', {}, [
     retorno,
-    campo('E-mail', { type: 'email', name: 'email', required: true, autocomplete: 'email', placeholder: 'voce@email.com' }),
+    campo('E-mail', { type: 'email', name: 'email', required: true, autocomplete: 'email', placeholder: 'você@email.com' }),
     campo('Senha', { type: 'password', name: 'senha', required: true, autocomplete: 'current-password' }),
     el('button', { classe: 'botao', type: 'submit', texto: 'Entrar no sistema', estilo: 'width:100%' }),
     el('p', { classe: 'dica', estilo: 'margin-top:.75rem' },

@@ -13,7 +13,7 @@ export const CATEGORIAS_DESPESA = ['aluguel', 'salarios', 'agua/luz/internet', '
 /** Somente o dono enxerga despesas e o resultado consolidado. */
 function somenteDono(req) {
   if (req.usuario.papel !== 'dono') {
-    throw new ErroApi('Apenas o dono da academia tem acesso a esta informacao.', 403);
+    throw new ErroApi('Apenas o dono da academia tem acesso a esta informação.', 403);
   }
 }
 
@@ -57,7 +57,7 @@ roteador.post('/lancamentos', exigirPapel(...GESTAO), rota((req, res) => {
   if (tipo === 'despesa') somenteDono(req);
 
   const valor = numero(req.body.valor, -1);
-  if (valor < 0) throw new ErroApi('Informe um valor valido.');
+  if (valor < 0) throw new ErroApi('Informe um valor válido.');
 
   const criado = executar(`
     INSERT INTO lancamentos (tipo, categoria, descricao, valor, data, forma_pagamento, aluno_id, registrado_por)

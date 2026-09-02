@@ -53,7 +53,7 @@ async function requisicao(metodo, caminho, corpo) {
       sessao.encerrar();
       window.location.hash = '#/entrar';
     }
-    throw new ErroApi(dados.erro || 'Não foi possível completar a operacao.', resposta.status);
+    throw new ErroApi(dados.erro || 'Não foi possível completar a operação.', resposta.status);
   }
   return dados;
 }

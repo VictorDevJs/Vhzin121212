@@ -51,8 +51,9 @@ roteador.get('/', exigirPapel(...EQUIPE, 'aluno'), rota((req, res) => {
 // Grade semanal completa (usada na aba de horarios)
 roteador.get('/grade', exigirPapel(...EQUIPE, 'aluno'), rota((_req, res) => {
   const aulas = todos(`
-    SELECT h.id AS horario_id, h.dia_semana, h.hora_inicio, h.hora_fim,
+    SELECT h.id AS horario_id, h.dia_semana, h.hora_inicio, h.hora_fim, h.rotulo, h.observacao,
            t.id AS turma_id, t.nome AS turma, t.categoria, t.nivel, t.local, t.capacidade,
+           t.modalidade_id, t.mestre_id,
            m.nome AS modalidade, m.cor AS modalidade_cor,
            u.nome AS mestre,
            (SELECT COUNT(*) FROM aluno_turmas at WHERE at.turma_id = t.id) AS total_alunos
@@ -146,6 +147,7 @@ roteador.delete('/:id', exigirPapel('dono'), rota((req, res) => {
 
 // ----- Horarios da turma -----
 
+/** Um horário pode ter rótulo próprio: "No-Gi", "Gi", "Iniciantes"... */
 function inserirHorario(turmaId, dados) {
   const dia = inteiro(dados.dia_semana, -1);
   if (dia < 0 || dia > 6) throw new ErroApi('Dia da semana inválido (0 = domingo ... 6 = sábado).');
@@ -159,10 +161,14 @@ function inserirHorario(turmaId, dados) {
   `, { turma_id: turmaId, dia, inicio });
   if (conflito) throw new ErroApi('Esta turma já tem uma aula neste dia e horário.', 409);
 
-  const criado = executar(
-    'INSERT INTO horarios (turma_id, dia_semana, hora_inicio, hora_fim, ativo) VALUES (:turma_id, :dia, :inicio, :fim, 1)',
-    { turma_id: turmaId, dia, inicio, fim },
-  );
+  const criado = executar(`
+    INSERT INTO horarios (turma_id, dia_semana, hora_inicio, hora_fim, rotulo, observacao, ativo)
+    VALUES (:turma_id, :dia, :inicio, :fim, :rotulo, :observacao, 1)
+  `, {
+    turma_id: turmaId, dia, inicio, fim,
+    rotulo: texto(dados.rotulo),
+    observacao: texto(dados.observacao),
+  });
   return Number(criado.lastInsertRowid);
 }
 
@@ -171,6 +177,39 @@ roteador.post('/:id/horarios', exigirPapel('dono', 'mestre'), rota((req, res) =>
   garantirEdicao(req, turmaId);
   const id = inserirHorario(turmaId, req.body || {});
   res.status(201).json(um('SELECT * FROM horarios WHERE id = :id', { id }));
+}));
+
+/** Edita um horário sem precisar apagar e cadastrar de novo. */
+roteador.put('/:id/horarios/:horarioId', exigirPapel('dono', 'mestre'), rota((req, res) => {
+  const turmaId = inteiro(req.params.id);
+  garantirEdicao(req, turmaId);
+  const horarioId = inteiro(req.params.horarioId);
+  const atual = um('SELECT * FROM horarios WHERE id = :id AND turma_id = :turma', { id: horarioId, turma: turmaId });
+  if (!atual) throw new ErroApi('Horário não encontrado.', 404);
+
+  const dia = inteiro(req.body.dia_semana, atual.dia_semana);
+  if (dia < 0 || dia > 6) throw new ErroApi('Dia da semana inválido.');
+  const inicio = req.body.hora_inicio ? hora(req.body.hora_inicio) : atual.hora_inicio;
+  const fim = req.body.hora_fim ? hora(req.body.hora_fim) : atual.hora_fim;
+  if (fim <= inicio) throw new ErroApi('O horário final precisa ser maior que o inicial.');
+
+  const conflito = um(`
+    SELECT id FROM horarios
+    WHERE turma_id = :turma AND dia_semana = :dia AND hora_inicio = :inicio AND id != :id
+  `, { turma: turmaId, dia, inicio, id: horarioId });
+  if (conflito) throw new ErroApi('Esta turma já tem uma aula neste dia e horário.', 409);
+
+  executar(`
+    UPDATE horarios SET dia_semana = :dia, hora_inicio = :inicio, hora_fim = :fim,
+           rotulo = :rotulo, observacao = :observacao, ativo = :ativo
+    WHERE id = :id
+  `, {
+    id: horarioId, dia, inicio, fim,
+    rotulo: texto(req.body.rotulo, atual.rotulo),
+    observacao: texto(req.body.observacao, atual.observacao),
+    ativo: booleano(req.body.ativo, atual.ativo),
+  });
+  res.json(um('SELECT * FROM horarios WHERE id = :id', { id: horarioId }));
 }));
 
 roteador.delete('/:id/horarios/:horarioId', exigirPapel('dono', 'mestre'), rota((req, res) => {
@@ -198,7 +237,7 @@ roteador.post('/:id/alunos', exigirPapel(...GESTAO, 'mestre'), rota((req, res) =
     throw new ErroApi(`Turma lotada (${turma.capacidade} vagas).`, 409);
   }
   executar('INSERT OR IGNORE INTO aluno_turmas (aluno_id, turma_id) VALUES (:a, :t)', { a: alunoId, t: turmaId });
-  res.status(201).json({ mensagem: 'Aluno incluido na turma.' });
+  res.status(201).json({ mensagem: 'Aluno incluído na turma.' });
 }));
 
 roteador.delete('/:id/alunos/:alunoId', exigirPapel(...GESTAO, 'mestre'), rota((req, res) => {

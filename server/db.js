@@ -18,6 +18,7 @@ export function abrirBanco(arquivo = process.env.DB_ARQUIVO || './dados/academia
   db.exec('PRAGMA journal_mode = WAL');
   db.exec('PRAGMA foreign_keys = ON');
   criarEsquema(db);
+  migrar(db);
   return db;
 }
 
@@ -62,6 +63,23 @@ export function transacao(fn) {
   }
 }
 
+/** Colunas acrescentadas depois da primeira versão do banco. */
+function migrar(banco) {
+  const novas = [
+    ['horarios', 'rotulo', 'TEXT'],
+    ['horarios', 'observacao', 'TEXT'],
+    ['modalidades', 'destaque', 'TEXT'],
+    ['modalidades', 'ordem', 'INTEGER NOT NULL DEFAULT 0'],
+    ['modalidades', 'imagem', 'TEXT'],
+  ];
+  for (const [tabela, coluna, tipo] of novas) {
+    const existentes = banco.prepare(`PRAGMA table_info(${tabela})`).all().map((c) => c.name);
+    if (!existentes.includes(coluna)) {
+      banco.exec(`ALTER TABLE ${tabela} ADD COLUMN ${coluna} ${tipo}`);
+    }
+  }
+}
+
 function criarEsquema(banco) {
   banco.exec(`
     CREATE TABLE IF NOT EXISTS usuarios (
@@ -80,6 +98,9 @@ function criarEsquema(banco) {
       nome       TEXT NOT NULL UNIQUE COLLATE NOCASE,
       descricao  TEXT,
       cor        TEXT DEFAULT '#2a78d6',
+      destaque   TEXT,
+      ordem      INTEGER NOT NULL DEFAULT 0,
+      imagem     TEXT,
       ativo      INTEGER NOT NULL DEFAULT 1,
       criado_em  TEXT NOT NULL DEFAULT (datetime('now','localtime'))
     );
@@ -132,6 +153,8 @@ function criarEsquema(banco) {
       dia_semana  INTEGER NOT NULL CHECK (dia_semana BETWEEN 0 AND 6),
       hora_inicio TEXT NOT NULL,
       hora_fim    TEXT NOT NULL,
+      rotulo      TEXT,
+      observacao  TEXT,
       ativo       INTEGER NOT NULL DEFAULT 1,
       UNIQUE (turma_id, dia_semana, hora_inicio)
     );

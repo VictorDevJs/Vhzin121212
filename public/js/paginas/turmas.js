@@ -32,7 +32,7 @@ export default async function paginaTurmas() {
           el('h3', {}, [modalidade.nome, ' ', modalidade.ativo ? null : etiqueta('inativa', 'neutra')]),
           el('p', { classe: 'dica', texto: modalidade.descricao || 'Sem descrição.' }),
           el('div', { classe: 'acoes', estilo: 'margin-bottom:.6rem' }, [
-            etiqueta(`${modalidade.total_turmas} turma(s)`, 'info'),
+            etiqueta(modalidade.destaque || `${modalidade.total_turmas} turma(s)`, 'marca'),
             etiqueta(`${modalidade.total_graduacoes} faixa(s)`, 'neutra'),
           ]),
           ehDono
@@ -50,16 +50,29 @@ export default async function paginaTurmas() {
   function formularioModalidade(modalidade = null) {
     abrirFormulario({
       titulo: modalidade ? `Editar ${modalidade.nome}` : 'Nova modalidade',
+      aviso: 'A frase de destaque aparece no cartão da modalidade, no site.',
       campos: [
-        { nome: 'nome', rotulo: 'Nome da modalidade', obrigatorio: true, placeholder: 'Jiu-Jitsu, Boxe, Judô...' },
-        { nome: 'descrição', rotulo: 'Descrição', tipo: 'textarea' },
-        { nome: 'cor', rotulo: 'Cor de identificacao', tipo: 'color', valor: '#c62828' },
+        { nome: 'nome', rotulo: 'Nome da modalidade', obrigatorio: true, placeholder: 'Jiu-Jitsu, Boxe, Judô…' },
+        { nome: 'descricao', rotulo: 'Descrição que aparece no site', tipo: 'textarea' },
+        { nome: 'destaque', rotulo: 'Frase de destaque',
+          placeholder: '3 turmas por semana · Kids e adulto',
+          dica: 'Substitui a contagem automática de turmas. Em branco, o site mostra a contagem.' },
+        { nome: 'cor', rotulo: 'Cor de identificação', tipo: 'color', valor: '#2a78d6' },
+        { nome: 'ordem', rotulo: 'Ordem de exibição', tipo: 'number', dica: 'Menor número aparece primeiro.' },
+        { nome: 'imagem_nova', rotulo: 'Foto da modalidade', tipo: 'arquivo', aceita: 'image/*' },
         { nome: 'ativo', rotulo: 'Modalidade ativa', tipo: 'checkbox', valor: 1 },
       ],
-      valores: modalidade || {},
+      valores: modalidade || { cor: '#2a78d6', ativo: 1, ordem: 0 },
       aoSalvar: async (dados) => {
-        if (modalidade) await api.atualizar(`/modalidades/${modalidade.id}`, dados);
-        else await api.criar('/modalidades', dados);
+        const { imagem_nova: imagem, ...corpo } = dados;
+        if (imagem) {
+          const enviada = await api.criar('/arquivos', { conteudo: imagem });
+          corpo.imagem = enviada.url;
+        } else if (modalidade?.imagem) {
+          corpo.imagem = modalidade.imagem;
+        }
+        if (modalidade) await api.atualizar(`/modalidades/${modalidade.id}`, corpo);
+        else await api.criar('/modalidades', corpo);
         aviso('Modalidade salva.');
         await carregar();
       },
@@ -161,7 +174,7 @@ export default async function paginaTurmas() {
         { nome: 'categoria', rotulo: 'Categoria', tipo: 'select', opcoes: [
           { valor: 'adulto', rotulo: 'Adulto' }, { valor: 'kids', rotulo: 'Kids' },
           { valor: 'misto', rotulo: 'Misto' }, { valor: 'feminino', rotulo: 'Feminino' }] },
-        { nome: 'nível', rotulo: 'Nível', tipo: 'select', opcoes: [
+        { nome: 'nivel', rotulo: 'Nível', tipo: 'select', opcoes: [
           { valor: 'todos', rotulo: 'Todos os niveis' }, { valor: 'iniciante', rotulo: 'Iniciante' },
           { valor: 'intermediário', rotulo: 'Intermediário' }, { valor: 'avançado', rotulo: 'Avançado' }] },
         { nome: 'mestre_id', rotulo: 'Mestre responsável', tipo: 'select',

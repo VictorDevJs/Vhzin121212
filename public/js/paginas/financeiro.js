@@ -50,7 +50,7 @@ export default async function paginaFinanceiro() {
         pontos: resumo.evolucao.map((mes) => ({ x: competenciaBr(mes.competencia), valores: [mes.receitas, mes.despesas] })),
         series: [{ nome: 'Entradas', cor: 'var(--serie-1)' }, { nome: 'Saídas', cor: 'var(--serie-2)' }],
       })
-      : vazio('Ainda não ha movimentacao registrada.', '\u{1F4C8}'));
+      : vazio('Ainda não ha movimentacao registrada.'));
 
     areaCategorias.replaceChildren(el('div', { classe: 'grade col-2' }, [
       blocoCategorias('Entradas por categoria', resumo.por_categoria.filter((c) => c.tipo === 'receita'), 'var(--serie-1)'),
@@ -66,7 +66,7 @@ export default async function paginaFinanceiro() {
           dados: itens.map((item) => ({ rotulo: item.categoria, valor: item.total, cor, legenda: 'total no mês' })),
           formatar: moeda,
         })
-        : vazio('Sem lançamentos neste mês.', '\u{1F4B8}'),
+        : vazio('Sem lançamentos neste mês.'),
     ]);
   }
 
@@ -147,7 +147,7 @@ export default async function paginaFinanceiro() {
     abrirFormulario({
       titulo: 'Gerar mensalidades do mês',
       aviso: 'Cria a cobranca de todos os alunos com matrícula ativa. Quem já tem mensalidade no mês e ignorado.',
-      campos: [{ nome: 'competência', rotulo: 'Competência', tipo: 'month', valor: estado.competencia, obrigatorio: true }],
+      campos: [{ nome: 'competencia', rotulo: 'Competência', tipo: 'month', valor: estado.competencia, obrigatorio: true }],
       textoConfirmar: 'Gerar',
       aoSalvar: async (dados) => {
         const resposta = await api.criar('/financeiro/mensalidades/gerar', dados);
@@ -163,10 +163,10 @@ export default async function paginaFinanceiro() {
       campos: [
         { nome: 'aluno_id', rotulo: 'Aluno', tipo: 'select', obrigatorio: true,
           opcoes: alunos.map((a) => ({ valor: a.id, rotulo: a.nome })) },
-        { nome: 'competência', rotulo: 'Competência', tipo: 'month', valor: estado.competencia, obrigatorio: true },
+        { nome: 'competencia', rotulo: 'Competência', tipo: 'month', valor: estado.competencia, obrigatorio: true },
         { nome: 'vencimento', rotulo: 'Vencimento', tipo: 'date', valor: `${estado.competencia}-10` },
         { nome: 'valor', rotulo: 'Valor', tipo: 'number', passo: '0.01', obrigatorio: true },
-        { nome: 'observação', rotulo: 'Observação' },
+        { nome: 'observacao', rotulo: 'Observação' },
       ],
       aoSalvar: async (dados) => {
         await api.criar('/financeiro/mensalidades', dados);
@@ -288,7 +288,7 @@ export default async function paginaFinanceiro() {
             ]),
           ),
         ])
-        : vazio('Sem mensalidades neste mês para dividir entre as modalidades.', '\u{1F94B}'),
+        : vazio('Sem mensalidades neste mês para dividir entre as modalidades.'),
       dados.sem_turma
         ? el('p', { classe: 'dica', texto: `${dados.sem_turma.alunos} aluno(s) sem turma definida somam ${moeda(dados.sem_turma.previsto)} e ficam fora da divisao acima.` })
         : null,
@@ -322,7 +322,7 @@ export default async function paginaFinanceiro() {
       ehDono ? botao('+ Saída', () => novoLancamento('despesa'), 'botao secundario') : null,
     ].filter(Boolean)),
     el('div', { classe: 'filtros' }, [
-      el('div', { classe: 'campo' }, [el('label', { texto: 'Mês de referencia' }), seletorCompetencia]),
+      el('div', { classe: 'campo' }, [el('label', { texto: 'Mês de referência' }), seletorCompetencia]),
     ]),
     areaIndicadores,
     ehDono ? cartao('Entradas e saídas dos últimos meses', areaGrafico) : null,

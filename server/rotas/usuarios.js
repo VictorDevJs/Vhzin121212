@@ -25,7 +25,7 @@ roteador.post('/', exigirPapel('dono'), rota((req, res) => {
   exigirCampos(req.body, ['nome', 'email', 'senha', 'papel']);
   const email = texto(req.body.email);
   const papel = texto(req.body.papel);
-  if (!emailValido(email)) throw new ErroApi('Informe um e-mail valido.');
+  if (!emailValido(email)) throw new ErroApi('Informe um e-mail válido.');
   if (!PAPEIS.includes(papel)) throw new ErroApi(`Papel invalido. Use: ${PAPEIS.join(', ')}.`);
   if (String(req.body.senha).length < 6) throw new ErroApi('A senha precisa ter pelo menos 6 caracteres.');
   if (um('SELECT id FROM usuarios WHERE email = :email', { email })) {
@@ -83,7 +83,7 @@ roteador.put('/:id', exigirPapel('dono'), rota((req, res) => {
 
 roteador.delete('/:id', exigirPapel('dono'), rota((req, res) => {
   const id = inteiro(req.params.id);
-  if (id === req.usuario.id) throw new ErroApi('Você não pode excluir o proprio usuário.', 409);
+  if (id === req.usuario.id) throw new ErroApi('Você não pode excluir o próprio usuário.', 409);
   const apagado = executar('DELETE FROM usuarios WHERE id = :id', { id });
   if (!apagado.changes) throw new ErroApi('Usuário não encontrado.', 404);
   res.json({ mensagem: 'Usuário removido.' });

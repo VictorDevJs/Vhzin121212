@@ -9,12 +9,20 @@ export const marca = {
   nome: 'CT Atak',
   chamada: '',
   cor: '',
+  // Arquivos enviados pelo dono em Equipe e academia; se vazios, usa os de /marca/.
+  logo: '',
+  simbolo: '',
 };
 
 /** Aplica no documento os dados de marca vindos da API. */
 export function aplicarMarca(academia = {}) {
   if (academia.nome) marca.nome = academia.nome;
   if (academia.chamada) marca.chamada = academia.chamada;
+  marca.logo = academia.logo_url || '';
+  marca.simbolo = academia.simbolo_url || '';
+  if (marca.simbolo) {
+    document.querySelector('link[rel="icon"]')?.setAttribute('href', marca.simbolo);
+  }
   document.title = `${marca.nome} · Sistema de gestão`;
   if (academia.cor_primaria) definirCorPrincipal(academia.cor_primaria);
 }
@@ -49,7 +57,9 @@ function clarear(cor, quanto) {
 
 /** Logo horizontal, com o nome em texto caso o arquivo não exista. */
 export function logotipo(altura = 32) {
-  const imagem = el('img', { src: '/marca/logo.svg', alt: marca.nome, estilo: `height:${altura}px` });
+  const imagem = el('img', {
+    src: marca.logo || '/marca/logo.svg', alt: marca.nome, estilo: `height:${altura}px`,
+  });
   imagem.addEventListener('error', () => imagem.replaceWith(el('span', { classe: 'nome', texto: marca.nome })));
   return imagem;
 }
@@ -57,8 +67,8 @@ export function logotipo(altura = 32) {
 /** Simbolo quadrado (menu, avatar da academia, favicon). */
 export function simbolo(tamanho = 38) {
   const imagem = el('img', {
-    classe: 'simbolo', src: '/marca/simbolo.svg', alt: '',
-    estilo: `width:${tamanho}px;height:${tamanho}px`,
+    classe: 'simbolo', src: marca.simbolo || '/marca/simbolo.svg', alt: '',
+    estilo: `width:${tamanho}px;height:${tamanho}px;object-fit:contain`,
   });
   imagem.addEventListener('error', () => imagem.replaceWith(el('span', {
     classe: 'avatar', texto: marca.nome.slice(0, 1).toUpperCase(),

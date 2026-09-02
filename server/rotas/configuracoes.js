@@ -8,6 +8,7 @@ const roteador = Router();
 const CHAVES = [
   'nome_academia', 'telefone', 'whatsapp', 'endereco', 'instagram', 'sobre', 'chamada',
   'cor_primaria', 'ano_fundacao', 'historia', 'horario_funcionamento',
+  'logo_url', 'simbolo_url',
 ];
 
 roteador.get('/', exigirPapel(...EQUIPE), rota((_req, res) => {

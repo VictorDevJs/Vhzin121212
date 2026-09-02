@@ -14,11 +14,6 @@ const TIPOS = [
   { valor: 'outro', rotulo: 'Outro documento' },
 ];
 
-const ICONE_TIPO = {
-  faixa_preta: '\u{1F94B}', graduacao: '\u{1F3C5}', mestre: '\u{1F393}',
-  federacao: '\u{1F4DC}', curso: '\u{1F4D8}', premiacao: '\u{1F3C6}', outro: '\u{1F4C4}',
-};
-
 /** Certificados e titulacoes da academia - o dono publica, todos consultam. */
 export default async function paginaCertificados() {
   const ehDono = sessao.papel === 'dono';
@@ -35,7 +30,7 @@ export default async function paginaCertificados() {
     const lista = await api.obter(`/certificados${filtro.tipo ? `?tipo=${filtro.tipo}` : ''}`);
     area.replaceChildren(lista.length
       ? el('div', { classe: 'grade col-2' }, lista.map(cartaoCertificado))
-      : vazio('Nenhum certificado publicado ainda.', '\u{1F3C5}'));
+      : vazio('Nenhum certificado publicado ainda.'));
   }
 
   function cartaoCertificado(item) {
@@ -44,7 +39,7 @@ export default async function paginaCertificados() {
       el('div', { classe: 'miniatura' }, [
         item.arquivo && !item.arquivo.endsWith('.pdf')
           ? el('img', { src: item.arquivo, alt: `Certificado de ${item.pessoa_nome}`, loading: 'lazy' })
-          : el('span', { texto: ICONE_TIPO[item.tipo] || '\u{1F4C4}' }),
+          : el('span', { classe: 'sem-foto', texto: rotuloTipo.slice(0, 2).toUpperCase() }),
       ]),
       el('div', { estilo: 'min-width:0;flex:1' }, [
         el('div', { classe: 'selo-tipo', texto: rotuloTipo }),
@@ -72,7 +67,7 @@ export default async function paginaCertificados() {
   function formulario(item = null) {
     abrirFormulario({
       titulo: item ? 'Editar certificado' : 'Publicar certificado',
-      aviso: 'Envie a foto ou o PDF do diploma. Marcado para o site, ele aparece na pagina publica da academia.',
+      aviso: 'Envie a foto ou o PDF do diploma. Marcado para o site, ele aparece na página pública da academia.',
       campos: [
         { nome: 'titulo', rotulo: 'Titulo do documento', obrigatorio: true, placeholder: 'Faixa preta de Jiu-Jitsu' },
         { nome: 'pessoa_nome', rotulo: 'Nome de quem recebeu', obrigatorio: true },
@@ -84,10 +79,10 @@ export default async function paginaCertificados() {
         { nome: 'entidade', rotulo: 'Federação / entidade emissora', placeholder: 'CBJJ, CBMT, IBJJF...' },
         { nome: 'registro', rotulo: 'Número de registro' },
         { nome: 'data_emissao', rotulo: 'Data de emissão', tipo: 'date' },
-        { nome: 'descrição', rotulo: 'Observações', tipo: 'textarea' },
+        { nome: 'descricao', rotulo: 'Observações', tipo: 'textarea' },
         { nome: 'arquivo_novo', rotulo: 'Imagem ou PDF do certificado', tipo: 'arquivo',
           dica: 'JPG, PNG, WEBP ou PDF de até 5 MB.' },
-        { nome: 'publicar_site', rotulo: 'Mostrar na pagina publica', tipo: 'checkbox', valor: 1 },
+        { nome: 'publicar_site', rotulo: 'Mostrar na página pública', tipo: 'checkbox', valor: 1 },
       ],
       valores: item || { tipo: 'faixa_preta', publicar_site: 1 },
       aoSalvar: async (dados) => {

@@ -83,7 +83,7 @@ export function exigirPapel(...papeis) {
   return (req, res, proximo) => {
     if (!req.usuario) return res.status(401).json({ erro: 'Faca login para continuar.' });
     if (!papeis.includes(req.usuario.papel)) {
-      return res.status(403).json({ erro: 'Você não tem permissao para esta acao.' });
+      return res.status(403).json({ erro: 'Você não tem permissao para esta ação.' });
     }
     proximo();
   };

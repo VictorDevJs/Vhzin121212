@@ -128,9 +128,10 @@ export function botao(texto, aoClicar, classe = 'botao') {
   return el('button', { classe, texto, aoClicar, type: 'button' });
 }
 
-export function vazio(mensagem, icone = '\u2014') {
+/** Estado vazio discreto: um traço fino e a explicação, sem emoji. */
+export function vazio(mensagem) {
   return el('div', { classe: 'vazio' }, [
-    el('span', { classe: 'icone', texto: icone }),
+    el('span', { classe: 'risco' }),
     el('div', { texto: mensagem }),
   ]);
 }
@@ -283,7 +284,7 @@ export function lerFormulario(form, campos) {
  * Abre um modal com formulario. aoSalvar recebe os dados e pode ser assincrono;
  * lancar um erro mantem o modal aberto exibindo a mensagem.
  */
-export function abrirFormulario({ titulo, campos, valores = {}, textoConfirmar = 'Salvar', aoSalvar, aviso: textoAviso }) {
+export function abrirFormulario({ titulo, campos, valores = {}, textoConfirmar = 'Salvar', aoSalvar, aviso: textoAviso, extras = [] }) {
   const erro = el('div', { classe: 'mensagem-erro', estilo: 'display:none' });
   const form = el('form', { classe: 'corpo' }, [
     textoAviso ? el('p', { classe: 'dica', texto: textoAviso }) : null,
@@ -300,6 +301,8 @@ export function abrirFormulario({ titulo, campos, valores = {}, textoConfirmar =
       ]),
       form,
       el('footer', {}, [
+        ...extras,
+        el('span', { estilo: 'flex:1' }),
         botao('Cancelar', fechar, 'botao secundario'),
         confirmar,
       ]),

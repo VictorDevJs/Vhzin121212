@@ -104,10 +104,10 @@ function painelGestao(dados) {
           dados: porModalidade.map((item) => ({ rotulo: item.modalidade, valor: item.alunos, cor: item.cor, legenda: 'alunos' })),
           formatar: (v) => `${v}`,
         })
-        : vazio('Vincule alunos as turmas para ver a distribuicao.', '\u{1F4CA}')),
+        : vazio('Vincule alunos as turmas para ver a distribuicao.')),
       cartao('Composição da base', (dados.alunos.ativos ?? 0)
         ? rosca({ dados: composicao, titulo: 'alunos ativos', formatar: (v) => `${v}` })
-        : vazio('Nenhum aluno ativo ainda.', '\u{1F465}')),
+        : vazio('Nenhum aluno ativo ainda.')),
     ]),
   ];
 
@@ -133,7 +133,7 @@ function painelMestre(dados) {
     cartao('Minhas turmas', dados.minhas_turmas.length
       ? tabela(['Turma', 'Modalidade', 'Categoria', 'Alunos'],
         dados.minhas_turmas.map((t) => [t.nome, t.modalidade, t.categoria, String(t.total_alunos)]))
-      : vazio('Você ainda não e responsável por nenhuma turma.', '\u{1F94B}'),
+      : vazio('Você ainda não e responsável por nenhuma turma.'),
     el('button', { classe: 'botao pequeno', texto: 'Fazer chamada', aoClicar: () => irPara('chamada') })),
   ];
 }
@@ -152,7 +152,7 @@ function painelAluno(dados) {
 /* ------------------------------------------------------------- listas */
 
 function listaAulasHoje(aulas) {
-  if (!aulas.length) return vazio('Nenhuma aula marcada para hoje.', '\u{1F5D3}');
+  if (!aulas.length) return vazio('Nenhuma aula marcada para hoje.');
   return el('div', {}, aulas.map((aula) => el('div', {
     classe: 'aula', estilo: `border-left-color:${aula.modalidade_cor || 'var(--marca-1)'}`,
   }, [
@@ -192,7 +192,7 @@ const ROTULO_AVISO = {
 };
 
 function listaAvisos(avisos) {
-  if (!avisos.length) return vazio('Nenhum aviso publicado.', '\u{1F4E2}');
+  if (!avisos.length) return vazio('Nenhum aviso publicado.');
   return el('div', {}, avisos.map((item) => el('div', {
     estilo: 'padding:.6rem 0;border-bottom:1px solid var(--borda)',
   }, [

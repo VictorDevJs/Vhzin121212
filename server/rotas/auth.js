@@ -24,7 +24,7 @@ roteador.post('/registrar', rota((req, res) => {
   const { nome, email, senha, telefone, data_nascimento, responsavel_nome, responsavel_telefone, observacoes } = req.body || {};
   exigirCampos(req.body, ['nome', 'email', 'senha']);
 
-  if (!emailValido(email)) throw new ErroApi('Informe um e-mail valido.');
+  if (!emailValido(email)) throw new ErroApi('Informe um e-mail válido.');
   if (String(senha).length < 6) throw new ErroApi('A senha precisa ter pelo menos 6 caracteres.');
 
   const jaExiste = um('SELECT id FROM usuarios WHERE email = :email', { email: texto(email) });

@@ -5,32 +5,32 @@ import { hoje, competenciaAtual, somarMeses } from './util.js';
 /** Modalidades e faixas que ja vem prontas na primeira execucao. */
 const MODALIDADES = [
   {
-    nome: 'Jiu-Jitsu', cor: '#2a78d6',
+    nome: 'Jiu-Jitsu', destaque: 'Kids, adulto e competição · No-Gi e Gi', cor: '#2a78d6',
     descricao: 'Arte suave focada em luta de solo, quedas, raspagens e finalizações.',
     faixas: ['Branca', 'Cinza', 'Amarela', 'Laranja', 'Verde', 'Azul', 'Roxa', 'Marrom', 'Preta'],
   },
   {
-    nome: 'Muay Thai', cor: '#eb6834',
+    nome: 'Muay Thai', destaque: 'Turmas kids, adulto e feminino', cor: '#eb6834',
     descricao: 'Boxe tailandês: socos, chutes, joelhadas, cotoveladas e clinch.',
     faixas: ['Branca', 'Vermelha', 'Rosa', 'Amarela', 'Laranja', 'Verde', 'Azul', 'Marrom', 'Preta'],
   },
   {
-    nome: 'Karatê', cor: '#1baf7a',
+    nome: 'Karatê', destaque: 'Kids a partir de 5 anos e adulto', cor: '#1baf7a',
     descricao: 'Arte marcial japonesa com katas, golpes tradicionais e disciplina.',
     faixas: ['Branca', 'Amarela', 'Vermelha', 'Laranja', 'Verde', 'Roxa', 'Marrom', 'Preta'],
   },
   {
-    nome: 'Kickboxing', cor: '#eda100',
+    nome: 'Kickboxing', destaque: 'Condicionamento e técnica, todos os níveis', cor: '#eda100',
     descricao: 'Combinação de boxe e chutes, muito condicionamento e ritmo.',
     faixas: ['Branca', 'Amarela', 'Laranja', 'Verde', 'Azul', 'Marrom', 'Preta'],
   },
   {
-    nome: 'Boxe', cor: '#4a3aa7',
+    nome: 'Boxe', destaque: 'Base de mãos para iniciantes e avançados', cor: '#4a3aa7',
     descricao: 'Jogo de maos, esquiva e ritmo: a base da trocação em qualquer luta.',
     faixas: ['Iniciante', 'Intermediario', 'Avancado', 'Competicao'],
   },
   {
-    nome: 'MMA', cor: '#e87ba4',
+    nome: 'MMA', destaque: 'Iniciante e equipe de competição', cor: '#e87ba4',
     descricao: 'Artes marciais mistas: trocação, quedas e solo em um só treino.',
     faixas: ['Iniciante', 'Intermediario', 'Avancado', 'Competicao'],
   },
@@ -48,7 +48,11 @@ const PLANOS = [
 const TURMAS = [
   ['Jiu-Jitsu', 'Jiu-Jitsu Kids', 'kids', 'todos', [[1, '17:00', '18:00'], [3, '17:00', '18:00'], [5, '17:00', '18:00']]],
   ['Jiu-Jitsu', 'Jiu-Jitsu Adulto Manhã', 'adulto', 'todos', [[1, '06:30', '08:00'], [3, '06:30', '08:00'], [5, '06:30', '08:00']]],
-  ['Jiu-Jitsu', 'Jiu-Jitsu Adulto Noite', 'adulto', 'todos', [[1, '20:00', '21:30'], [2, '20:00', '21:30'], [4, '20:00', '21:30']]],
+  ['Jiu-Jitsu', 'Jiu-Jitsu Adulto Noite', 'adulto', 'todos', [
+    [1, '19:00', '20:00', 'No-Gi'], [1, '20:00', '21:30', 'Gi'],
+    [3, '19:00', '20:00', 'No-Gi'], [3, '20:00', '21:30', 'Gi'],
+    [5, '20:00', '21:30', 'Gi'],
+  ]],
   ['Muay Thai', 'Muay Thai Kids', 'kids', 'iniciante', [[2, '17:00', '18:00'], [4, '17:00', '18:00']]],
   ['Muay Thai', 'Muay Thai Adulto', 'adulto', 'todos', [[1, '19:00', '20:00'], [3, '19:00', '20:00'], [5, '19:00', '20:00']]],
   ['Muay Thai', 'Muay Thai Feminino', 'feminino', 'todos', [[2, '09:00', '10:00'], [4, '09:00', '10:00']]],
@@ -57,7 +61,7 @@ const TURMAS = [
   ['Kickboxing', 'Kickboxing Adulto', 'adulto', 'todos', [[1, '18:00', '19:00'], [3, '18:00', '19:00'], [5, '18:00', '19:00']]],
   ['Boxe', 'Boxe Adulto', 'adulto', 'todos', [[2, '19:00', '20:00'], [4, '19:00', '20:00']]],
   ['MMA', 'MMA Iniciante', 'adulto', 'iniciante', [[2, '21:00', '22:00'], [4, '21:00', '22:00']]],
-  ['MMA', 'MMA Competição', 'adulto', 'avancado', [[3, '21:00', '22:30'], [6, '10:00', '12:00']]],
+  ['MMA', 'MMA Competição', 'adulto', 'avancado', [[3, '21:00', '22:30', 'Sparring'], [6, '10:00', '12:00', 'Treino aberto']]],
 ];
 
 const CONFIGURACOES = {
@@ -68,7 +72,7 @@ const CONFIGURACOES = {
   instagram: '@ctatak',
   chamada: 'Centro de treinamento de lutas',
   sobre: 'O CT Atak Pechincha forma lutadores de Jiu-Jitsu, Muay Thai, Karatê, Kickboxing, Boxe e MMA - do primeiro dia no tatame até o pódio, com turmas kids, adulto e feminino.',
-  historia: 'São mais de 15 anos formando atletas e mudando historias no Pechincha. O que comecou como um projeto de bairro virou um centro de treinamento com equipe de competição, turmas kids e professores graduados.',
+  historia: 'São mais de 15 anos formando atletas e mudando histórias no Pechincha. O que começou como um projeto de bairro virou um centro de treinamento com equipe de competição, turmas kids e professores graduados.',
   horario_funcionamento: 'Segunda a sexta, 06h as 22h · Sábado, 09h as 13h',
   ano_fundacao: String(new Date().getFullYear() - 15),
   cor_primaria: '#f5b301',
@@ -94,15 +98,23 @@ export function garantirDadosIniciais() {
       executar('INSERT OR REPLACE INTO configuracoes (chave, valor) VALUES (:chave, :valor)', { chave, valor });
     }
 
-    for (const modalidade of MODALIDADES) {
-      const criada = executar('INSERT INTO modalidades (nome, descricao, cor) VALUES (:nome, :descricao, :cor)',
-        { nome: modalidade.nome, descricao: modalidade.descricao, cor: modalidade.cor });
+    MODALIDADES.forEach((modalidade, ordem) => {
+      const criada = executar(`
+        INSERT INTO modalidades (nome, descricao, cor, destaque, ordem)
+        VALUES (:nome, :descricao, :cor, :destaque, :ordem)
+      `, {
+        nome: modalidade.nome,
+        descricao: modalidade.descricao,
+        cor: modalidade.cor,
+        destaque: modalidade.destaque || null,
+        ordem,
+      });
       const modalidadeId = Number(criada.lastInsertRowid);
       modalidade.faixas.forEach((faixa, indice) => {
         executar('INSERT INTO graduacoes (modalidade_id, nome, ordem) VALUES (:m, :nome, :ordem)',
           { m: modalidadeId, nome: faixa, ordem: indice });
       });
-    }
+    });
 
     for (const plano of PLANOS) {
       executar(`INSERT INTO planos (nome, descricao, valor, periodicidade, aulas_semana)
@@ -121,9 +133,9 @@ export function garantirDadosIniciais() {
                               VALUES (:m, :nome, :categoria, :nivel, 30, 'Tatame principal')`,
         { m: m.id, nome: nomeTurma, categoria, nivel });
       const turmaId = Number(turma.lastInsertRowid);
-      for (const [dia, inicio, fim] of horarios) {
-        executar(`INSERT INTO horarios (turma_id, dia_semana, hora_inicio, hora_fim)
-                  VALUES (:t, :dia, :inicio, :fim)`, { t: turmaId, dia, inicio, fim });
+      for (const [dia, inicio, fim, rotulo = null] of horarios) {
+        executar(`INSERT INTO horarios (turma_id, dia_semana, hora_inicio, hora_fim, rotulo)
+                  VALUES (:t, :dia, :inicio, :fim, :rotulo)`, { t: turmaId, dia, inicio, fim, rotulo });
       }
     }
 

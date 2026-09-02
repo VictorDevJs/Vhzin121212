@@ -15,13 +15,13 @@ roteador.get('/academia', rota((_req, res) => {
   );
 
   const modalidades = todos(`
-    SELECT m.id, m.nome, m.descricao, m.cor,
+    SELECT m.id, m.nome, m.descricao, m.cor, m.destaque, m.imagem,
            (SELECT COUNT(*) FROM turmas t WHERE t.modalidade_id = m.id AND t.ativo = 1) AS turmas
-    FROM modalidades m WHERE m.ativo = 1 ORDER BY m.nome
+    FROM modalidades m WHERE m.ativo = 1 ORDER BY m.ordem, m.nome
   `);
 
   const grade = todos(`
-    SELECT h.dia_semana, h.hora_inicio, h.hora_fim,
+    SELECT h.dia_semana, h.hora_inicio, h.hora_fim, h.rotulo,
            t.nome AS turma, t.categoria, t.nivel, t.local,
            m.nome AS modalidade, m.cor AS modalidade_cor, u.nome AS mestre
     FROM horarios h
@@ -105,6 +105,8 @@ roteador.get('/academia', rota((_req, res) => {
       sobre: configuracoes.sobre || '',
       chamada: configuracoes.chamada || '',
       cor_primaria: configuracoes.cor_primaria || '',
+      logo_url: configuracoes.logo_url || '',
+      simbolo_url: configuracoes.simbolo_url || '',
       historia: configuracoes.historia || '',
       horario_funcionamento: configuracoes.horario_funcionamento || '',
       ano_fundacao: anoFundacao,

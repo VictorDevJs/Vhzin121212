@@ -97,7 +97,7 @@ export default async function paginaChamada() {
         linha.categoria,
         String(linha.presencas),
       ]))
-      : vazio('Ainda não ha presenças registradas neste mês.', '\u{1F3C6}'));
+      : vazio('Ainda não ha presenças registradas neste mês.'));
   }
 
   async function carregarResumo() {

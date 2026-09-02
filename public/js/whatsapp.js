@@ -26,5 +26,5 @@ export function mensagemCobranca({ aluno, competencia, valor, vencimento, academ
 }
 
 export function mensagemBoasVindas({ aluno, academia }) {
-  return `Oi, ${aluno.split(' ')[0]}! Bem-vindo(a) a ${academia}. Qualquer duvida sobre horarios, planos ou uniforme, e so chamar por aqui.`;
+  return `Oi, ${aluno.split(' ')[0]}! Bem-vindo(a) a ${academia}. Qualquer duvida sobre horarios, planos ou uniforme, e só chamar por aqui.`;
 }

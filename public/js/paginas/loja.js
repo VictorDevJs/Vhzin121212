@@ -11,11 +11,6 @@ const ROTULO_CATEGORIA = {
   bermuda: 'Bermuda', mochila: 'Mochila', acessorio: 'Acessório',
 };
 
-const ICONE_CATEGORIA = {
-  kimono: '🥋', faixa: '🎗️', rashguard: '👕', short: '🩳', luva: '🥊', caneleira: '🦵',
-  protetor: '😁', camisa: '👕', casaco: '🧥', bermuda: '🩳', mochila: '🎒', acessorio: '🧴',
-};
-
 /** Loja da academia: equipamento por luta e acessórios para todo mundo. */
 export default async function paginaLoja() {
   const ehDono = sessao.papel === 'dono';
@@ -60,7 +55,7 @@ export default async function paginaLoja() {
 
   function desenharCatalogo(produtos) {
     if (!produtos.length) {
-      area.replaceChildren(vazio('Nenhum produto com esse filtro.', '🛒'));
+      area.replaceChildren(vazio('Nenhum produto com esse filtro.'));
       return;
     }
     // Agrupa por luta; os itens sem modalidade viram a linha de acessórios.
@@ -84,7 +79,7 @@ export default async function paginaLoja() {
       el('div', { classe: 'capa' }, [
         produto.imagem
           ? el('img', { src: produto.imagem, alt: produto.nome, loading: 'lazy' })
-          : el('span', { texto: ICONE_CATEGORIA[produto.categoria] || '🛍️' }),
+          : el('span', { classe: 'sem-foto', texto: (ROTULO_CATEGORIA[produto.categoria] || 'Produto').slice(0, 2).toUpperCase() }),
         el('span', { classe: 'selo', texto: ROTULO_CATEGORIA[produto.categoria] || produto.categoria }),
       ]),
       el('div', { classe: 'corpo-produto' }, [
@@ -258,7 +253,7 @@ export default async function paginaLoja() {
           v.itens.map((i) => `${i.quantidade}x ${i.nome}`).join(', '),
           v.forma_pagamento || '—', moeda(v.total),
         ]))
-        : vazio('Nenhuma venda registrada neste mês.', '🧾'),
+        : vazio('Nenhuma venda registrada neste mês.'),
     );
   }
 

@@ -88,7 +88,7 @@ export default async function paginaAvisos() {
         { nome: 'titulo', rotulo: 'Titulo', obrigatorio: true, placeholder: 'Campeonato estadual, sem aula na sexta...' },
         { nome: 'mensagem', rotulo: 'Mensagem', tipo: 'textarea', obrigatorio: true },
         { nome: 'tipo', rotulo: 'Tipo do aviso', tipo: 'select', opcoes: TIPOS },
-        { nome: 'público', rotulo: 'Quem deve ver', tipo: 'select', opcoes: PUBLICOS },
+        { nome: 'publico', rotulo: 'Quem deve ver', tipo: 'select', opcoes: PUBLICOS },
         { nome: 'modalidade_id', rotulo: 'Modalidade (se o público for modalidade)', tipo: 'select',
           opcoes: [{ valor: '', rotulo: '-' }, ...modalidades.map((m) => ({ valor: m.id, rotulo: m.nome }))] },
         { nome: 'turma_id', rotulo: 'Turma (se o público for turma)', tipo: 'select',
@@ -96,7 +96,7 @@ export default async function paginaAvisos() {
         { nome: 'data_evento', rotulo: 'Data do evento / campeonato', tipo: 'date' },
         { nome: 'local_evento', rotulo: 'Local' },
         { nome: 'fixado', rotulo: 'Fixar no topo', tipo: 'checkbox' },
-        { nome: 'publicar_site', rotulo: 'Mostrar na pagina publica da academia', tipo: 'checkbox', valor: 1 },
+        { nome: 'publicar_site', rotulo: 'Mostrar na página pública da academia', tipo: 'checkbox', valor: 1 },
       ],
       valores: item || { tipo: 'geral', publico: 'todos', publicar_site: 1 },
       aoSalvar: async (dados) => {

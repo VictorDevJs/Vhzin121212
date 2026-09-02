@@ -32,7 +32,6 @@ async function telaDoAluno() {
 
     area.replaceChildren(el('div', {}, [
       aulas.length ? null : el('div', { classe: 'mensagem-ok' }, [
-        el('span', { texto: '🗓️' }),
         'Você não tem aula marcada para hoje. Aproveite para descansar — ou fale com a recepção para entrar em outra turma.',
       ]),
 
@@ -73,7 +72,7 @@ async function telaDoAluno() {
           celula([etiqueta(t.modalidade, 'marca')]),
           t.turma,
         ]))
-        : vazio('Seu primeiro check-in aparece aqui.', '🥋')),
+        : vazio('Seu primeiro check-in aparece aqui.')),
     ]));
   }
 
@@ -165,7 +164,7 @@ async function telaDaAcademia() {
           }),
         ])]),
       ]))
-      : vazio('Nenhuma aula marcada para hoje.', '🗓️')),
+      : vazio('Nenhuma aula marcada para hoje.')),
 
     el('div', { classe: 'grade col-2' }, [
       cartao('Check-ins por modalidade', porModalidade.length
@@ -173,7 +172,7 @@ async function telaDaAcademia() {
           dados: porModalidade.map((m) => ({ rotulo: m.modalidade, valor: m.checkins, cor: m.cor, legenda: 'check-ins' })),
           formatar: (v) => String(v),
         })
-        : vazio('Ainda não há check-ins registrados.', '📊')),
+        : vazio('Ainda não há check-ins registrados.')),
 
       cartao('Quem mais treinou', ranking.length
         ? tabela(['#', 'Aluno', 'Treinos'], ranking.slice(0, 10).map((linha, i) => [
@@ -181,7 +180,7 @@ async function telaDaAcademia() {
           linha.nome,
           String(linha.checkins),
         ]))
-        : vazio('O ranking aparece depois dos primeiros check-ins.', '🏆')),
+        : vazio('O ranking aparece depois dos primeiros check-ins.')),
     ]),
 
     cartao('Movimento dia a dia', porDia.length > 1
@@ -190,7 +189,7 @@ async function telaDaAcademia() {
         series: [{ nome: 'Check-ins', cor: 'var(--serie-1)' }],
         formatar: (v) => String(Math.round(v)),
       })
-      : vazio('O gráfico aparece quando houver check-in em mais de um dia.', '📈')),
+      : vazio('O gráfico aparece quando houver check-in em mais de um dia.')),
 
     cartao('Detalhe por turma', porTurma.length
       ? tabela(['Turma', 'Modalidade', 'Check-ins', 'Alunos diferentes', 'Dias com aula', 'Média por aula'],
@@ -198,6 +197,6 @@ async function telaDaAcademia() {
           linha.turma, linha.modalidade, String(linha.checkins), String(linha.alunos), String(linha.dias),
           String(linha.dias ? (linha.checkins / linha.dias).toFixed(1) : '0'),
         ]))
-      : vazio('Sem dados no período.', '📋')),
+      : vazio('Sem dados no período.')),
   ]);
 }

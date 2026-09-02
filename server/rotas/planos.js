@@ -32,7 +32,7 @@ roteador.post('/', exigirPapel('dono'), rota((req, res) => {
     throw new ErroApi(`Periodicidade invalida. Use: ${PERIODICIDADES.join(', ')}.`);
   }
   const valor = numero(req.body.valor, -1);
-  if (valor < 0) throw new ErroApi('Informe um valor valido para o plano.');
+  if (valor < 0) throw new ErroApi('Informe um valor válido para o plano.');
 
   const id = transacao(() => {
     const criado = executar(`

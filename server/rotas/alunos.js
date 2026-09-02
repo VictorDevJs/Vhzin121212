@@ -86,7 +86,7 @@ roteador.get('/:id', exigirPapel(...EQUIPE), rota((req, res) => {
 roteador.post('/', exigirPapel(...GESTAO), rota((req, res) => {
   exigirCampos(req.body, ['nome']);
   const email = texto(req.body.email);
-  if (email && !emailValido(email)) throw new ErroApi('Informe um e-mail valido.');
+  if (email && !emailValido(email)) throw new ErroApi('Informe um e-mail válido.');
 
   const senha = texto(req.body.senha);
   const criado = transacao(() => {

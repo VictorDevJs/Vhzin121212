@@ -17,7 +17,7 @@ export default async function paginaEquipe() {
   async function carregarEquipe() {
     const usuarios = await api.obter('/usuarios');
     areaEquipe.replaceChildren(tabela(
-      ['Nome', 'Funcao', 'E-mail', 'Telefone', 'Turmas', 'Situação', 'Ações'],
+      ['Nome', 'Função', 'E-mail', 'Telefone', 'Turmas', 'Situação', 'Ações'],
       usuarios.map((usuario) => [
         usuario.nome,
         celula([etiqueta(traduzirPapel(usuario.papel), usuario.papel === 'dono' ? 'alerta' : 'info')]),
@@ -51,7 +51,7 @@ export default async function paginaEquipe() {
         { nome: 'nome', rotulo: 'Nome', obrigatorio: true },
         { nome: 'email', rotulo: 'E-mail de acesso', tipo: 'email', obrigatorio: true },
         { nome: 'telefone', rotulo: 'Telefone' },
-        { nome: 'papel', rotulo: 'Funcao', tipo: 'select', opcoes: PAPEIS },
+        { nome: 'papel', rotulo: 'Função', tipo: 'select', opcoes: PAPEIS },
         { nome: 'senha', rotulo: usuario ? 'Nova senha (opcional)' : 'Senha', tipo: 'password',
           obrigatorio: !usuario, dica: 'Mínimo de 6 caracteres.' },
         { nome: 'ativo', rotulo: 'Acesso liberado', tipo: 'checkbox', valor: 1 },
@@ -93,15 +93,15 @@ export default async function paginaEquipe() {
         campo('instagram', 'Instagram', config.instagram),
       ]),
       el('div', { classe: 'linha' }, [
-        campo('ano_fundacao', 'Ano de fundacao', config.ano_fundacao),
+        campo('ano_fundacao', 'Ano de fundação', config.ano_fundacao),
         campo('horario_funcionamento', 'Horário de funcionamento', config.horario_funcionamento),
       ]),
       el('div', { classe: 'campo' }, [
-        el('label', { texto: 'Nossa história (secao da pagina publica)' }),
+        el('label', { texto: 'Nossa história (seção da página pública)' }),
         el('textarea', { name: 'historia', value: config.historia || '' }),
       ]),
       el('div', { classe: 'campo' }, [
-        el('label', { texto: 'Sobre a academia (texto da pagina publica)' }),
+        el('label', { texto: 'Sobre a academia (texto da página pública)' }),
         el('textarea', { name: 'sobre', value: config.sobre || '' }),
       ]),
       el('div', { classe: 'linha' }, [
@@ -111,9 +111,9 @@ export default async function paginaEquipe() {
           el('div', { classe: 'dica', texto: 'A tela inteira muda junto enquanto você escolhe.' }),
         ]),
         el('div', { classe: 'campo' }, [
-          el('label', { texto: 'Previa' }),
+          el('label', { texto: 'Prévia' }),
           el('div', { classe: 'acoes', estilo: 'padding-top:.3rem' }, [
-            el('span', { classe: 'botao pequeno', texto: 'Botao' }),
+            el('span', { classe: 'botao pequeno', texto: 'Botão' }),
             etiqueta('destaque', 'marca'),
             el('span', { classe: 'avatar', texto: 'A' }),
           ]),
@@ -131,12 +131,54 @@ export default async function paginaEquipe() {
     });
 
     areaConfig.replaceChildren(
-      el('div', { classe: 'acoes', estilo: 'margin-bottom:1rem' }, [
-        simbolo(46), logotipo(30),
-        el('span', { classe: 'dica', texto: 'Troque os arquivos em public/marca/ (logo.svg e simbolo.svg) para usar a arte oficial.' }),
-      ]),
+      cartaoDaArte(config),
       form,
     );
+  }
+
+  /** Envio da arte oficial: o arquivo passa a valer em todo o sistema. */
+  function cartaoDaArte(config) {
+    const previa = el('div', {
+      estilo: 'display:flex;align-items:center;gap:1.25rem;flex-wrap:wrap;padding:1rem;'
+        + 'background:var(--plano-2);border:1px solid var(--borda);border-radius:var(--raio-2)',
+    }, [simbolo(64), logotipo(38)]);
+
+    async function enviar(chave, rotuloArquivo) {
+      abrirFormulario({
+        titulo: `Enviar ${rotuloArquivo}`,
+        aviso: 'Aceita SVG, PNG, JPG ou WEBP de até 5 MB. O arquivo passa a ser usado no site, no sistema e no ícone do app.',
+        campos: [{ nome: 'arquivo', rotulo: rotuloArquivo, tipo: 'arquivo', aceita: 'image/*', obrigatorio: true }],
+        textoConfirmar: 'Enviar',
+        aoSalvar: async (dados) => {
+          if (!dados.arquivo) throw new Error('Escolha um arquivo.');
+          const enviado = await api.criar('/arquivos', { conteudo: dados.arquivo });
+          const salvo = await api.atualizar('/configuracoes', { [chave]: enviado.url });
+          aplicarMarca({ nome: salvo.nome_academia, logo_url: salvo.logo_url, simbolo_url: salvo.simbolo_url });
+          aviso('Arte atualizada. Ela já está valendo em todas as telas.');
+          await carregarConfiguracoes();
+        },
+      });
+    }
+
+    return el('div', { classe: 'campo' }, [
+      el('label', { texto: 'Arte oficial da academia' }),
+      previa,
+      el('div', { classe: 'acoes', estilo: 'margin-top:.75rem' }, [
+        botao('Enviar logo horizontal', () => enviar('logo_url', 'Logo horizontal'), 'botao secundario'),
+        botao('Enviar brasão / ícone', () => enviar('simbolo_url', 'Brasão quadrado'), 'botao secundario'),
+        config.logo_url || config.simbolo_url
+          ? botao('Voltar para a arte padrão', async () => {
+            if (!confirmar('Voltar a usar o desenho padrão do sistema?')) return;
+            const salvo = await api.atualizar('/configuracoes', { logo_url: '', simbolo_url: '' });
+            aplicarMarca({ nome: salvo.nome_academia, logo_url: '', simbolo_url: '' });
+            aviso('Arte padrão restaurada.');
+            await carregarConfiguracoes();
+          }, 'botao perigo')
+          : null,
+      ].filter(Boolean)),
+      el('div', { classe: 'dica' },
+        ['Use a arte em alta: o logo horizontal aparece no topo do site e do sistema; o brasão vira o ícone do aplicativo.']),
+    ]);
   }
 
   function campo(nome, rotulo, valor) {
@@ -149,7 +191,7 @@ export default async function paginaEquipe() {
   await Promise.all([carregarEquipe(), carregarConfiguracoes()]);
 
   return el('div', {}, [
-    topo('Equipe e academia', 'Acessos de mestres e recepção, e os dados que aparecem na pagina publica',
+    topo('Equipe e academia', 'Acessos de mestres e recepção, e os dados que aparecem na página pública',
       [botao('+ Novo acesso', () => formularioUsuario())]),
     cartao('Equipe', areaEquipe),
     cartao('Identidade visual e dados da academia', areaConfig),
