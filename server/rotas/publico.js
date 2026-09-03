@@ -55,6 +55,16 @@ roteador.get('/academia', rota((_req, res) => {
     ORDER BY fixado DESC, criado_em DESC LIMIT 8
   `);
 
+  // Galeria: só as fotos que a academia marcou para o site.
+  const fotos = todos(`
+    SELECT f.id, f.arquivo, f.legenda, f.categoria, f.destaque,
+           m.nome AS modalidade, m.cor AS modalidade_cor
+    FROM fotos f
+    LEFT JOIN modalidades m ON m.id = f.modalidade_id
+    WHERE f.publicar_site = 1
+    ORDER BY f.destaque DESC, f.ordem, f.id DESC
+  `);
+
   const totalAlunos = um(`SELECT COUNT(*) AS total FROM alunos WHERE status = 'ativo'`);
 
   // Professores mostrados no site, com as titulacoes que o dono publicou.
@@ -177,6 +187,7 @@ roteador.get('/academia', rota((_req, res) => {
     equipes,
     medalhas,
     produtos,
+    fotos,
     certificados,
     avaliacoes,
     resumo_avaliacoes: resumoAvaliacoes(),

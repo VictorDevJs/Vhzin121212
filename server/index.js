@@ -29,6 +29,7 @@ import rotasEquipes from './rotas/equipes.js';
 import rotasAuditoria from './rotas/auditoria.js';
 import rotasRegras from './rotas/regras.js';
 import rotasContas from './rotas/contas.js';
+import rotasFotos from './rotas/fotos.js';
 import { garantirCobrancaDoDia } from './cobranca.js';
 
 const raiz = dirname(dirname(fileURLToPath(import.meta.url)));
@@ -74,6 +75,7 @@ export function criarApp() {
   app.use('/api/auditoria', rotasAuditoria);
   app.use('/api/regras', rotasRegras);
   app.use('/api/contas', rotasContas);
+  app.use('/api/fotos', rotasFotos);
 
   app.use('/api', (_req, res) => res.status(404).json({ erro: 'Endpoint não encontrado.' }));
 

@@ -30,15 +30,17 @@ export default async function paginaPublica() {
   const {
     academia, modalidades, grade, planos, avisos, mestres, produtos, competicoes, equipes,
     medalhas, certificados, avaliacoes, resumo_avaliacoes: resumoAvaliacoes, numeros,
+    fotos = [],
   } = dados;
   const redes = academia.redes || [];
 
   return el('div', { classe: 'site' }, [
-    cabecalho(redes),
+    cabecalho(redes, fotos.length > 0),
     heroi(academia, numeros, modalidades),
     el('div', { classe: 'envolucro' }, [
       academia.historia ? secaoHistoria(academia) : null,
       secaoModalidades(modalidades),
+      fotos.length ? secaoGaleria(fotos) : null,
       secaoHorarios(grade, modalidades),
       mestres.length ? secaoProfessores(mestres) : null,
       secaoGraduacoes(modalidades),
@@ -64,11 +66,12 @@ function rolarAte(id) {
   };
 }
 
-function cabecalho(redes = []) {
+function cabecalho(redes = [], temFotos = false) {
   return el('header', { classe: 'site-topo' }, [
     el('div', { classe: 'identidade', estilo: 'padding:0' }, [logotipo(34)]),
     el('nav', {}, [
       el('a', { href: '#modalidades', texto: 'Modalidades', aoClicar: rolarAte('modalidades') }),
+      temFotos ? el('a', { href: '#galeria', texto: 'Fotos', aoClicar: rolarAte('galeria') }) : null,
       el('a', { href: '#horarios', texto: 'Horários', aoClicar: rolarAte('horarios') }),
       el('a', { href: '#professores', texto: 'Professores', aoClicar: rolarAte('professores') }),
       el('a', { href: '#graduacoes', texto: 'Graduações', aoClicar: rolarAte('graduacoes') }),
@@ -231,6 +234,68 @@ function secaoModalidades(modalidades) {
         : null,
     ]), { inicial: 6, rotulo: 'modalidades', genero: 'f' }),
   ]);
+}
+
+/**
+ * A academia por dentro: as fotos que o dono publicou.
+ * Chips filtram por arte marcial; clicar amplia a foto.
+ */
+function secaoGaleria(fotos) {
+  const artes = [...new Set(fotos.map((f) => f.modalidade).filter(Boolean))];
+  const area = el('div', { classe: 'galeria-site' });
+  let escolhida = '';
+
+  function desenhar() {
+    const lista = escolhida ? fotos.filter((f) => f.modalidade === escolhida) : fotos;
+    area.replaceChildren(...lista.map((foto) => el('button', {
+      classe: 'foto-site', type: 'button',
+      'aria-label': foto.legenda || `Foto de ${foto.modalidade || 'academia'}`,
+      aoClicar: () => ampliarFoto(foto),
+    }, [
+      el('img', { src: foto.arquivo, alt: foto.legenda || 'Foto da academia', loading: 'lazy' }),
+      foto.legenda || foto.modalidade
+        ? el('span', { classe: 'tarja-foto' }, [
+          foto.modalidade
+            ? el('span', { classe: 'ponto', estilo: `background:${foto.modalidade_cor || 'var(--marca-1)'}` })
+            : null,
+          foto.legenda || foto.modalidade,
+        ].filter(Boolean))
+        : null,
+    ].filter(Boolean))));
+  }
+
+  const abas = artes.length > 1
+    ? el('div', { classe: 'acoes', estilo: 'margin-bottom:1.25rem' }, [
+      chip('Tudo', true, function () { escolhida = ''; marcar(abas, 'Tudo'); desenhar(); }),
+      ...artes.map((nome) => chip(nome, false, () => { escolhida = nome; marcar(abas, nome); desenhar(); })),
+    ])
+    : null;
+
+  desenhar();
+  return el('section', { classe: 'secao', id: 'galeria' }, [
+    tituloSecao('A academia por dentro', 'Nosso tatame'),
+    el('p', { classe: 'dica', estilo: 'margin:-.5rem 0 1.5rem;max-width:62ch' },
+      ['Fotos de treino, das turmas e da estrutura. É a academia como ela é, sem cenário montado.']),
+    abas,
+    area,
+  ].filter(Boolean));
+}
+
+function ampliarFoto(foto) {
+  const fundo = el('div', { classe: 'lente-foto' }, [
+    el('img', { src: foto.arquivo, alt: foto.legenda || 'Foto da academia' }),
+    foto.legenda ? el('p', { texto: foto.legenda }) : null,
+    el('button', { classe: 'fechar-lente', type: 'button', texto: '\u00d7', 'aria-label': 'Fechar' }),
+  ].filter(Boolean));
+
+  function fechar() {
+    fundo.remove();
+    document.removeEventListener('keydown', aoTeclar);
+  }
+  function aoTeclar(evento) { if (evento.key === 'Escape') fechar(); }
+  fundo.addEventListener('click', fechar);
+  document.addEventListener('keydown', aoTeclar);
+  document.body.append(fundo);
 }
 
 function secaoHorarios(grade, modalidades) {

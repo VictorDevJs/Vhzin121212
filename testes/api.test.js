@@ -1042,3 +1042,136 @@ test('o painel do aluno só mostra as aulas e os avisos da arte dele', async () 
   assert.ok(doDono.aulas_hoje.length >= dados.aulas_hoje.length,
     'o dono continua vendo a agenda inteira do dia');
 });
+
+/* ==========================================================================
+   Galeria de fotos da academia
+   ========================================================================== */
+
+const PNG_MINIMO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAf'
+  + 'FcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+
+test('o dono envia uma foto e ela entra na galeria da arte certa', async () => {
+  const enviado = await chamar('POST', '/api/arquivos', {
+    token: estado.tokenDono, corpo: { conteudo: PNG_MINIMO },
+  });
+  assert.equal(enviado.status, 201);
+  assert.match(enviado.dados.url, /^\/arquivos\/.+\.png$/);
+
+  const criada = await chamar('POST', '/api/fotos', {
+    token: estado.tokenDono,
+    corpo: {
+      arquivo: enviado.dados.url, legenda: 'Treino da turma da noite',
+      categoria: 'treino', modalidade_id: estado.modalidadeJiu, destaque: 1,
+    },
+  });
+  assert.equal(criada.status, 201);
+  assert.equal(criada.dados.modalidade, 'Jiu-Jitsu');
+  assert.equal(criada.dados.publicar_site, 1, 'nasce publicada no site');
+  estado.fotoId = criada.dados.id;
+});
+
+test('a foto publicada aparece na vitrine da academia', async () => {
+  const { dados } = await chamar('GET', '/api/publico/academia');
+  assert.ok(dados.fotos.some((f) => f.id === estado.fotoId),
+    'a galeria do site traz a foto publicada');
+});
+
+test('a foto tirada do site some da vitrine mas continua na gestão', async () => {
+  await chamar('PUT', `/api/fotos/${estado.fotoId}`, {
+    token: estado.tokenDono, corpo: { publicar_site: 0 },
+  });
+
+  const { dados: site } = await chamar('GET', '/api/publico/academia');
+  assert.ok(!site.fotos.some((f) => f.id === estado.fotoId), 'saiu do site');
+
+  const { dados: internas } = await chamar('GET', '/api/fotos', { token: estado.tokenDono });
+  assert.ok(internas.some((f) => f.id === estado.fotoId), 'continua na galeria interna');
+
+  await chamar('PUT', `/api/fotos/${estado.fotoId}`, {
+    token: estado.tokenDono, corpo: { publicar_site: 1 },
+  });
+});
+
+test('a galeria do aluno só traz as fotos da arte dele', async () => {
+  const { status, dados } = await chamar('GET', '/api/fotos', { token: estado.tokenAluno });
+  assert.equal(status, 200);
+  assert.ok(!dados.some((f) => f.id === estado.fotoId),
+    'a foto de Jiu-Jitsu não aparece para quem treina Judo');
+});
+
+test('aluno não publica nem apaga foto', async () => {
+  const publicar = await chamar('POST', '/api/fotos', {
+    token: estado.tokenAluno, corpo: { arquivo: '/arquivos/x.png' },
+  });
+  assert.equal(publicar.status, 403);
+
+  const apagar = await chamar('DELETE', `/api/fotos/${estado.fotoId}`, { token: estado.tokenAluno });
+  assert.equal(apagar.status, 403);
+});
+
+test('mestre cuida das fotos da arte dele, e só delas', async () => {
+  // O mestre de teste ensina Jiu-Jitsu: a foto de Judo não é assunto dele.
+  const deOutraArte = await chamar('POST', '/api/fotos', {
+    token: estado.tokenDono,
+    corpo: { arquivo: '/arquivos/judo.png', categoria: 'treino', modalidade_id: estado.modalidadeId },
+  });
+  assert.equal(deOutraArte.status, 201);
+
+  const negado = await chamar('DELETE', `/api/fotos/${deOutraArte.dados.id}`,
+    { token: estado.tokenMestreTeste });
+  assert.equal(negado.status, 403);
+  assert.match(negado.dados.erro, /não acompanha|não treina/);
+
+  const daArteDele = await chamar('PUT', `/api/fotos/${estado.fotoId}`, {
+    token: estado.tokenMestreTeste, corpo: { legenda: 'Turma da noite, No-Gi' },
+  });
+  assert.equal(daArteDele.status, 200, 'na arte dele o mestre edita');
+  assert.equal(daArteDele.dados.legenda, 'Turma da noite, No-Gi');
+});
+
+test('a academia toda só é publicada por quem cuida da casa inteira', async () => {
+  const doMestre = await chamar('POST', '/api/fotos', {
+    token: estado.tokenMestreTeste,
+    corpo: { arquivo: '/arquivos/x.png', categoria: 'estrutura' },
+  });
+  assert.equal(doMestre.status, 403, 'foto geral não é do mestre');
+
+  const daRecepcao = await chamar('POST', '/api/fotos', {
+    token: estado.tokenRecepcao,
+    corpo: { arquivo: '/arquivos/y.png', categoria: 'estrutura', legenda: 'Tatame principal' },
+  });
+  assert.equal(daRecepcao.status, 201);
+  assert.equal(daRecepcao.dados.modalidade, null, 'foto da casa não tem arte marcial');
+});
+
+test('categoria inventada é recusada', async () => {
+  const { status, dados } = await chamar('POST', '/api/fotos', {
+    token: estado.tokenDono,
+    corpo: { arquivo: '/arquivos/z.png', categoria: 'churrasco' },
+  });
+  assert.equal(status, 400);
+  assert.match(dados.erro, /Categoria inválida/);
+});
+
+test('a ordem da galeria é gravada de uma vez', async () => {
+  const { dados: antes } = await chamar('GET', '/api/fotos', { token: estado.tokenDono });
+  const ids = antes.map((f) => f.id).reverse();
+
+  const { status } = await chamar('POST', '/api/fotos/ordenar', {
+    token: estado.tokenDono, corpo: { ids },
+  });
+  assert.equal(status, 200);
+
+  const { dados: depois } = await chamar('GET', '/api/fotos', { token: estado.tokenDono });
+  const semDestaque = depois.filter((f) => !f.destaque).map((f) => f.id);
+  const esperado = ids.filter((id) => semDestaque.includes(id));
+  assert.deepEqual(semDestaque, esperado, 'a ordem enviada é respeitada');
+});
+
+test('o dono apaga a foto e ela sai do site', async () => {
+  const { status } = await chamar('DELETE', `/api/fotos/${estado.fotoId}`, { token: estado.tokenDono });
+  assert.equal(status, 204);
+
+  const { dados } = await chamar('GET', '/api/publico/academia');
+  assert.ok(!dados.fotos.some((f) => f.id === estado.fotoId));
+});

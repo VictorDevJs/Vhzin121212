@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import { resolve, join } from 'node:path';
-import { exigirPapel } from '../auth.js';
+import { exigirPapel, temCargo } from '../auth.js';
 import { rota, ErroApi, texto } from '../util.js';
 
 const roteador = Router();
@@ -22,7 +22,13 @@ const LIMITE_BYTES = 5 * 1024 * 1024; // 5 MB
  * Recebe o arquivo como data URL (base64) e grava no disco.
  * Evita dependencia de upload multipart e mantem o servidor sem bibliotecas extras.
  */
-roteador.post('/', exigirPapel('dono'), rota((req, res) => {
+roteador.post('/', exigirPapel('dono', 'recepcao', 'mestre', 'competicoes'), rota((req, res) => {
+  // Quem publica foto precisa conseguir enviar o arquivo: gestão, mestres e
+  // quem recebeu o cargo de comunicação.
+  const podeEnviar = ['dono', 'recepcao', 'mestre'].includes(req.usuario.papel)
+    || temCargo(req.usuario, 'marketing');
+  if (!podeEnviar) throw new ErroApi('Você não tem permissão para enviar arquivos.', 403);
+
   const conteudo = texto(req.body?.conteudo);
   if (!conteudo) throw new ErroApi('Envie o arquivo no campo "conteudo".');
 

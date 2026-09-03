@@ -357,6 +357,22 @@ const ESQUEMA = `
     );
 
     -- Certificados e titulacoes (faixas pretas, mestres, federacoes, cursos)
+    -- Galeria da academia: as fotos que o dono publica no site.
+    -- Cada foto pode pertencer a uma arte marcial ou valer para a casa toda.
+    CREATE TABLE IF NOT EXISTS fotos (
+      id            INTEGER PRIMARY KEY AUTOINCREMENT,
+      arquivo       TEXT NOT NULL,
+      legenda       TEXT,
+      categoria     TEXT NOT NULL DEFAULT 'treino'
+                    CHECK (categoria IN ('treino','turma','estrutura','competicao','evento','graduacao','equipe')),
+      modalidade_id INTEGER REFERENCES modalidades(id) ON DELETE SET NULL,
+      ordem         INTEGER NOT NULL DEFAULT 0,
+      destaque      INTEGER NOT NULL DEFAULT 0,
+      publicar_site INTEGER NOT NULL DEFAULT 1,
+      criado_por    INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
+      criado_em     TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+    );
+
     CREATE TABLE IF NOT EXISTS certificados (
       id            INTEGER PRIMARY KEY AUTOINCREMENT,
       titulo        TEXT NOT NULL,

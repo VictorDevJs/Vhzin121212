@@ -27,6 +27,7 @@ import paginaSeguranca from './paginas/seguranca.js';
 import paginaRegras from './paginas/regras.js';
 import paginaContas from './paginas/contas.js';
 import paginaCobranca from './paginas/cobranca.js';
+import paginaFotos from './paginas/fotos.js';
 
 const EQUIPE = ['dono', 'mestre', 'recepcao', 'competicoes'];
 const GESTAO = ['dono', 'recepcao'];
@@ -52,6 +53,7 @@ const ROTAS = [
   { caminho: 'turmas', titulo: 'Turmas e modalidades', curto: 'Turmas', icone: 'luva', grupo: 'Gestão', papeis: EQUIPE, render: paginaTurmas },
   { caminho: 'graduacoes', titulo: 'Graduações', curto: 'Faixas', icone: 'faixa', grupo: 'Gestão', papeis: [...EQUIPE, 'aluno'], render: paginaGraduacoes },
   { caminho: 'certificados', titulo: 'Certificados', curto: 'Diplomas', icone: 'medalha', grupo: 'Gestão', papeis: [...EQUIPE, 'aluno'], render: paginaCertificados },
+  { caminho: 'fotos', titulo: 'Galeria da academia', curto: 'Fotos', icone: 'camera', grupo: 'Gestão', papeis: [...EQUIPE, 'aluno'], render: paginaFotos },
   { caminho: 'planos', titulo: 'Planos', curto: 'Planos', icone: 'cartao', grupo: 'Gestão', papeis: EQUIPE, render: paginaPlanos },
   { caminho: 'loja', titulo: 'Loja', curto: 'Loja', icone: 'sacola', grupo: 'Gestão', papeis: [...EQUIPE, 'aluno'], render: paginaLoja },
 
