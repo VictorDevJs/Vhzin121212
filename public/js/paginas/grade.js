@@ -39,6 +39,7 @@ export default async function paginaGrade() {
   const filtro = { modalidade: '', categoria: '' };
   const area = el('div');
   let aulas = [];
+  let diaEscolhido = null; // no celular, o dia que está aberto
 
   async function carregar() {
     area.replaceChildren(esqueleto(1, 420));
@@ -64,7 +65,11 @@ export default async function paginaGrade() {
     }
     area.replaceChildren(el('div', {}, [
       legendaModalidades(lista),
-      el('div', { classe: 'rolagem' }, [montarAgenda(lista)]),
+      // No celular a semana inteira não cabe: vira lista de um dia por vez.
+      el('div', { classe: 'so-celular' }, [agendaDoDia(lista)]),
+      el('div', { classe: 'so-computador' }, [
+        el('div', { classe: 'rolagem' }, [montarAgenda(lista)]),
+      ]),
       podeEditar
         ? el('p', { classe: 'dica', estilo: 'margin-top:.75rem' },
           ['Clique em um espaço livre para criar uma aula naquele dia e horário, ou em um bloco para editar.'])
@@ -78,6 +83,50 @@ export default async function paginaGrade() {
     return el('div', { classe: 'legenda-agenda' }, [...usadas.entries()].map(([nome, cor]) => el('span', {
       classe: 'chave',
     }, [el('span', { classe: 'quadro', estilo: `background:${cor}` }), nome])));
+  }
+
+  /* --------------------------------------------------- agenda do celular */
+
+  /**
+   * No celular, um dia por vez: as abas trocam o dia e cada aula vira uma
+   * linha com hora, arte, turma e mestre. Cabe na tela e se lê de longe.
+   */
+  function agendaDoDia(lista) {
+    const hoje = new Date().getDay();
+    let dia = diaEscolhido ?? hoje;
+    const corpo = el('div', { classe: 'lista-aulas' });
+
+    const abas = el('div', { classe: 'abas-dia' }, DIAS_SEMANA.map((nome, indice) => el('button', {
+      classe: `aba-dia ${indice === dia ? 'ativa' : ''}`, type: 'button',
+      'aria-pressed': String(indice === dia),
+      aoClicar: () => { diaEscolhido = indice; desenhar(); },
+    }, [
+      el('span', { classe: 'sigla-dia', texto: nome.slice(0, 3) }),
+      el('span', { classe: 'conta-dia', texto: String(lista.filter((a) => a.dia_semana === indice).length) }),
+    ])));
+
+    const doDia = lista.filter((a) => a.dia_semana === dia)
+      .sort((a, b) => minutos(a.hora_inicio) - minutos(b.hora_inicio));
+
+    corpo.replaceChildren(doDia.length
+      ? el('div', {}, doDia.map((aula) => el('button', {
+        classe: 'linha-aula', type: 'button',
+        estilo: `--cor-aula:${aula.modalidade_cor || 'var(--marca-1)'}`,
+        aoClicar: () => (podeEditar ? formularioAula(aula) : detalhesDaAula(aula)),
+      }, [
+        el('span', { classe: 'hora-aula' }, [
+          el('strong', { texto: aula.hora_inicio }),
+          el('span', { texto: aula.hora_fim }),
+        ]),
+        el('span', { classe: 'dados-aula' }, [
+          el('strong', { texto: aula.modalidade }),
+          el('span', { classe: 'dica', texto: `${aula.turma}${aula.mestre ? ` · ${aula.mestre}` : ''}` }),
+        ]),
+        aula.rotulo ? el('span', { classe: 'b-rotulo', texto: aula.rotulo }) : null,
+      ].filter(Boolean))))
+      : vazio(`Nenhuma aula na ${DIAS_SEMANA[dia].toLowerCase()}.`));
+
+    return el('div', {}, [abas, corpo]);
   }
 
   /* ------------------------------------------------------ desenho da agenda */

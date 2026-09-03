@@ -220,16 +220,16 @@ function linhaContato(rotulo, valor) {
 function secaoModalidades(modalidades) {
   return el('section', { classe: 'secao', id: 'modalidades' }, [
     tituloSecao('O que você treina aqui', 'Modalidades'),
-    el('div', { classe: 'grade col-3' }, modalidades.map((modalidade) => el('article', {
+    listaComMais(modalidades, (modalidade) => el('article', {
       classe: 'cartao-modalidade tilt',
       estilo: `--cor-modalidade:${modalidade.cor || 'var(--marca-1)'}`,
     }, [
       el('h3', { texto: modalidade.nome }),
       el('p', { classe: 'dica', estilo: 'font-size:.92rem', texto: modalidade.descricao || '' }),
       modalidade.destaque
-        ? el('div', { classe: 'acoes' }, [etiqueta(modalidade.destaque, 'marca')])
+        ? el('p', { classe: 'destaque-modalidade', texto: modalidade.destaque })
         : null,
-    ]))),
+    ]), { inicial: 6, rotulo: 'modalidades', genero: 'f' }),
   ]);
 }
 
@@ -361,7 +361,7 @@ function secaoGraduacoes(modalidades) {
         el('span', { classe: 'contador-aba', texto: String(modalidade.faixas.length) }),
       ]))),
 
-      el('ol', { classe: 'escala' }, escolhida.faixas.map((faixa, indice) => el('li', { classe: 'degrau' }, [
+      listaComMais(escolhida.faixas, (faixa, indice) => el('li', { classe: 'degrau' }, [
         el('span', { classe: 'ordem-degrau', texto: String(indice + 1) }),
         el('span', {
           classe: 'faixa-visual', 'aria-hidden': 'true',
@@ -379,7 +379,7 @@ function secaoGraduacoes(modalidades) {
             faixa.graus ? etiqueta(`até ${faixa.graus} grau(s)`, 'neutra') : null,
           ].filter(Boolean)),
         ]),
-      ]))),
+      ]), { inicial: 8, classe: 'escala', rotulo: 'faixas', genero: 'f' }),
     );
   }
 
@@ -407,7 +407,7 @@ function secaoCompeticoes(competicoes, equipes, medalhas) {
       ])
       : null,
 
-    el('div', { classe: 'grade col-2' }, competicoes.map((competicao) => el('article', {
+    listaComMais(competicoes, (competicao) => el('article', {
       classe: 'cartao competicao tilt',
     }, [
       competicao.cartaz
@@ -428,12 +428,12 @@ function secaoCompeticoes(competicoes, equipes, medalhas) {
         parFicha('Atletas da Atak', `${competicao.inscritos} inscrito(s)`),
       ].filter(Boolean)),
       competicao.descricao ? el('p', { texto: competicao.descricao }) : null,
-    ]))),
+    ]), { inicial: 3, classe: 'grade col-2', rotulo: 'campeonatos' }),
 
     equipes.length
       ? el('div', { estilo: 'margin-top:1.6rem' }, [
         el('h3', { estilo: 'margin-bottom:.8rem', texto: 'Equipes de competição' }),
-        el('div', { classe: 'grade col-3' }, equipes.map((equipe) => el('article', {
+        listaComMais(equipes, (equipe) => el('article', {
           classe: 'cartao equipe', estilo: `--cor-equipe:${equipe.cor || 'var(--marca-1)'}`,
         }, [
           el('div', { classe: 'faixa-equipe' }),
@@ -449,7 +449,7 @@ function secaoCompeticoes(competicoes, equipes, medalhas) {
             ]),
           ]),
           el('p', { classe: 'dica', texto: `Técnico: ${equipe.tecnico || 'a definir'}` }),
-        ]))),
+        ]), { inicial: 3, rotulo: 'equipes', genero: 'f' }),
       ])
       : null,
   ]);
@@ -462,6 +462,35 @@ function placar(valor, rotulo) {
   ]);
 }
 
+/**
+ * Lista longa não precisa ocupar a página inteira: mostra os primeiros e
+ * guarda o resto atrás de um botão. No celular isso é a diferença entre
+ * rolar dez telas e rolar duas.
+ */
+function listaComMais(itens, montar, {
+  inicial = 4, classe = 'grade col-3', rotulo = 'itens', genero = 'm',
+} = {}) {
+  const area = el('div', { classe });
+  let aberto = itens.length <= inicial;
+  const verTudo = `Ver ${genero === 'f' ? 'as' : 'os'} ${itens.length} ${rotulo}`;
+
+  function desenhar() {
+    area.replaceChildren(...(aberto ? itens : itens.slice(0, inicial)).map(montar));
+  }
+  desenhar();
+  if (aberto) return area;
+
+  const botao = el('button', {
+    classe: 'botao secundario ver-mais', type: 'button', texto: verTudo,
+    aoClicar: () => {
+      aberto = !aberto;
+      desenhar();
+      botao.textContent = aberto ? 'Mostrar menos' : verTudo;
+    },
+  });
+  return el('div', {}, [area, el('div', { classe: 'acoes centro-acoes' }, [botao])]);
+}
+
 function secaoPlanos(planos, academia) {
   if (!planos.length) return null;
   const maiorValor = Math.max(...planos.map((p) => p.valor));
@@ -470,7 +499,7 @@ function secaoPlanos(planos, academia) {
     tituloSecao('Escolha o seu', 'Planos e valores'),
     el('p', { classe: 'dica', estilo: 'margin:-.5rem 0 1.5rem;max-width:60ch' },
       ['Sem taxa escondida: o valor abaixo é o que você paga. A primeira aula é experimental e não custa nada.']),
-    el('div', { classe: 'grade col-3' }, planos.map((plano) => el('article', {
+    listaComMais(planos, (plano) => el('article', {
       classe: `cartao-plano tilt ${plano.valor === maiorValor && planos.length > 1 ? 'destaque' : ''}`,
     }, [
       plano.valor === maiorValor && planos.length > 1
@@ -497,7 +526,7 @@ function secaoPlanos(planos, academia) {
           `Olá! Quero saber mais sobre o plano ${plano.nome} do ${academia.nome}.`) || '#planos',
         texto: 'Quero este plano',
       }),
-    ]))),
+    ]), { inicial: 3, rotulo: 'planos' }),
   ]);
 }
 
@@ -513,7 +542,7 @@ function secaoLoja(produtos) {
   let aberto = [...grupos.keys()][0];
 
   function desenhar() {
-    area.replaceChildren(el('div', { classe: 'grade produtos' }, (grupos.get(aberto) || []).map((produto) => el('article', {
+    area.replaceChildren(listaComMais(grupos.get(aberto) || [], (produto) => el('article', {
       classe: 'produto tilt',
     }, [
       el('div', { classe: 'capa' }, [
@@ -530,7 +559,7 @@ function secaoLoja(produtos) {
           ? etiqueta('disponível na academia', 'bom')
           : etiqueta('sob encomenda', 'atencao'),
       ]),
-    ]))));
+    ]), { inicial: 4, classe: 'grade produtos', rotulo: 'produtos' }));
   }
 
   const abas = el('div', { classe: 'acoes', estilo: 'margin-bottom:1.25rem' },
@@ -559,7 +588,7 @@ function secaoCertificados(certificados) {
     tituloSecao('Transparência', 'Certificados e titulações'),
     el('p', { classe: 'dica', estilo: 'margin:-.5rem 0 1.5rem;max-width:62ch' },
       ['Nossos professores e faixas pretas com registro em federação. Está tudo publicado para qualquer pessoa conferir.']),
-    el('div', { classe: 'grade col-2' }, certificados.map((item) => el('article', { classe: 'certificado' }, [
+    listaComMais(certificados, (item) => el('article', { classe: 'certificado' }, [
       el('div', { classe: 'miniatura' }, [
         item.arquivo && !item.arquivo.endsWith('.pdf')
           ? el('img', { src: item.arquivo, alt: `Certificado de ${item.pessoa_nome}`, loading: 'lazy' })
@@ -571,7 +600,7 @@ function secaoCertificados(certificados) {
         el('div', { estilo: 'font-weight:700', texto: item.pessoa_nome }),
         el('div', { classe: 'dica', texto: [item.modalidade, item.entidade, item.data_emissao && dataBr(item.data_emissao)].filter(Boolean).join(' · ') }),
       ]),
-    ]))),
+    ]), { inicial: 4, classe: 'grade col-2', rotulo: 'certificados' }),
   ]);
 }
 

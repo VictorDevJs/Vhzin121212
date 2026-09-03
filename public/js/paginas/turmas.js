@@ -32,8 +32,12 @@ export default async function paginaTurmas() {
         }, [
           el('h3', {}, [modalidade.nome, ' ', modalidade.ativo ? null : etiqueta('inativa', 'neutra')]),
           el('p', { classe: 'dica', texto: modalidade.descricao || 'Sem descrição.' }),
+          // O destaque é uma frase, não um selo: vira linha de texto.
+          modalidade.destaque
+            ? el('p', { classe: 'destaque-modalidade', texto: modalidade.destaque })
+            : null,
           el('div', { classe: 'acoes', estilo: 'margin-bottom:.6rem' }, [
-            etiqueta(modalidade.destaque || `${modalidade.total_turmas} turma(s)`, 'marca'),
+            etiqueta(`${modalidade.total_turmas} turma(s)`, 'marca'),
             etiqueta(`${modalidade.total_graduacoes} faixa(s)`, 'neutra'),
           ]),
           ehDono

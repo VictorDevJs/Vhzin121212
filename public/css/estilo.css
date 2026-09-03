@@ -195,6 +195,8 @@ a:hover { text-decoration: underline; }
 .cartao > .titulo-cartao h3 { margin: 0; }
 
 .grade { display: grid; gap: var(--esp-4); }
+/* Sem isto, uma tabela larga dentro do cartão empurra a coluna inteira. */
+.grade > *, .grade-compacta > * { min-width: 0; }
 .grade.col-2 { grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); }
 .grade.col-3 { grid-template-columns: repeat(auto-fit, minmax(265px, 1fr)); }
 .grade.col-4 { grid-template-columns: repeat(auto-fit, minmax(225px, 1fr)); }
@@ -778,16 +780,17 @@ td.acoes-celula > * + * { margin-left: var(--esp-1); }
 .heroi-gravado {
   position: absolute;
   z-index: -1;
-  right: -14%;
+  /* O brasão entra inteiro: metade de uma palavra cortada parece defeito. */
+  right: 4%;
   top: 52%;
   transform: translateY(-50%);
-  opacity: .055;
+  opacity: .05;
   pointer-events: none;
   filter: grayscale(1) contrast(1.08);
   -webkit-mask-image: radial-gradient(70% 70% at 50% 50%, #000 45%, transparent 100%);
   mask-image: radial-gradient(70% 70% at 50% 50%, #000 45%, transparent 100%);
 }
-.heroi-gravado img { display: block; width: min(600px, 50vw); height: auto; }
+.heroi-gravado img { display: block; width: min(480px, 40vw); height: auto; }
 
 .heroi-corpo { position: relative; padding: 5.5rem 0 4rem; }
 
@@ -1501,8 +1504,11 @@ td.acoes-celula > * + * { margin-left: var(--esp-1); }
 
 /* No celular os indicadores viram dois por linha: cabe mais informacao na tela */
 @media (max-width: 620px) {
+  .grade.col-2,
   .grade.col-3,
-  .grade.col-4,
+  .grade.col-4 { grid-template-columns: 1fr; }
+  .grade.col-3:has(> .indicador),
+  .grade.col-4:has(> .indicador),
   .grade-compacta { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--esp-3); }
   .grade.col-3 > .cartao,
   .grade.col-4 > .cartao { grid-column: 1 / -1; }
@@ -1532,4 +1538,83 @@ td.acoes-celula > * + * { margin-left: var(--esp-1); }
 @media (max-width: 620px) {
   .lista-regras { grid-template-columns: 1fr; gap: .1rem; }
   .lista-regras dd { margin-bottom: .55rem; }
+}
+
+/* Peças que só existem em uma das telas */
+.so-celular { display: none; }
+@media (max-width: 720px) {
+  .so-celular { display: block; }
+  .so-computador { display: none; }
+}
+
+/* Agenda do celular: um dia por vez */
+.abas-dia {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin: var(--esp-3) 0;
+}
+.aba-dia {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: .45rem .1rem;
+  border: 1px solid var(--borda);
+  border-radius: var(--raio-1);
+  background: var(--superficie);
+  color: var(--tinta-2);
+  font: inherit; font-size: .72rem; font-weight: 700;
+  cursor: pointer;
+}
+.aba-dia.ativa {
+  background: var(--marca-gradiente);
+  border-color: transparent;
+  color: var(--marca-contraste);
+}
+.conta-dia { font-size: .66rem; font-weight: 600; opacity: .7; font-variant-numeric: tabular-nums; }
+
+.lista-aulas { display: flex; flex-direction: column; }
+.linha-aula {
+  display: flex; align-items: center; gap: var(--esp-3);
+  width: 100%; text-align: left;
+  padding: .65rem .7rem;
+  border: 1px solid var(--borda);
+  border-left: 3px solid var(--cor-aula, var(--marca-1));
+  border-radius: var(--raio-2);
+  background: var(--superficie);
+  color: inherit; font: inherit;
+  cursor: pointer;
+  margin-bottom: 6px;
+}
+.linha-aula:hover { border-color: var(--borda-forte); }
+.hora-aula {
+  display: flex; flex-direction: column; align-items: flex-start;
+  min-width: 3.4rem;
+  font-variant-numeric: tabular-nums;
+}
+.hora-aula strong { font-size: .95rem; }
+.hora-aula span { font-size: .74rem; color: var(--tinta-3); }
+.dados-aula { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1; }
+.dados-aula strong { font-size: .9rem; }
+.dados-aula .dica { margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.destaque-modalidade {
+  margin: 0 0 .6rem;
+  font-size: .82rem;
+  line-height: 1.5;
+  color: var(--tinta-2);
+  font-style: italic;
+}
+
+/* Selo com texto longo pode quebrar em vez de estourar o cartão */
+.etiqueta.longa { white-space: normal; text-align: left; }
+
+.centro-acoes { justify-content: center; margin-top: var(--esp-4); }
+.ver-mais { min-width: 15rem; justify-content: center; }
+
+/* No celular o cartão de plano encolhe: o preço não precisa gritar */
+@media (max-width: 620px) {
+  .cartao-plano { padding: var(--esp-4); }
+  .cartao-plano .preco { font-size: 2.1rem; }
+  .cartao-plano h3 { font-size: 1.15rem !important; }
+  .secao { padding: var(--esp-6) 0 0; }
+  .titulo-secao h2 { letter-spacing: 0; }
 }
