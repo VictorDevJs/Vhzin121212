@@ -15,7 +15,7 @@ export default async function paginaTurmas() {
   let mestres = [];
 
   async function carregar() {
-    [modalidades, mestres] = await Promise.all([api.obter('/modalidades'), api.obter('/usuarios/mestres')]);
+    [modalidades, mestres] = await Promise.all([api.obter('/modalidades?todas=1'), api.obter('/usuarios/mestres')]);
     const turmas = await api.obter('/turmas');
     desenharModalidades();
     desenharTurmas(turmas);

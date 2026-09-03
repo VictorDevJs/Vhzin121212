@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { todos, um, executar, transacao } from '../db.js';
 import { exigirPapel, EQUIPE } from '../auth.js';
 import { rota, ErroApi, exigirCampos, texto, numero, inteiro, booleano } from '../util.js';
+import { modalidadesEmEscopo } from '../escopo.js';
 
 const roteador = Router();
 const PERIODICIDADES = ['mensal', 'trimestral', 'semestral', 'anual'];
@@ -21,8 +22,13 @@ roteador.get('/', exigirPapel(...EQUIPE, 'aluno'), rota((req, res) => {
   const lista = todos(`
     SELECT p.*, (SELECT COUNT(*) FROM matriculas mt WHERE mt.plano_id = p.id AND mt.status = 'ativa') AS alunos_ativos
     FROM planos p ${onde} ORDER BY p.ativo DESC, p.valor
-  `);
-  res.json(lista.map(comModalidades));
+  `).map(comModalidades);
+
+  // O aluno vê os planos das artes que ele treina, mais os que valem para todas.
+  const escopo = modalidadesEmEscopo(req.usuario);
+  if (escopo === null) return res.json(lista);
+  res.json(lista.filter((plano) => !plano.modalidades.length
+    || plano.modalidades.some((m) => escopo.includes(m.id))));
 }));
 
 roteador.post('/', exigirPapel('dono'), rota((req, res) => {

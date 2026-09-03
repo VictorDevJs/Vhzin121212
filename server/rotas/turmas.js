@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { todos, um, executar } from '../db.js';
 import { exigirPapel, EQUIPE, GESTAO } from '../auth.js';
 import { rota, ErroApi, exigirCampos, texto, inteiro, booleano, hora, DIAS_SEMANA } from '../util.js';
+import { recorteDeModalidade } from '../escopo.js';
 
 const roteador = Router();
 
@@ -49,7 +50,12 @@ roteador.get('/', exigirPapel(...EQUIPE, 'aluno'), rota((req, res) => {
 }));
 
 // Grade semanal completa (usada na aba de horarios)
-roteador.get('/grade', exigirPapel(...EQUIPE, 'aluno'), rota((_req, res) => {
+roteador.get('/grade', exigirPapel(...EQUIPE, 'aluno'), rota((req, res) => {
+  // Na grade, o aluno vê os horários da arte que ele treina; a academia vê tudo.
+  // "todas=1" é para quem monta a grade e precisa enxergar a semana inteira.
+  const recorte = texto(req.query.todas) === '1'
+    ? null
+    : recorteDeModalidade(req.usuario, 't.modalidade_id', { incluirGerais: false });
   const aulas = todos(`
     SELECT h.id AS horario_id, h.dia_semana, h.hora_inicio, h.hora_fim, h.rotulo, h.observacao,
            t.id AS turma_id, t.nome AS turma, t.categoria, t.nivel, t.local, t.capacidade,
@@ -61,10 +67,10 @@ roteador.get('/grade', exigirPapel(...EQUIPE, 'aluno'), rota((_req, res) => {
     JOIN turmas t ON t.id = h.turma_id
     JOIN modalidades m ON m.id = t.modalidade_id
     LEFT JOIN usuarios u ON u.id = t.mestre_id
-    WHERE h.ativo = 1 AND t.ativo = 1
+    WHERE h.ativo = 1 AND t.ativo = 1 ${recorte ? `AND ${recorte}` : ''}
     ORDER BY h.dia_semana, h.hora_inicio, m.nome
   `);
-  res.json({ dias: DIAS_SEMANA, aulas });
+  res.json({ dias: DIAS_SEMANA, aulas, escopo_limitado: recorte !== null });
 }));
 
 roteador.get('/:id', exigirPapel(...EQUIPE, 'aluno'), rota((req, res) => {

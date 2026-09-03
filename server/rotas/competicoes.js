@@ -3,6 +3,7 @@ import { todos, um, executar, transacao } from '../db.js';
 import { exigirPapel, temCargo, registrar, EQUIPE } from '../auth.js';
 import { rota, ErroApi, exigirCampos, texto, numero, inteiro, booleano, data, hoje } from '../util.js';
 import { CATEGORIAS_PESO } from '../graduacoes-padrao.js';
+import { recorteDeModalidade, modalidadesVisiveis, podeVerModalidade } from '../escopo.js';
 
 const roteador = Router();
 
@@ -42,9 +43,17 @@ roteador.get('/categorias-peso', exigirPapel(...EQUIPE, 'aluno'), rota((_req, re
   res.json(CATEGORIAS_PESO);
 }));
 
+/** As modalidades que esta pessoa pode ver - alimenta o filtro da tela. */
+roteador.get('/minhas-modalidades', exigirPapel(...EQUIPE, 'aluno'), rota((req, res) => {
+  res.json(modalidadesVisiveis(req.usuario));
+}));
+
 roteador.get('/', exigirPapel(...EQUIPE, 'aluno'), rota((req, res) => {
   const filtros = [];
   const params = {};
+  // Quem treina uma arte não vê o campeonato das outras.
+  const recorte = recorteDeModalidade(req.usuario, 'c.modalidade_id');
+  if (recorte) filtros.push(recorte);
   if (inteiro(req.query.modalidade_id)) {
     filtros.push('c.modalidade_id = :modalidade_id');
     params.modalidade_id = inteiro(req.query.modalidade_id);
@@ -67,17 +76,20 @@ roteador.get('/', exigirPapel(...EQUIPE, 'aluno'), rota((req, res) => {
   res.json(lista);
 }));
 
-roteador.get('/agenda', exigirPapel(...EQUIPE, 'aluno'), rota((_req, res) => {
+roteador.get('/agenda', exigirPapel(...EQUIPE, 'aluno'), rota((req, res) => {
+  const recorte = recorteDeModalidade(req.usuario, 'c.modalidade_id');
   res.json({
     proximas: todos(`${SELECT_COMPETICAO}
       WHERE c.data_inicio >= date('now','localtime') AND c.status != 'cancelada'
+      ${recorte ? `AND ${recorte}` : ''}
       ORDER BY c.data_inicio LIMIT 6`),
-    quadro_medalhas: quadroDeMedalhas(),
+    quadro_medalhas: quadroDeMedalhas(recorteDeModalidade(req.usuario, 'c.modalidade_id')),
   });
 }));
 
-/** Ranking de medalhas por modalidade e por atleta. */
-export function quadroDeMedalhas() {
+/** Ranking de medalhas por modalidade e por atleta, dentro do escopo. */
+export function quadroDeMedalhas(recorte = null) {
+  const onde = recorte ? `WHERE ${recorte}` : '';
   const porModalidade = todos(`
     SELECT m.id, m.nome AS modalidade, m.cor,
            SUM(CASE WHEN r.medalha = 'ouro' THEN 1 ELSE 0 END) AS ouro,
@@ -88,6 +100,7 @@ export function quadroDeMedalhas() {
     JOIN competicao_inscricoes i ON i.id = r.inscricao_id
     JOIN competicoes c ON c.id = i.competicao_id
     LEFT JOIN modalidades m ON m.id = c.modalidade_id
+    ${onde}
     GROUP BY m.id ORDER BY ouro DESC, prata DESC, bronze DESC
   `);
   const atletas = todos(`
@@ -99,7 +112,9 @@ export function quadroDeMedalhas() {
            SUM(r.vitorias) AS vitorias, SUM(r.lutas) AS lutas
     FROM competicao_resultados r
     JOIN competicao_inscricoes i ON i.id = r.inscricao_id
+    JOIN competicoes c ON c.id = i.competicao_id
     JOIN alunos a ON a.id = i.aluno_id
+    ${onde}
     GROUP BY a.id ORDER BY ouro DESC, prata DESC, bronze DESC, vitorias DESC LIMIT 20
   `);
   return { por_modalidade: porModalidade, atletas };
@@ -109,6 +124,9 @@ roteador.get('/:id', exigirPapel(...EQUIPE, 'aluno'), rota((req, res) => {
   const id = inteiro(req.params.id);
   const competicao = um(`${SELECT_COMPETICAO} WHERE c.id = :id`, { id });
   if (!competicao) throw new ErroApi('Competição não encontrada.', 404);
+  if (!podeVerModalidade(req.usuario, competicao.modalidade_id)) {
+    throw new ErroApi('Esta competição é de outra modalidade.', 403);
+  }
 
   competicao.inscricoes = todos(`
     SELECT i.*, a.nome AS aluno, a.categoria AS categoria_aluno, e.nome AS equipe,
@@ -236,6 +254,9 @@ roteador.post('/:id/inscricoes', exigirPapel(...EQUIPE, 'aluno'), rota((req, res
     const aluno = alunoDoUsuario(req.usuario);
     if (!aluno) throw new ErroApi('Sua ficha de aluno ainda não foi criada. Fale com a recepção.', 404);
     alunoId = aluno.id;
+    if (!podeVerModalidade(req.usuario, competicao.modalidade_id)) {
+      throw new ErroApi('Esta competição é de uma modalidade que você não treina.', 403);
+    }
     if (competicao.inscricao_ate && competicao.inscricao_ate < hoje()) {
       throw new ErroApi('O prazo de inscrição já encerrou. Fale com o responsável de competições.');
     }

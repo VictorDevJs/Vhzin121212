@@ -12,7 +12,7 @@ import { topo } from '../app.js';
 export default async function paginaAlunos() {
   const podeGerir = sessao.ehUm('dono', 'recepcao');
   const [modalidades, planos, turmas] = await Promise.all([
-    api.obter('/modalidades'),
+    api.obter('/modalidades?todas=1'),
     api.obter('/planos'),
     api.obter('/turmas'),
   ]);

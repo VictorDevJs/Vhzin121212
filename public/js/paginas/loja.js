@@ -17,7 +17,7 @@ export default async function paginaLoja() {
   const ehDono = sessao.papel === 'dono';
   const podeVender = sessao.ehUm('dono', 'recepcao');
   const [modalidades, alunos] = await Promise.all([
-    api.obter('/modalidades'),
+    api.obter('/modalidades?todas=1'),
     podeVender ? api.obter('/alunos?status=ativo') : Promise.resolve([]),
   ]);
 

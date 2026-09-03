@@ -373,15 +373,20 @@ export default async function paginaCompeticoes() {
     el('p', { classe: 'explicacao' }, [
       icone('trofeu', 16),
       ehAluno
-        ? 'Aqui ficam todos os campeonatos que a Atak vai disputar. Clique em "Quero competir" e o responsável de competições fala com você para acertar categoria e peso.'
-        : 'Cada competição guarda a lista de atletas, a categoria de peso, a taxa paga e o resultado. O que você marcar como público aparece no site da academia.',
+        ? `Você está vendo as competições ${listaDeArtes(modalidades)}, que é o que você treina. `
+          + 'Clique em "Quero competir" e o responsável fala com você para acertar categoria e peso.'
+        : sessao.ehUm('dono', 'recepcao')
+          ? 'Cada competição guarda a lista de atletas, a categoria de peso, a taxa paga e o resultado. O que você marcar como público aparece no site da academia.'
+          : `Você está vendo as competições ${listaDeArtes(modalidades)}, as artes que você acompanha.`,
     ]),
 
     areaIndicadores,
 
     el('div', { classe: 'filtros' }, [
-      seletor('Modalidade', [{ valor: '', rotulo: 'Todas' }, ...opcoesDe(modalidades)],
-        (valor) => { filtro.modalidade_id = valor; carregar(); }),
+      modalidades.length > 1
+        ? seletor('Modalidade', [{ valor: '', rotulo: 'Todas as minhas' }, ...opcoesDe(modalidades)],
+          (valor) => { filtro.modalidade_id = valor; carregar(); })
+        : null,
       seletor('Período', [
         { valor: 'futuras', rotulo: 'Próximas' },
         { valor: 'passadas', rotulo: 'Já realizadas' },
@@ -394,6 +399,14 @@ export default async function paginaCompeticoes() {
     area,
     cartao('Quadro de medalhas da Atak', quadroDeMedalhas()),
   ]);
+}
+
+/** "de Jiu-Jitsu" ou "de Jiu-Jitsu e Muay Thai": o texto que explica o recorte. */
+function listaDeArtes(modalidades) {
+  const nomes = modalidades.map((m) => m.nome);
+  if (!nomes.length) return 'da academia';
+  if (nomes.length === 1) return `de ${nomes[0]}`;
+  return `de ${nomes.slice(0, -1).join(', ')} e ${nomes[nomes.length - 1]}`;
 }
 
 function seletor(rotulo, opcoes, aoMudar, valorInicial = '') {

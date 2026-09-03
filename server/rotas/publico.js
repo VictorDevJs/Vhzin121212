@@ -148,6 +148,13 @@ roteador.get('/academia', rota((_req, res) => {
       whatsapp: configuracoes.whatsapp || '',
       endereco: configuracoes.endereco || '',
       instagram: configuracoes.instagram || '',
+      redes: [
+        { nome: 'Instagram', chave: 'instagram', url: configuracoes.instagram_url || '',
+          usuario: configuracoes.instagram || '' },
+        { nome: 'Facebook', chave: 'facebook', url: configuracoes.facebook_url || '', usuario: '' },
+        { nome: 'YouTube', chave: 'youtube', url: configuracoes.youtube_url || '', usuario: '' },
+        { nome: 'TikTok', chave: 'tiktok', url: configuracoes.tiktok_url || '', usuario: '' },
+      ].filter((r) => r.url),
       sobre: configuracoes.sobre || '',
       chamada: configuracoes.chamada || '',
       manchete: configuracoes.manchete || '',

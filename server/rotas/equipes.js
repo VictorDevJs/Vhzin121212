@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { todos, um, executar } from '../db.js';
 import { exigirPapel, temCargo, registrar, EQUIPE } from '../auth.js';
 import { rota, ErroApi, exigirCampos, texto, numero, inteiro, booleano, data } from '../util.js';
+import { recorteDeModalidade, podeVerModalidade } from '../escopo.js';
 
 const roteador = Router();
 
@@ -28,6 +29,9 @@ function exigirResponsavel(req) {
 roteador.get('/', exigirPapel(...EQUIPE, 'aluno'), rota((req, res) => {
   const filtros = [];
   const params = {};
+  // Cada arte marcial enxerga só as suas equipes.
+  const recorte = recorteDeModalidade(req.usuario, 'e.modalidade_id');
+  if (recorte) filtros.push(recorte);
   if (inteiro(req.query.modalidade_id)) {
     filtros.push('e.modalidade_id = :modalidade_id');
     params.modalidade_id = inteiro(req.query.modalidade_id);
@@ -41,6 +45,9 @@ roteador.get('/:id', exigirPapel(...EQUIPE, 'aluno'), rota((req, res) => {
   const id = inteiro(req.params.id);
   const equipe = um(`${SELECT_EQUIPE} WHERE e.id = :id`, { id });
   if (!equipe) throw new ErroApi('Equipe não encontrada.', 404);
+  if (!podeVerModalidade(req.usuario, equipe.modalidade_id)) {
+    throw new ErroApi('Esta equipe é de outra modalidade.', 403);
+  }
 
   equipe.membros = todos(`
     SELECT em.*, a.nome AS aluno, a.categoria AS categoria_aluno, a.data_nascimento, a.status,

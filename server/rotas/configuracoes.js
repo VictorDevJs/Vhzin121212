@@ -9,6 +9,7 @@ const CHAVES = [
   'nome_academia', 'telefone', 'whatsapp', 'endereco', 'instagram', 'sobre', 'chamada',
   'cor_primaria', 'ano_fundacao', 'historia', 'horario_funcionamento',
   'logo_url', 'simbolo_url', 'foto_capa', 'manchete',
+  'instagram_url', 'facebook_url', 'youtube_url', 'tiktok_url',
 ];
 
 roteador.get('/', exigirPapel(...EQUIPE), rota((_req, res) => {

@@ -19,7 +19,7 @@ const TIPOS = [
 export default async function paginaCertificados() {
   const ehDono = sessao.papel === 'dono';
   const [modalidades, equipe] = await Promise.all([
-    api.obter('/modalidades'),
+    api.obter('/modalidades?todas=1'),
     ehDono ? api.obter('/usuarios') : Promise.resolve([]),
   ]);
 

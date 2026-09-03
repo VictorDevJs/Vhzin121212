@@ -31,7 +31,7 @@ function relogio(total) {
 export default async function paginaGrade() {
   const podeEditar = sessao.ehUm('dono', 'mestre');
   const [modalidades, turmas, mestres] = await Promise.all([
-    api.obter('/modalidades'),
+    api.obter('/modalidades?todas=1'),
     api.obter('/turmas'),
     sessao.papel === 'aluno' ? Promise.resolve([]) : api.obter('/usuarios/mestres'),
   ]);
@@ -42,7 +42,7 @@ export default async function paginaGrade() {
 
   async function carregar() {
     area.replaceChildren(esqueleto(1, 420));
-    const dados = await api.obter('/turmas/grade');
+    const dados = await api.obter(podeEditar ? '/turmas/grade?todas=1' : '/turmas/grade');
     aulas = dados.aulas;
     desenhar();
   }

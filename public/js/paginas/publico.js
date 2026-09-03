@@ -31,9 +31,10 @@ export default async function paginaPublica() {
     academia, modalidades, grade, planos, avisos, mestres, produtos, competicoes, equipes,
     medalhas, certificados, avaliacoes, resumo_avaliacoes: resumoAvaliacoes, numeros,
   } = dados;
+  const redes = academia.redes || [];
 
   return el('div', { classe: 'site' }, [
-    cabecalho(),
+    cabecalho(redes),
     heroi(academia, numeros, modalidades),
     el('div', { classe: 'envolucro' }, [
       academia.historia ? secaoHistoria(academia) : null,
@@ -45,6 +46,7 @@ export default async function paginaPublica() {
       secaoPlanos(planos, academia),
       produtos.length ? secaoLoja(produtos) : null,
       certificados.length ? secaoCertificados(certificados) : null,
+      redes.length ? secaoRedes(redes, academia) : null,
       secaoAvaliacoes(avaliacoes, resumoAvaliacoes, modalidades),
       avisos.length ? secaoAvisos(avisos) : null,
       rodape(academia),
@@ -62,7 +64,7 @@ function rolarAte(id) {
   };
 }
 
-function cabecalho() {
+function cabecalho(redes = []) {
   return el('header', { classe: 'site-topo' }, [
     el('div', { classe: 'identidade', estilo: 'padding:0' }, [logotipo(34)]),
     el('nav', {}, [
@@ -71,6 +73,7 @@ function cabecalho() {
       el('a', { href: '#professores', texto: 'Professores', aoClicar: rolarAte('professores') }),
       el('a', { href: '#graduacoes', texto: 'Graduações', aoClicar: rolarAte('graduacoes') }),
       el('a', { href: '#competicoes', texto: 'Competições', aoClicar: rolarAte('competicoes') }),
+      redes.length ? el('a', { href: '#redes', texto: 'Redes', aoClicar: rolarAte('redes') }) : null,
       el('a', { href: '#planos', texto: 'Planos', aoClicar: rolarAte('planos') }),
       el('a', { href: '#loja', texto: 'Loja', aoClicar: rolarAte('loja') }),
     ]),
@@ -302,6 +305,26 @@ function secaoProfessores(mestres) {
         icone('medalha', 13),
         ` ${titulo.titulo}${titulo.entidade ? ` · ${titulo.entidade}` : ''}`,
       ])),
+    ]))),
+  ]);
+}
+
+/** Onde a academia posta o dia a dia: treino, campeonato, graduação. */
+function secaoRedes(redes, academia) {
+  return el('section', { classe: 'secao', id: 'redes' }, [
+    tituloSecao('O dia a dia da academia', 'Redes sociais'),
+    el('p', { classe: 'dica', estilo: 'max-width:64ch;margin-bottom:1.3rem' },
+      ['É onde saem os treinos, os campeonatos e as graduações da semana. Siga para acompanhar de perto.']),
+    el('div', { classe: 'grade col-2' }, redes.map((rede) => el('a', {
+      classe: `cartao rede rede-${rede.chave}`,
+      href: rede.url, target: '_blank', rel: 'noopener',
+    }, [
+      el('span', { classe: 'marca-rede' }, [icone(rede.chave, 26)]),
+      el('div', { classe: 'dados-rede' }, [
+        el('strong', { texto: rede.nome }),
+        el('span', { classe: 'dica', texto: rede.usuario || academia.nome }),
+      ]),
+      el('span', { classe: 'seta-rede', 'aria-hidden': 'true' }, [icone('externo', 18)]),
     ]))),
   ]);
 }

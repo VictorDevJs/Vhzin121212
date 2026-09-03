@@ -2,17 +2,23 @@ import { Router } from 'express';
 import { todos, um, executar } from '../db.js';
 import { exigirPapel, temCargo, registrar, EQUIPE } from '../auth.js';
 import { GRADUACOES_PADRAO, aplicarGraduacoes } from '../graduacoes-padrao.js';
+import { recorteDeModalidade, podeVerModalidade } from '../escopo.js';
 import { rota, ErroApi, exigirCampos, texto, inteiro, booleano } from '../util.js';
 
 const roteador = Router();
 
 // Toda a equipe consulta; somente o dono cadastra e altera as modalidades.
 roteador.get('/', exigirPapel(...EQUIPE, 'aluno'), rota((req, res) => {
+  // "todas=1" é o pedido explícito de quem monta cadastro (formulários do dono).
+  const recorte = texto(req.query.todas) === '1'
+    ? null
+    : recorteDeModalidade(req.usuario, 'm.id', { incluirGerais: false });
   const lista = todos(`
     SELECT m.*,
            (SELECT COUNT(*) FROM turmas t WHERE t.modalidade_id = m.id AND t.ativo = 1) AS total_turmas,
            (SELECT COUNT(*) FROM graduacoes g WHERE g.modalidade_id = m.id) AS total_graduacoes
     FROM modalidades m
+    ${recorte ? `WHERE ${recorte}` : ''}
     ORDER BY m.ativo DESC, m.ordem, m.nome
   `);
   res.json(lista);
@@ -100,6 +106,9 @@ roteador.get('/catalogo-graduacoes', exigirPapel(...EQUIPE, 'aluno'), rota((_req
 
 roteador.get('/:id/graduacoes', exigirPapel(...EQUIPE, 'aluno'), rota((req, res) => {
   const id = inteiro(req.params.id);
+  if (!podeVerModalidade(req.usuario, id)) {
+    throw new ErroApi('Esta modalidade não faz parte do seu treino.', 403);
+  }
   const lista = todos(`
     SELECT g.*,
            (SELECT COUNT(DISTINCT ag.aluno_id) FROM aluno_graduacoes ag

@@ -24,7 +24,7 @@ const COR_PAPEL = { dono: 'alerta', mestre: 'info', competicoes: 'ok', recepcao:
 export default async function paginaEquipe() {
   const ehDono = sessao.papel === 'dono';
   const [modalidades, cargosDisponiveis] = await Promise.all([
-    api.obter('/modalidades'),
+    api.obter('/modalidades?todas=1'),
     api.obter('/usuarios/cargos'),
   ]);
 

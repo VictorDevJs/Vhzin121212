@@ -43,12 +43,39 @@ const MODALIDADES = [
   },
 ];
 
+/**
+ * Um plano por arte marcial: quem entra para o Jiu-Jitsu paga o Jiu-Jitsu.
+ * Os combinados existem para quem treina duas artes, e são a única exceção.
+ */
 const PLANOS = [
-  { nome: 'Kids Mensal', descricao: 'Aulas infantis (até 15 anos), 2x por semana.', valor: 120, periodicidade: 'mensal', aulas_semana: 2 },
-  { nome: 'Uma Modalidade', descricao: 'Escolha 1 modalidade, treinos livres nos horários da turma.', valor: 150, periodicidade: 'mensal', aulas_semana: 3 },
-  { nome: 'Duas Modalidades', descricao: 'Combine 2 modalidades no mesmo mês.', valor: 210, periodicidade: 'mensal', aulas_semana: 5 },
-  { nome: 'Passe Livre', descricao: 'Acesso a todas as modalidades e horários.', valor: 260, periodicidade: 'mensal', aulas_semana: 0 },
-  { nome: 'Passe Livre Anual', descricao: 'Todas as modalidades com desconto no pagamento anual.', valor: 2600, periodicidade: 'anual', aulas_semana: 0 },
+  { nome: 'Jiu-Jitsu Kids', modalidade: 'Jiu-Jitsu', categoria: 'kids', valor: 130, aulas_semana: 3,
+    descricao: 'Turmas infantis de Jiu-Jitsu, três vezes por semana.' },
+  { nome: 'Jiu-Jitsu Adulto', modalidade: 'Jiu-Jitsu', categoria: 'adulto', valor: 180, aulas_semana: 0,
+    descricao: 'Todos os horários de Jiu-Jitsu, manhã e noite, Gi e No-Gi.' },
+  { nome: 'Muay Thai Kids', modalidade: 'Muay Thai', categoria: 'kids', valor: 125, aulas_semana: 2,
+    descricao: 'Muay Thai infantil, duas vezes por semana.' },
+  { nome: 'Muay Thai Adulto', modalidade: 'Muay Thai', categoria: 'adulto', valor: 165, aulas_semana: 0,
+    descricao: 'Muay Thai adulto e feminino, todos os horários.' },
+  { nome: 'Karatê Kids', modalidade: 'Karatê', categoria: 'kids', valor: 120, aulas_semana: 2,
+    descricao: 'Karatê infantil a partir dos cinco anos.' },
+  { nome: 'Karatê Adulto', modalidade: 'Karatê', categoria: 'adulto', valor: 150, aulas_semana: 2,
+    descricao: 'Karatê adulto, kata e kumite.' },
+  { nome: 'Judô Kids', modalidade: 'Judô', categoria: 'kids', valor: 125, aulas_semana: 2,
+    descricao: 'Judô infantil, quedas e imobilizações com segurança.' },
+  { nome: 'Judô Adulto', modalidade: 'Judô', categoria: 'adulto', valor: 160, aulas_semana: 2,
+    descricao: 'Judô adulto, com randori nas quintas.' },
+  { nome: 'Capoeira', modalidade: 'Capoeira', categoria: 'misto', valor: 130, aulas_semana: 3,
+    descricao: 'Capoeira para todas as idades, com roda aberta no sábado.' },
+  { nome: 'Kickboxing', modalidade: 'Kickboxing', categoria: 'adulto', valor: 160, aulas_semana: 3,
+    descricao: 'Kickboxing adulto, condicionamento e técnica.' },
+  { nome: 'Taekwondo', modalidade: 'Taekwondo', categoria: 'misto', valor: 140, aulas_semana: 2,
+    descricao: 'Taekwondo kids e adulto.' },
+  { nome: 'Boxe', modalidade: 'Boxe', categoria: 'adulto', valor: 155, aulas_semana: 2,
+    descricao: 'Boxe adulto, do primeiro jab ao sparring.' },
+  { nome: 'MMA', modalidade: 'MMA', categoria: 'adulto', valor: 190, aulas_semana: 0,
+    descricao: 'MMA iniciante e equipe de competição.' },
+  { nome: 'Combinado: duas artes', modalidade: null, categoria: 'adulto', valor: 240, aulas_semana: 0,
+    descricao: 'Escolha duas modalidades e treine em todos os horários das duas.' },
 ];
 
 /** turma: [modalidade, nome, categoria, nivel, horarios [dia, inicio, fim]] */
@@ -82,7 +109,8 @@ const CONFIGURACOES = {
   telefone: '(21) 97024-0245',
   whatsapp: '5521970240245',
   endereco: 'Rua Coronel Francisco Lobo, 145 - Pechincha, Rio de Janeiro - RJ, 22740-350',
-  instagram: '@ctatak',
+  instagram: '@ct_atak',
+  instagram_url: 'https://www.instagram.com/ct_atak',
   chamada: 'Centro de treinamento de lutas',
   manchete: 'Formando lutador de verdade na Pechincha.',
   sobre: 'Jiu-Jitsu, Muay Thai, Karatê, Judô, Capoeira, Boxe, Kickboxing, Taekwondo e MMA. Turmas kids, adulto e feminino, do primeiro dia no tatame até a equipe de competição.',
@@ -129,14 +157,18 @@ export function garantirDadosIniciais() {
     });
 
     for (const plano of PLANOS) {
-      executar(`INSERT INTO planos (nome, descricao, valor, periodicidade, aulas_semana)
-                VALUES (:nome, :descricao, :valor, :periodicidade, :aulas_semana)`, {
+      const criado = executar(`INSERT INTO planos (nome, descricao, valor, periodicidade, aulas_semana)
+                VALUES (:nome, :descricao, :valor, 'mensal', :aulas_semana)`, {
         nome: plano.nome,
         descricao: plano.descricao,
         valor: plano.valor,
-        periodicidade: plano.periodicidade,
         aulas_semana: plano.aulas_semana,
       });
+      if (plano.modalidade) {
+        executar(`INSERT INTO plano_modalidades (plano_id, modalidade_id)
+                  SELECT :plano, id FROM modalidades WHERE nome = :modalidade`,
+          { plano: Number(criado.lastInsertRowid), modalidade: plano.modalidade });
+      }
     }
 
     for (const [modalidade, nomeTurma, categoria, nivel, horarios] of TURMAS) {
@@ -558,7 +590,20 @@ export function carregarDemonstracao() {
     }
 
     // A demonstração usa apenas planos mensais, para o caixa do mes fazer sentido.
-    const planos = todos(`SELECT * FROM planos WHERE ativo = 1 AND periodicidade = 'mensal' ORDER BY valor`);
+    // Cada aluno entra no plano da arte que ele treina, na categoria dele.
+    const planos = todos(`
+      SELECT p.*, pm.modalidade_id FROM planos p
+      LEFT JOIN plano_modalidades pm ON pm.plano_id = p.id
+      WHERE p.ativo = 1 ORDER BY p.valor
+    `);
+    const planoDaTurma = (nomeTurma, categoriaAluno) => {
+      const turma = um(`SELECT modalidade_id FROM turmas WHERE nome = :nome`, { nome: nomeTurma });
+      const daArte = planos.filter((p) => p.modalidade_id === turma?.modalidade_id);
+      const kids = categoriaAluno === 'kids';
+      return daArte.find((p) => (kids ? /Kids/i.test(p.nome) : !/Kids/i.test(p.nome)))
+        || daArte[0]
+        || planos[0];
+    };
     const competencia = competenciaAtual();
 
     alunosDemo.forEach(([nomeAluno, categoria, nascimento, nomeTurma], indice) => {
@@ -595,7 +640,7 @@ export function carregarDemonstracao() {
 
       if (indice === alunosDemo.length - 1) return; // aluno pendente fica sem matricula
 
-      const plano = categoria === 'kids' ? planos[0] : planos[(indice % (planos.length - 1)) + 1];
+      const plano = planoDaTurma(nomeTurma, categoria);
 
       // O aluno entrou em algum momento dos ultimos 6 meses.
       const mesesDeCasa = Math.min(5, indice);

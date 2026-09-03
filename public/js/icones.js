@@ -30,6 +30,11 @@ const CAMINHOS = {
   bandeira: '<path d="M5.5 21V3.5"/><path d="M5.5 4.5c4-1.8 7-.2 11 0v9c-4-1.8-7-.2-11 0"/>',
   camera: '<path d="M4 8.5h3l1.5-2.5h7L17 8.5h3a1.5 1.5 0 0 1 1.5 1.5v8a1.5 1.5 0 0 1-1.5 1.5H4A1.5 1.5 0 0 1 2.5 18v-8A1.5 1.5 0 0 1 4 8.5Z"/><circle cx="12" cy="13.5" r="3.5"/>',
   livro: '<path d="M4 4.5h6a2.5 2.5 0 0 1 2 1 2.5 2.5 0 0 1 2-1h6v14h-6a2.5 2.5 0 0 0-2 1 2.5 2.5 0 0 0-2-1H4v-14Z"/><path d="M12 5.5v14"/>',
+  instagram: '<rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.4" cy="6.6" r="1.1" fill="currentColor" stroke="none"/>',
+  facebook: '<path d="M14.5 8.5H17V5h-2.5A4.5 4.5 0 0 0 10 9.5V12H7.5v3.5H10V22h3.5v-6.5H16l.6-3.5H13.5V9.5a1 1 0 0 1 1-1Z"/>',
+  youtube: '<rect x="2.5" y="5.5" width="19" height="13" rx="4"/><path d="M10.2 9.6v4.8l4.3-2.4Z" fill="currentColor" stroke="none"/>',
+  tiktok: '<path d="M14 3.5v11.2a3.3 3.3 0 1 1-3.3-3.3h.6"/><path d="M14 3.5a5.2 5.2 0 0 0 5.2 5.2"/>',
+  externo: '<path d="M14 4h6v6"/><path d="M20 4 11 13"/><path d="M18 14v4.5A1.5 1.5 0 0 1 16.5 20h-11A1.5 1.5 0 0 1 4 18.5v-11A1.5 1.5 0 0 1 5.5 6H10"/>',
 };
 
 /** Devolve um SVG pronto para colocar no DOM. */

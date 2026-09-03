@@ -1308,3 +1308,43 @@ td.acoes-celula { display: flex; gap: var(--esp-1); }
     repeating-linear-gradient(45deg, transparent 0 10px, rgba(255, 255, 255, .025) 10px 20px),
     var(--plano-2);
 }
+
+/* =========================================================================
+   Redes sociais
+   ========================================================================= */
+
+.cartao.rede {
+  display: flex;
+  align-items: center;
+  gap: var(--esp-4);
+  text-decoration: none;
+  color: var(--tinta);
+  transition: border-color var(--mov-rapido), transform var(--mov-rapido);
+}
+.cartao.rede:hover {
+  text-decoration: none;
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--cor-rede, var(--marca-1)) 55%, var(--borda));
+}
+
+.marca-rede {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  flex: none;
+  border-radius: var(--raio-2);
+  color: #fff;
+  background: var(--cor-rede, var(--marca-1));
+}
+.rede-instagram { --cor-rede: #c13584; }
+.rede-facebook  { --cor-rede: #1877f2; }
+.rede-youtube   { --cor-rede: #ff0033; }
+.rede-tiktok    { --cor-rede: #111114; }
+.rede-tiktok .marca-rede { border: 1px solid var(--borda-forte); }
+
+.dados-rede { display: flex; flex-direction: column; gap: .15rem; min-width: 0; }
+.dados-rede strong { font-size: 1rem; }
+.dados-rede .dica { margin: 0; }
+.seta-rede { margin-left: auto; color: var(--tinta-3); flex: none; }
+.cartao.rede:hover .seta-rede { color: var(--marca-1); }

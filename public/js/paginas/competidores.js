@@ -229,21 +229,24 @@ export default async function paginaCompetidores() {
 
     el('p', { classe: 'explicacao' }, [
       icone('escudo', 16),
-      'Cada arte marcial tem a sua equipe: Jiu-Jitsu, Muay Thai, Karatê, Judô, Boxe e MMA competem separados, '
-      + 'com times kids e adulto. Abra uma equipe para ver o elenco e a campanha dela.',
+      sessao.ehUm('dono', 'recepcao')
+        ? 'Cada arte marcial tem a sua equipe, com times kids e adulto. Abra uma equipe para ver o elenco e a campanha dela.'
+        : `Você está vendo as equipes ${modalidades.map((m) => m.nome).join(', ') || 'da academia'}, que é o que você treina.`,
     ]),
 
     areaIndicadores,
 
-    el('div', { classe: 'filtros' }, [
-      el('div', { classe: 'campo' }, [
-        el('label', { texto: 'Modalidade' }),
-        el('select', { aoMudar: (evento) => { filtro.modalidade_id = evento.target.value; carregar(); } }, [
-          el('option', { value: '', texto: 'Todas as modalidades' }),
-          ...modalidades.map((m) => el('option', { value: m.id, texto: m.nome })),
+    modalidades.length > 1
+      ? el('div', { classe: 'filtros' }, [
+        el('div', { classe: 'campo' }, [
+          el('label', { texto: 'Modalidade' }),
+          el('select', { aoMudar: (evento) => { filtro.modalidade_id = evento.target.value; carregar(); } }, [
+            el('option', { value: '', texto: 'Todas as minhas' }),
+            ...modalidades.map((m) => el('option', { value: m.id, texto: m.nome })),
+          ]),
         ]),
-      ]),
-    ]),
+      ])
+      : null,
 
     area,
   ]);
