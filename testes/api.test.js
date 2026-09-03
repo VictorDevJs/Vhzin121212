@@ -1222,3 +1222,79 @@ test('arquivo ainda usado por outra foto não é apagado', async () => {
   await chamar('DELETE', `/api/fotos/${segunda.dados.id}`, { token: estado.tokenDono });
   assert.ok(!existsSync(caminho), 'sem ninguém usando, o arquivo sai');
 });
+
+/* ==========================================================================
+   Painel avancado: pendencias, evasao, graduacao, ocupacao e movimento
+   ========================================================================== */
+
+test('o painel do dono vira lista de trabalho, não só números', async () => {
+  const { status, dados } = await chamar('GET', '/api/painel', { token: estado.tokenDono });
+  assert.equal(status, 200);
+  for (const parte of ['pendencias', 'alunos_sumidos', 'aptos_graduacao',
+    'ocupacao_turmas', 'proximas_competicoes', 'frequencia_semana', 'movimento']) {
+    assert.ok(dados[parte] !== undefined, `o painel traz ${parte}`);
+  }
+  assert.equal(dados.frequencia_semana.length, 7, 'a semana tem sete dias');
+});
+
+test('cada pendência sabe para que tela levar', async () => {
+  const { dados } = await chamar('GET', '/api/painel', { token: estado.tokenDono });
+  const telas = ['alunos', 'cobranca', 'contas', 'avaliacoes', 'chamada', 'graduacoes', 'competicoes'];
+  for (const item of dados.pendencias) {
+    assert.ok(item.quantidade > 0, `${item.titulo} só entra na lista se tiver o que fazer`);
+    assert.ok(telas.includes(item.tela), `tela desconhecida em "${item.titulo}": ${item.tela}`);
+    assert.ok(['critico', 'atencao', ''].includes(item.gravidade));
+  }
+  const criticoDepoisDeNormal = dados.pendencias
+    .findIndex((p) => p.gravidade === '') < dados.pendencias.findLastIndex((p) => p.gravidade === 'critico');
+  assert.ok(!criticoDepoisDeNormal, 'o urgente vem antes do resto');
+});
+
+test('a ocupação da turma conta vagas e não passa de 100%', async () => {
+  const { dados } = await chamar('GET', '/api/painel', { token: estado.tokenDono });
+  for (const turma of dados.ocupacao_turmas) {
+    assert.equal(turma.vagas, Math.max(0, turma.capacidade - turma.matriculados));
+    assert.ok(turma.ocupacao >= 0, `ocupação negativa em ${turma.turma}`);
+  }
+});
+
+test('o movimento compara períodos do mesmo tamanho', async () => {
+  const { dados } = await chamar('GET', '/api/painel', { token: estado.tokenDono });
+  const m = dados.movimento;
+  const dias = (de, ate) => Math.round(
+    (new Date(`${ate}T00:00:00`) - new Date(`${de}T00:00:00`)) / 86400000);
+  assert.equal(dias(m.periodo.de, m.periodo.ate), dias(m.periodo_anterior.de, m.periodo_anterior.ate),
+    'as duas janelas têm a mesma quantidade de dias');
+  assert.ok(m.periodo_anterior.ate < m.periodo.de, 'os períodos não se sobrepõem');
+});
+
+test('a receita do movimento é só do dono', async () => {
+  const { dados: doDono } = await chamar('GET', '/api/painel', { token: estado.tokenDono });
+  assert.ok(doDono.movimento.receita, 'o dono vê a receita');
+
+  const { dados: daRecepcao } = await chamar('GET', '/api/painel', { token: estado.tokenRecepcao });
+  assert.equal(daRecepcao.movimento.receita, undefined, 'a recepção não vê a receita');
+  assert.ok(daRecepcao.movimento.checkins, 'mas continua vendo o movimento de treino');
+});
+
+test('o painel do mestre traz só as turmas e os alunos da arte dele', async () => {
+  const { status, dados } = await chamar('GET', '/api/painel', { token: estado.tokenMestreTeste });
+  assert.equal(status, 200);
+  assert.ok(dados.pendencias !== undefined, 'o mestre também tem lista de trabalho');
+  assert.equal(dados.movimento, undefined, 'o resultado da academia não é assunto do mestre');
+
+  const artes = new Set(dados.ocupacao_turmas.map((t) => t.modalidade));
+  assert.ok(!artes.has('Judo'), `o mestre de Jiu-Jitsu viu turma de outra arte: ${[...artes].join(', ')}`);
+
+  for (const apto of dados.aptos_graduacao) {
+    assert.notEqual(apto.modalidade, 'Judo', 'graduação de outra arte não aparece para ele');
+  }
+});
+
+test('o aluno não recebe a lista de trabalho da equipe', async () => {
+  const { dados } = await chamar('GET', '/api/painel', { token: estado.tokenAluno });
+  assert.equal(dados.pendencias, undefined);
+  assert.equal(dados.alunos_sumidos, undefined);
+  assert.equal(dados.ocupacao_turmas, undefined);
+  assert.ok(dados.aluno, 'mas continua recebendo a própria ficha');
+});

@@ -1701,3 +1701,106 @@ td.acoes-celula > * + * { margin-left: var(--esp-1); }
 
 /* O menu fica colado no topo: a âncora precisa parar abaixo dele. */
 .secao[id], .heroi[id] { scroll-margin-top: 5rem; }
+
+/* ------------------------------------------- Central de pendências */
+
+.lista-pendencias { display: flex; flex-direction: column; }
+
+.linha-pendencia {
+  display: flex; align-items: center; gap: var(--esp-3);
+  width: 100%; text-align: left;
+  padding: .7rem .2rem;
+  border: 0; border-bottom: 1px solid var(--borda);
+  background: none; color: inherit; font: inherit;
+  cursor: pointer;
+}
+.linha-pendencia:last-child { border-bottom: 0; }
+.linha-pendencia:hover { background: var(--superficie-2); }
+
+.contagem-pendencia {
+  flex: none; min-width: 2.4rem; height: 2.4rem;
+  display: grid; place-items: center;
+  border-radius: var(--raio-1);
+  background: var(--superficie-3); color: var(--tinta);
+  font-weight: 800; font-variant-numeric: tabular-nums;
+}
+.linha-pendencia.critico .contagem-pendencia {
+  background: color-mix(in srgb, var(--critico) 16%, transparent); color: var(--critico-tinta);
+}
+.linha-pendencia.atencao .contagem-pendencia {
+  background: color-mix(in srgb, var(--atencao) 18%, transparent);
+  color: color-mix(in srgb, var(--atencao) 82%, var(--tinta));
+}
+
+.texto-pendencia { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1; }
+.texto-pendencia strong { font-size: .92rem; }
+.texto-pendencia .dica { margin: 0; }
+.seta-pendencia { flex: none; color: var(--tinta-3); display: grid; place-items: center; }
+.linha-pendencia:hover .seta-pendencia { color: var(--marca-1); }
+
+/* ------------------------------------------------- Pulso da semana */
+
+.pulso-semana {
+  display: grid; grid-template-columns: repeat(7, 1fr);
+  gap: var(--esp-2); align-items: end;
+  height: 150px;
+}
+.coluna-pulso { display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; }
+.valor-pulso { font-size: .74rem; font-weight: 700; color: var(--tinta-2); font-variant-numeric: tabular-nums; }
+.barra-pulso {
+  width: 100%; max-width: 34px;
+  background: var(--marca-1);
+  border-radius: 4px 4px 0 0;
+  min-height: 4px;
+}
+.dia-pulso { font-size: .7rem; color: var(--tinta-3); font-weight: 600; }
+
+/* --------------------------------------------- Ocupação das turmas */
+
+.lista-ocupacao { display: flex; flex-direction: column; gap: .55rem; }
+.linha-ocupacao {
+  display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(80px, 2fr) auto;
+  gap: var(--esp-3); align-items: center;
+}
+.dados-ocupacao { display: flex; flex-direction: column; min-width: 0; }
+.dados-ocupacao strong { font-size: .88rem; }
+.dados-ocupacao .dica { margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.trilha-ocupacao {
+  height: 8px; border-radius: var(--raio-pilula);
+  background: var(--superficie-3); overflow: hidden;
+}
+.preenchido-ocupacao {
+  display: block; height: 100%;
+  background: var(--cor-turma, var(--marca-1));
+  border-radius: var(--raio-pilula);
+}
+.preenchido-ocupacao.cheio { background: var(--critico); }
+
+.numero-ocupacao { text-align: right; }
+.numero-ocupacao strong,
+.numero-ocupacao .dica { display: block; }
+.numero-ocupacao strong { font-size: .88rem; font-variant-numeric: tabular-nums; }
+.numero-ocupacao .dica { margin: 0; white-space: nowrap; }
+
+/* --------------------------------------------- Movimento do período */
+
+.quadro-movimento { display: flex; flex-direction: column; }
+.linha-movimento {
+  display: grid; grid-template-columns: minmax(0, 1.3fr) auto auto minmax(0, 1fr);
+  gap: var(--esp-3); align-items: center;
+  padding: .5rem 0; border-bottom: 1px solid var(--borda);
+}
+.linha-movimento:last-of-type { border-bottom: 0; }
+.rotulo-movimento { font-size: .86rem; color: var(--tinta-2); }
+.atual-movimento { font-size: 1.05rem; font-variant-numeric: tabular-nums; }
+.linha-movimento .dica { margin: 0; text-align: right; }
+
+@media (max-width: 620px) {
+  .linha-ocupacao { grid-template-columns: 1fr auto; }
+  .trilha-ocupacao { grid-column: 1 / -1; order: 3; }
+  .linha-movimento { grid-template-columns: 1fr auto auto; }
+  .linha-movimento .dica { grid-column: 1 / -1; text-align: left; }
+  .pulso-semana { height: 120px; gap: 4px; }
+  .valor-pulso { font-size: .66rem; }
+}

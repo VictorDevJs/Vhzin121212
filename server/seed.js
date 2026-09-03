@@ -173,9 +173,11 @@ export function garantirDadosIniciais() {
 
     for (const [modalidade, nomeTurma, categoria, nivel, horarios] of TURMAS) {
       const m = um('SELECT id FROM modalidades WHERE nome = :nome', { nome: modalidade });
+      // Turma kids trabalha em grupo menor; feminino e adulto cabem mais.
+      const capacidade = { kids: 16, feminino: 20, adulto: 24, misto: 24 }[categoria] || 24;
       const turma = executar(`INSERT INTO turmas (modalidade_id, nome, categoria, nivel, capacidade, local)
-                              VALUES (:m, :nome, :categoria, :nivel, 30, 'Tatame principal')`,
-        { m: m.id, nome: nomeTurma, categoria, nivel });
+                              VALUES (:m, :nome, :categoria, :nivel, :capacidade, 'Tatame principal')`,
+        { m: m.id, nome: nomeTurma, categoria, nivel, capacidade });
       const turmaId = Number(turma.lastInsertRowid);
       for (const [dia, inicio, fim, rotulo = null] of horarios) {
         executar(`INSERT INTO horarios (turma_id, dia_semana, hora_inicio, hora_fim, rotulo)
@@ -455,6 +457,9 @@ function gerarCheckins() {
       if (vinculo.dia_semana !== dia.getDay()) continue;
       const chave = `${vinculo.aluno_id}-${vinculo.turma_id}`;
       if (registrados.has(chave)) continue;
+      // Um em cada nove alunos foi sumindo: parou de aparecer em algum ponto
+      // do histórico. É o que o painel precisa detectar para segurar a matrícula.
+      if (vinculo.aluno_id % 9 === 0 && atras < 18 + (vinculo.aluno_id % 4) * 9) continue;
       // Frequência entre 45% e 85%, variando de aluno para aluno.
       const base = 0.45 + ((vinculo.aluno_id * 7) % 40) / 100;
       // Algumas turmas vêm crescendo e outras caindo, para a análise ter o que mostrar.

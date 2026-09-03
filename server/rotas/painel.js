@@ -4,6 +4,10 @@ import { exigirPapel, EQUIPE } from '../auth.js';
 import { rota, hoje, competenciaAtual, DIAS_SEMANA } from '../util.js';
 import { recorteDeModalidade } from '../escopo.js';
 import { filtroPorUsuario } from './avisos.js';
+import {
+  pendencias, alunosSumidos, aptosParaGraduacao, ocupacaoDasTurmas,
+  proximasCompeticoes, frequenciaDaSemana, movimentoDoMes, DIAS_SUMIDO,
+} from '../painel-inteligencia.js';
 
 const roteador = Router();
 
@@ -58,6 +62,17 @@ roteador.get('/', exigirPapel(...EQUIPE, 'aluno'), rota((req, res) => {
     return res.json({ ...base, aluno, aulas_hoje: aulasDeHoje(null, req.usuario) });
   }
 
+  // Da equipe para cima, o painel deixa de ser vitrine e vira lista de trabalho.
+  const trabalho = {
+    pendencias: pendencias(req.usuario),
+    alunos_sumidos: alunosSumidos(req.usuario),
+    aptos_graduacao: aptosParaGraduacao(req.usuario),
+    proximas_competicoes: proximasCompeticoes(req.usuario),
+    frequencia_semana: frequenciaDaSemana(req.usuario),
+    ocupacao_turmas: ocupacaoDasTurmas(req.usuario),
+    dias_sumido: DIAS_SUMIDO,
+  };
+
   if (papel === 'mestre') {
     const minhasTurmas = todos(`
       SELECT t.id, t.nome, t.categoria, m.nome AS modalidade,
@@ -69,9 +84,22 @@ roteador.get('/', exigirPapel(...EQUIPE, 'aluno'), rota((req, res) => {
       SELECT COUNT(DISTINCT at.aluno_id) AS total FROM aluno_turmas at
       JOIN turmas t ON t.id = at.turma_id WHERE t.mestre_id = :id
     `, { id: req.usuario.id });
+    // Presença da semana nas turmas do mestre, para ele ver quem está esvaziando.
+    const presencaTurmas = todos(`
+      SELECT t.id, t.nome AS turma,
+             (SELECT COUNT(*) FROM aluno_turmas at WHERE at.turma_id = t.id) AS matriculados,
+             (SELECT COUNT(DISTINCT c.aluno_id) FROM checkins c
+               WHERE c.turma_id = t.id AND c.data >= date('now','localtime','-6 days')) AS treinaram
+      FROM turmas t WHERE t.mestre_id = :id AND t.ativo = 1
+    `, { id: req.usuario.id });
+
     return res.json({
       ...base,
-      minhas_turmas: minhasTurmas,
+      ...trabalho,
+      minhas_turmas: minhasTurmas.map((turma) => ({
+        ...turma,
+        ...presencaTurmas.find((p) => p.id === turma.id),
+      })),
       total_alunos: alunosNasMinhasTurmas.total,
       aulas_hoje: aulasDeHoje(req.usuario.id),
     });
@@ -139,6 +167,15 @@ roteador.get('/', exigirPapel(...EQUIPE, 'aluno'), rota((req, res) => {
 
   res.json({
     ...base,
+    ...trabalho,
+    // A recepção acompanha o movimento de treino e matrícula, mas o
+    // resultado em dinheiro continua sendo só do dono.
+    movimento: (() => {
+      const m = movimentoDoMes();
+      if (papel === 'dono') return m;
+      const { receita, ...semDinheiro } = m;
+      return semDinheiro;
+    })(),
     alunos,
     aniversariantes,
     avaliacoes_pendentes: avaliacoesPendentes.total,
