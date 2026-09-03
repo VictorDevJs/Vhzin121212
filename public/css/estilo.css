@@ -384,12 +384,13 @@ td.acoes-celula > * + * { margin-left: var(--esp-1); }
 }
 .aviso-flutuante.erro { border-left-color: var(--critico); }
 
-.mensagem-erro, .mensagem-ok {
+.mensagem-erro, .mensagem-ok, .mensagem-alerta {
   padding: .8rem 1rem; border-radius: var(--raio-2); margin-bottom: var(--esp-3);
   font-size: .9rem; display: flex; gap: var(--esp-2); align-items: flex-start;
 }
 .mensagem-erro { background: color-mix(in srgb, var(--critico) 14%, transparent); border: 1px solid color-mix(in srgb, var(--critico) 34%, transparent); color: var(--critico-tinta); }
 .mensagem-ok { background: color-mix(in srgb, var(--bom) 14%, transparent); border: 1px solid color-mix(in srgb, var(--bom) 34%, transparent); color: var(--bom-tinta); }
+.mensagem-alerta { background: color-mix(in srgb, var(--atencao) 15%, transparent); border: 1px solid color-mix(in srgb, var(--atencao) 36%, transparent); color: var(--atencao-tinta, var(--tinta)); }
 
 /* =========================================================================
    Peças com profundidade (3D)
@@ -1489,20 +1490,20 @@ td.acoes-celula > * + * { margin-left: var(--esp-1); }
   .contagem-grupo { width: 100%; order: 3; }
 }
 
-.grade-ficha {
+.grade-compacta {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: var(--esp-3);
   margin: var(--esp-3) 0;
 }
-.grade-ficha .indicador { padding: var(--esp-3); }
-.grade-ficha .indicador .valor { font-size: 1.35rem; }
+.grade-compacta .indicador { padding: var(--esp-3); }
+.grade-compacta .indicador .valor { font-size: 1.35rem; }
 
 /* No celular os indicadores viram dois por linha: cabe mais informacao na tela */
 @media (max-width: 620px) {
   .grade.col-3,
   .grade.col-4,
-  .grade-ficha { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--esp-3); }
+  .grade-compacta { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--esp-3); }
   .grade.col-3 > .cartao,
   .grade.col-4 > .cartao { grid-column: 1 / -1; }
   .indicador { padding: var(--esp-3); }
@@ -1515,4 +1516,20 @@ td.acoes-celula > * + * { margin-left: var(--esp-1); }
   .filtros .campo { min-width: 0; }
   .filtros .campo:first-child { grid-column: 1 / -1; }
   .filtros .botao { grid-column: 1 / -1; justify-content: center; }
+}
+
+/* Regras da cobrança: rótulo à esquerda, o que vale à direita */
+.lista-regras {
+  display: grid;
+  grid-template-columns: minmax(150px, auto) 1fr;
+  gap: .55rem var(--esp-4);
+  margin: 0;
+  align-items: baseline;
+}
+.lista-regras dt { color: var(--tinta-3); font-size: .8rem; font-weight: 700; }
+.lista-regras dd { margin: 0; font-size: .9rem; color: var(--tinta); }
+
+@media (max-width: 620px) {
+  .lista-regras { grid-template-columns: 1fr; gap: .1rem; }
+  .lista-regras dd { margin-bottom: .55rem; }
 }

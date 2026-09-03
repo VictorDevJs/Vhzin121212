@@ -926,3 +926,119 @@ test('a mensalidade vencida e não paga marca o aluno como atrasado', async () =
   assert.equal(dados.pagamento.atrasadas, 1);
   assert.equal(dados.pagamento.valor_atrasado, 150);
 });
+
+/* ==========================================================================
+   Controle automatico de plano e pagamento
+   ========================================================================== */
+
+test('a cobrança automática mostra as regras que estão valendo', async () => {
+  const { status, dados } = await chamar('GET', '/api/financeiro/cobranca', { token: estado.tokenDono });
+  assert.equal(status, 200);
+  assert.equal(typeof dados.ajustes.automatica, 'boolean');
+  assert.ok(dados.ajustes.dias_aviso >= 0);
+  assert.ok(dados.resumo.atrasados >= 1, 'o devedor de teste aparece no resumo');
+  assert.ok(dados.atrasados.some((a) => a.nome === 'Devedor de Teste'));
+});
+
+test('o atraso ganha multa e juros pela regra da casa', async () => {
+  const { dados } = await chamar('GET', '/api/financeiro/cobranca', { token: estado.tokenDono });
+  const devedor = dados.atrasados.find((a) => a.nome === 'Devedor de Teste');
+  const { multa, juros_dia: jurosDia } = dados.ajustes;
+
+  assert.ok(devedor.dias_atraso > 0, 'conta os dias desde o vencimento');
+  assert.equal(devedor.multa, Math.round(devedor.valor_atrasado * (multa / 100) * 100) / 100);
+  assert.equal(devedor.juros,
+    Math.round(devedor.valor_atrasado * (jurosDia / 100) * devedor.dias_atraso * 100) / 100);
+  assert.equal(devedor.valor_atualizado,
+    Math.round((devedor.valor_atrasado + devedor.multa + devedor.juros) * 100) / 100);
+});
+
+test('o dono muda as regras de cobrança e elas passam a valer', async () => {
+  const { status } = await chamar('PUT', '/api/configuracoes', {
+    token: estado.tokenDono,
+    corpo: { cobranca_tolerancia: '0', cobranca_bloquear_checkin: '1', cobranca_dias_aviso: '7' },
+  });
+  assert.equal(status, 200);
+
+  const { dados } = await chamar('GET', '/api/financeiro/cobranca', { token: estado.tokenDono });
+  assert.equal(dados.ajustes.tolerancia, 0);
+  assert.equal(dados.ajustes.bloquear_checkin, true);
+  assert.equal(dados.ajustes.dias_aviso, 7);
+});
+
+test('só o dono muda as regras; a recepção apenas consulta', async () => {
+  const negado = await chamar('PUT', '/api/configuracoes', {
+    token: estado.tokenRecepcao, corpo: { cobranca_tolerancia: '90' },
+  });
+  assert.equal(negado.status, 403);
+
+  const consulta = await chamar('GET', '/api/financeiro/cobranca', { token: estado.tokenRecepcao });
+  assert.equal(consulta.status, 200);
+});
+
+test('a rotina suspende quem passou do prazo e devolve quem pagou', async () => {
+  await chamar('PUT', '/api/configuracoes', {
+    token: estado.tokenDono, corpo: { cobranca_suspender_dias: '30' },
+  });
+
+  const executada = await chamar('POST', '/api/financeiro/cobranca/executar', { token: estado.tokenDono });
+  assert.equal(executada.status, 200);
+  assert.ok(executada.dados.matriculas_suspensas.includes('Devedor de Teste'),
+    'a matrícula do devedor de 2020 é suspensa sozinha');
+
+  const { dados: ficha } = await chamar('GET', '/api/contas', { token: estado.tokenDono });
+  const devedor = ficha.grupos.flatMap((g) => g.alunos).find((a) => a.nome === 'Devedor de Teste');
+  assert.equal(devedor.pagamento.suspensa_por_atraso, true);
+  assert.equal(devedor.pagamento.bloqueado, true, 'com tolerância zero, o check-in fica bloqueado');
+
+  // Pagando a mensalidade, a matrícula volta sozinha na próxima rodada.
+  const { dados: mensalidades } = await chamar('GET', '/api/financeiro/mensalidades?competencia=2020-01',
+    { token: estado.tokenDono });
+  const atrasada = mensalidades.mensalidades.find((m) => m.aluno === 'Devedor de Teste');
+  await chamar('POST', `/api/financeiro/mensalidades/${atrasada.id}/pagar`, {
+    token: estado.tokenDono, corpo: { forma_pagamento: 'pix' },
+  });
+
+  const devolvida = await chamar('POST', '/api/financeiro/cobranca/executar', { token: estado.tokenDono });
+  assert.ok(devolvida.dados.matriculas_reativadas.includes('Devedor de Teste'),
+    'quem acerta volta a treinar sem ninguém precisar mexer');
+});
+
+test('rodar a cobrança duas vezes não duplica mensalidade', async () => {
+  const primeira = await chamar('POST', '/api/financeiro/cobranca/executar', { token: estado.tokenDono });
+  const segunda = await chamar('POST', '/api/financeiro/cobranca/executar', { token: estado.tokenDono });
+  assert.equal(segunda.dados.mensalidades_criadas, 0,
+    `a segunda rodada não cria nada (a primeira criou ${primeira.dados.mensalidades_criadas})`);
+});
+
+test('o aluno em atraso não faz check-in quando o dono manda bloquear', async () => {
+  await chamar('PUT', '/api/configuracoes', {
+    token: estado.tokenDono, corpo: { cobranca_bloquear_checkin: '1', cobranca_tolerancia: '0' },
+  });
+
+  const antes = await chamar('GET', '/api/checkins/agora', { token: estado.tokenAluno });
+  assert.equal(antes.status, 200);
+  assert.ok(antes.dados.pagamento, 'o aluno vê a própria situação de pagamento');
+
+  // O aluno de teste não tem mensalidade vencida: continua liberado.
+  assert.equal(antes.dados.pagamento.bloqueado, false);
+});
+
+test('a área do aluno traz a situação do plano calculada pelo sistema', async () => {
+  const { dados } = await chamar('GET', '/api/minha-area', { token: estado.tokenAluno });
+  assert.ok(dados.pagamento, 'a área do aluno traz o pagamento');
+  assert.ok(['em dia', 'vence em breve', 'atrasado', 'sem plano', 'mês não gerado']
+    .includes(dados.pagamento.situacao));
+});
+
+test('o painel do aluno só mostra as aulas e os avisos da arte dele', async () => {
+  const { dados } = await chamar('GET', '/api/painel', { token: estado.tokenAluno });
+  assert.ok(dados.aulas_hoje.every((a) => a.modalidade === 'Judo'),
+    `o painel trouxe aulas de outra arte: ${dados.aulas_hoje.map((a) => a.modalidade).join(', ')}`);
+  assert.ok(dados.avisos_recentes.every((av) => !av.modalidade || av.modalidade === 'Judo'),
+    'nenhum aviso de outra arte aparece no painel do aluno');
+
+  const { dados: doDono } = await chamar('GET', '/api/painel', { token: estado.tokenDono });
+  assert.ok(doDono.aulas_hoje.length >= dados.aulas_hoje.length,
+    'o dono continua vendo a agenda inteira do dia');
+});

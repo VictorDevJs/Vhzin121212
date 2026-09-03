@@ -1,6 +1,6 @@
 import { api, sessao } from '../api.js';
 import {
-  el, cartao, indicador, botao, etiqueta, tabela, celula, vazio, aviso, esqueleto, dataBr,
+  el, cartao, indicador, botao, etiqueta, tabela, celula, vazio, aviso, esqueleto, dataBr, moeda,
 } from '../ui.js';
 import { icone } from '../icones.js';
 import { barrasHorizontais, evolucao } from '../graficos.js';
@@ -15,6 +15,44 @@ export default async function paginaCheckin() {
   return sessao.papel === 'aluno' ? telaDoAluno() : telaDaAcademia();
 }
 
+/**
+ * Recado sobre o plano, na tela onde o aluno vai treinar. Fala a verdade
+ * sem assustar: se está bloqueado, diz o que fazer; se está perto de vencer,
+ * lembra antes.
+ */
+function avisoDePagamento(pagamento) {
+  if (!pagamento) return null;
+
+  if (pagamento.bloqueado) {
+    return el('div', { classe: 'mensagem-erro' }, [
+      el('strong', { texto: 'Check-in bloqueado pela recepção. ' }),
+      `Sua mensalidade está ${pagamento.dias_atraso} dia(s) em atraso `
+      + `(${moeda(pagamento.valor_atualizado)} com multa e juros). `
+      + 'Passe na recepção para acertar e liberar o treino.',
+    ]);
+  }
+
+  if (pagamento.situacao === 'atrasado') {
+    return el('div', { classe: 'mensagem-alerta' }, [
+      el('strong', { texto: 'Mensalidade em atraso. ' }),
+      `Venceu em ${dataBr(pagamento.proximo_vencimento)} (${moeda(pagamento.valor_atrasado)}). `
+      + (pagamento.em_tolerancia
+        ? `Você ainda treina até ${dataBr(pagamento.tolerancia_ate)}. `
+        : '')
+      + 'Fale com a recepção quando puder.',
+    ]);
+  }
+
+  if (pagamento.situacao === 'vence em breve') {
+    return el('div', { classe: 'mensagem-ok' }, [
+      `Sua mensalidade de ${moeda(pagamento.valor_plano || 0)} vence em `
+      + `${dataBr(pagamento.proximo_vencimento)} — ${pagamento.dias_para_vencer} dia(s).`,
+    ]);
+  }
+
+  return null;
+}
+
 /* ------------------------------------------------------------- aluno */
 
 async function telaDoAluno() {
@@ -27,11 +65,13 @@ async function telaDoAluno() {
   }
 
   function desenhar(dados) {
-    const { aulas, totais } = dados;
+    const { aulas, totais, pagamento } = dados;
     const abertas = aulas.filter((a) => a.aberto && !a.ja_confirmado);
     const confirmadas = aulas.filter((a) => a.ja_confirmado);
 
     area.replaceChildren(el('div', {}, [
+      avisoDePagamento(pagamento),
+
       aulas.length ? null : el('div', { classe: 'mensagem-ok' }, [
         'Você não tem aula marcada para hoje. Aproveite para descansar — ou fale com a recepção para entrar em outra turma.',
       ]),

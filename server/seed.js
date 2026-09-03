@@ -645,12 +645,14 @@ export function carregarDemonstracao() {
       // O aluno entrou em algum momento dos ultimos 6 meses.
       const mesesDeCasa = Math.min(5, indice);
       const entrada = somarMeses(hoje(), -mesesDeCasa);
+      // Cada aluno escolhe o dia do vencimento, como acontece na recepção.
+      const diaVencimento = [5, 10, 20][indice % 3];
       const matricula = executar(`
         INSERT INTO matriculas (aluno_id, plano_id, inicio, fim, valor, dia_vencimento, status, criado_em)
-        VALUES (:a, :p, :inicio, :fim, :valor, 10, 'ativa', :criado_em)
+        VALUES (:a, :p, :inicio, :fim, :valor, :dia, 'ativa', :criado_em)
       `, {
         a: alunoId, p: plano.id, inicio: entrada, fim: somarMeses(entrada, 12), valor: plano.valor,
-        criado_em: `${entrada} 09:00:00`,
+        dia: diaVencimento, criado_em: `${entrada} 09:00:00`,
       });
       const matriculaId = Number(matricula.lastInsertRowid);
 
@@ -662,7 +664,8 @@ export function carregarDemonstracao() {
         // anterior vencer, e parte do mês corrente ainda está em aberto.
         const atrasaOMesPassado = atras === 1 && indice % 7 === 0;
         const pago = atrasaOMesPassado ? false : (!mesAtual || indice % 3 !== 0);
-        const pagoEm = mesAtual ? hoje() : `${mes}-08`;
+        const vencimento = `${mes}-${String(diaVencimento).padStart(2, '0')}`;
+        const pagoEm = mesAtual ? hoje() : `${mes}-0${diaVencimento === 20 ? 8 : 6}`;
         executar(`
           INSERT INTO mensalidades (matricula_id, aluno_id, competencia, vencimento, valor, status, pago_em, forma_pagamento)
           VALUES (:mt, :a, :competencia, :vencimento, :valor, :status, :pago_em, :forma)
@@ -670,7 +673,7 @@ export function carregarDemonstracao() {
           mt: matriculaId,
           a: alunoId,
           competencia: mes,
-          vencimento: `${mes}-10`,
+          vencimento,
           valor: plano.valor,
           status: pago ? 'pago' : 'pendente',
           pago_em: pago ? pagoEm : null,

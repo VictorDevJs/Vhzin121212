@@ -1,7 +1,8 @@
 import { Router } from 'express';
 import { todos, um } from '../db.js';
 import { exigirPapel } from '../auth.js';
-import { rota, ErroApi, texto, inteiro, hoje, competenciaAtual } from '../util.js';
+import { rota, ErroApi, texto, inteiro } from '../util.js';
+import { situacaoDePagamento, ajustesDeCobranca } from '../cobranca.js';
 
 const roteador = Router();
 
@@ -11,55 +12,6 @@ const roteador = Router();
  * É a mesma "Minha área" que o aluno vê, mas de fora: todas as contas
  * divididas por arte marcial, com a situação de pagamento calculada na hora.
  */
-
-/** Situação financeira do aluno, decidida pelas mensalidades e pelo vencimento. */
-function situacaoDePagamento(alunoId) {
-  const hojeISO = hoje();
-  const resumo = um(`
-    SELECT
-      SUM(CASE WHEN status = 'pendente' AND vencimento < :hoje THEN 1 ELSE 0 END) AS atrasadas,
-      SUM(CASE WHEN status = 'pendente' AND vencimento < :hoje THEN valor ELSE 0 END) AS valor_atrasado,
-      SUM(CASE WHEN status = 'pendente' AND vencimento >= :hoje THEN 1 ELSE 0 END) AS a_vencer,
-      MIN(CASE WHEN status = 'pendente' THEN vencimento END) AS proximo_vencimento,
-      MAX(CASE WHEN status = 'pago' THEN pago_em END) AS ultimo_pagamento
-    FROM mensalidades WHERE aluno_id = :id
-  `, { id: alunoId, hoje: hojeISO });
-
-  const matricula = um(`
-    SELECT mt.*, p.nome AS plano, p.valor AS valor_plano
-    FROM matriculas mt JOIN planos p ON p.id = mt.plano_id
-    WHERE mt.aluno_id = :id AND mt.status = 'ativa' ORDER BY mt.id DESC LIMIT 1
-  `, { id: alunoId });
-
-  const mesAtual = um(`
-    SELECT * FROM mensalidades WHERE aluno_id = :id AND competencia = :mes
-  `, { id: alunoId, mes: competenciaAtual() });
-
-  const atrasadas = resumo?.atrasadas || 0;
-  const diasParaVencer = resumo?.proximo_vencimento
-    ? Math.round((new Date(`${resumo.proximo_vencimento}T00:00:00`) - new Date(`${hojeISO}T00:00:00`)) / 86400000)
-    : null;
-
-  let situacao = 'em dia';
-  if (!matricula) situacao = 'sem plano';
-  else if (atrasadas > 0) situacao = 'atrasado';
-  else if (!mesAtual) situacao = 'mês não gerado';
-  else if (diasParaVencer !== null && diasParaVencer <= 5) situacao = 'vence em breve';
-
-  return {
-    situacao,
-    atrasadas,
-    valor_atrasado: resumo?.valor_atrasado || 0,
-    a_vencer: resumo?.a_vencer || 0,
-    proximo_vencimento: resumo?.proximo_vencimento || null,
-    dias_para_vencer: diasParaVencer,
-    ultimo_pagamento: resumo?.ultimo_pagamento || null,
-    plano: matricula?.plano || null,
-    valor_plano: matricula?.valor ?? matricula?.valor_plano ?? null,
-    dia_vencimento: matricula?.dia_vencimento ?? null,
-    mes_atual_pago: mesAtual?.status === 'pago',
-  };
-}
 
 /** Todas as contas, agrupadas pela arte marcial que o aluno treina. */
 roteador.get('/', exigirPapel('dono', 'recepcao'), rota((req, res) => {
@@ -84,6 +36,9 @@ roteador.get('/', exigirPapel('dono', 'recepcao'), rota((req, res) => {
   const modalidades = todos(`
     SELECT id, nome, cor, sigla FROM modalidades WHERE ativo = 1 ORDER BY ordem, nome
   `);
+
+  // Os ajustes de cobrança são lidos uma vez e valem para a lista inteira.
+  const ajustes = ajustesDeCobranca();
 
   // Cada aluno carrega a arte que treina, a graduação atual e a situação do plano.
   for (const aluno of alunos) {
@@ -111,7 +66,7 @@ roteador.get('/', exigirPapel('dono', 'recepcao'), rota((req, res) => {
       SELECT COUNT(*) AS total FROM checkins
       WHERE aluno_id = :id AND data >= date('now','localtime','-30 day')
     `, { id: aluno.id }).total;
-    aluno.pagamento = situacaoDePagamento(aluno.id);
+    aluno.pagamento = situacaoDePagamento(aluno.id, ajustes);
   }
 
   // Grupos por modalidade, mais um grupo para quem ainda não entrou em turma.
@@ -135,8 +90,13 @@ roteador.get('/', exigirPapel('dono', 'recepcao'), rota((req, res) => {
       sem_plano: alunos.filter((a) => a.pagamento.situacao === 'sem plano').length,
       mes_nao_gerado: alunos.filter((a) => a.pagamento.situacao === 'mês não gerado').length,
       valor_atrasado: alunos.reduce((soma, a) => soma + (a.pagamento.valor_atrasado || 0), 0),
+      valor_atualizado: Math.round(
+        alunos.reduce((soma, a) => soma + (a.pagamento.valor_atualizado || 0), 0) * 100) / 100,
+      suspensos: alunos.filter((a) => a.pagamento.suspensa_por_atraso).length,
+      bloqueados: alunos.filter((a) => a.pagamento.bloqueado).length,
       sem_acesso: alunos.filter((a) => !a.usuario_id).length,
     },
+    cobranca: ajustes,
   });
 }));
 

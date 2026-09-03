@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { todos, um } from '../db.js';
 import { exigirPapel } from '../auth.js';
 import { rota, ErroApi, DIAS_SEMANA, hoje } from '../util.js';
+import { situacaoDePagamento } from '../cobranca.js';
 
 const roteador = Router();
 
@@ -109,6 +110,7 @@ roteador.get('/', exigirPapel('aluno'), rota((req, res) => {
   res.json({
     aluno,
     matricula,
+    pagamento: situacaoDePagamento(aluno.id),
     turmas,
     horarios: meusHorarios.map((h) => ({ ...h, dia_nome: DIAS_SEMANA[h.dia_semana] })),
     mensalidades,

@@ -26,6 +26,7 @@ import paginaAnalises from './paginas/analises.js';
 import paginaSeguranca from './paginas/seguranca.js';
 import paginaRegras from './paginas/regras.js';
 import paginaContas from './paginas/contas.js';
+import paginaCobranca from './paginas/cobranca.js';
 
 const EQUIPE = ['dono', 'mestre', 'recepcao', 'competicoes'];
 const GESTAO = ['dono', 'recepcao'];
@@ -55,6 +56,7 @@ const ROTAS = [
   { caminho: 'loja', titulo: 'Loja', curto: 'Loja', icone: 'sacola', grupo: 'Gestão', papeis: [...EQUIPE, 'aluno'], render: paginaLoja },
 
   { caminho: 'financeiro', titulo: 'Financeiro', curto: 'Caixa', icone: 'dinheiro', grupo: 'Financeiro', papeis: GESTAO, render: paginaFinanceiro, principal: true },
+  { caminho: 'cobranca', titulo: 'Cobrança automática', curto: 'Cobrança', icone: 'cartao', grupo: 'Financeiro', papeis: GESTAO, render: paginaCobranca },
 
   { caminho: 'equipe', titulo: 'Equipe e academia', curto: 'Equipe', icone: 'engrenagem', grupo: 'Sistema', papeis: [...GESTAO, 'mestre'], render: paginaEquipe },
   { caminho: 'seguranca', titulo: 'Segurança e atividades', curto: 'Segurança', icone: 'cadeado', grupo: 'Sistema', papeis: ['dono'], render: paginaSeguranca },

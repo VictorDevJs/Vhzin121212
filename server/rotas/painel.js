@@ -2,12 +2,18 @@ import { Router } from 'express';
 import { todos, um } from '../db.js';
 import { exigirPapel, EQUIPE } from '../auth.js';
 import { rota, hoje, competenciaAtual, DIAS_SEMANA } from '../util.js';
+import { recorteDeModalidade } from '../escopo.js';
+import { filtroPorUsuario } from './avisos.js';
 
 const roteador = Router();
 
-/** Aulas do dia de hoje, com o mestre responsavel. */
-function aulasDeHoje(filtroMestre = null) {
+/**
+ * Aulas do dia de hoje, com o mestre responsavel. O recorte segue o resto
+ * do sistema: quem treina uma arte só vê as aulas dela.
+ */
+function aulasDeHoje(filtroMestre = null, usuario = null) {
   const diaSemana = new Date().getDay();
+  const recorte = usuario ? recorteDeModalidade(usuario, 't.modalidade_id', { incluirGerais: false }) : null;
   return todos(`
     SELECT h.hora_inicio, h.hora_fim, t.id AS turma_id, t.nome AS turma, t.categoria, t.local,
            m.nome AS modalidade, m.cor AS modalidade_cor, u.nome AS mestre, t.mestre_id,
@@ -19,6 +25,7 @@ function aulasDeHoje(filtroMestre = null) {
     LEFT JOIN usuarios u ON u.id = t.mestre_id
     WHERE h.dia_semana = :dia AND h.ativo = 1 AND t.ativo = 1
       ${filtroMestre ? 'AND t.mestre_id = :mestre_id' : ''}
+      ${recorte ? `AND ${recorte}` : ''}
     ORDER BY h.hora_inicio
   `, filtroMestre ? { dia: diaSemana, hoje: hoje(), mestre_id: filtroMestre } : { dia: diaSemana, hoje: hoje() });
 }
@@ -31,15 +38,24 @@ roteador.get('/', exigirPapel(...EQUIPE, 'aluno'), rota((req, res) => {
     papel,
     hoje: hoje(),
     dia_semana: DIAS_SEMANA[new Date().getDay()],
-    avisos_recentes: todos(`
-      SELECT av.id, av.titulo, av.tipo, av.data_evento, av.criado_em, av.fixado
-      FROM avisos av WHERE av.ativo = 1 ORDER BY av.fixado DESC, av.criado_em DESC LIMIT 5
-    `),
+    // Os avisos do painel seguem a mesma regra da aba de avisos: o aluno
+    // recebe os da arte dele, os da turma dele e os que valem para todos.
+    avisos_recentes: (() => {
+      const { clausula, params } = filtroPorUsuario(req.usuario);
+      return todos(`
+        SELECT av.id, av.titulo, av.tipo, av.data_evento, av.criado_em, av.fixado,
+               m.nome AS modalidade, m.cor AS modalidade_cor
+        FROM avisos av
+        LEFT JOIN modalidades m ON m.id = av.modalidade_id
+        WHERE ${clausula || 'av.ativo = 1'}
+        ORDER BY av.fixado DESC, av.criado_em DESC LIMIT 5
+      `, params);
+    })(),
   };
 
   if (papel === 'aluno') {
     const aluno = um('SELECT * FROM alunos WHERE usuario_id = :id', { id: req.usuario.id });
-    return res.json({ ...base, aluno, aulas_hoje: aulasDeHoje() });
+    return res.json({ ...base, aluno, aulas_hoje: aulasDeHoje(null, req.usuario) });
   }
 
   if (papel === 'mestre') {

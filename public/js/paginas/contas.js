@@ -47,11 +47,15 @@ export default async function paginaContas() {
       indicador({ rotulo: 'Pagamento em dia', valor: String(resumo.em_dia),
         detalhe: 'Sem nada vencido', tipo: 'bom' }),
       indicador({ rotulo: 'Atrasados', valor: String(resumo.atrasados),
-        detalhe: resumo.valor_atrasado ? `${moeda(resumo.valor_atrasado)} a receber` : 'Nada em atraso',
+        detalhe: resumo.valor_atualizado
+          ? `${moeda(resumo.valor_atualizado)} com multa e juros`
+          : 'Nada em atraso',
         tipo: resumo.atrasados ? 'critico' : 'bom' }),
-      indicador({ rotulo: 'Vencendo em 5 dias', valor: String(resumo.vence_em_breve),
-        detalhe: resumo.sem_plano ? `${resumo.sem_plano} sem plano ativo` : 'Cobrança preventiva',
-        tipo: resumo.vence_em_breve ? 'atencao' : '' }),
+      indicador({ rotulo: 'Vencendo', valor: String(resumo.vence_em_breve),
+        detalhe: resumo.suspensos
+          ? `${resumo.suspensos} matrícula(s) suspensa(s)`
+          : (resumo.sem_plano ? `${resumo.sem_plano} sem plano ativo` : 'Cobrança preventiva'),
+        tipo: resumo.vence_em_breve || resumo.suspensos ? 'atencao' : '' }),
     );
   }
 
@@ -120,8 +124,13 @@ export default async function paginaContas() {
     if (pagamento.situacao === 'atrasado') {
       return el('div', {}, [
         etiquetaBase,
+        pagamento.suspensa_por_atraso ? etiqueta('matrícula suspensa', 'erro') : null,
+        pagamento.bloqueado ? etiqueta('check-in bloqueado', 'erro') : null,
         el('div', { classe: 'dica', texto: `${moeda(pagamento.valor_atrasado)} desde ${dataBr(pagamento.proximo_vencimento)}` }),
-      ]);
+        pagamento.multa + pagamento.juros
+          ? el('div', { classe: 'dica', texto: `${moeda(pagamento.valor_atualizado)} com multa e juros · ${pagamento.dias_atraso} dia(s)` })
+          : null,
+      ].filter(Boolean));
     }
     if (pagamento.dias_para_vencer !== null && pagamento.dias_para_vencer >= 0) {
       return el('div', {}, [
@@ -167,7 +176,7 @@ export default async function paginaContas() {
         ]),
       ]),
 
-      el('div', { classe: 'grade-ficha' }, [
+      el('div', { classe: 'grade-compacta' }, [
         indicador({ rotulo: 'Plano', valor: f.pagamento.plano || '—',
           detalhe: f.pagamento.valor_plano ? moeda(f.pagamento.valor_plano) : 'sem matrícula ativa' }),
         indicador({ rotulo: 'Treinos no total', valor: String(f.frequencia.total),
@@ -274,7 +283,8 @@ export default async function paginaContas() {
   return el('div', {}, [
     topo('Contas dos alunos',
       'Todas as fichas divididas por arte marcial, com plano, graduação, frequência e pagamento',
-      [botao('+ Novo aluno', () => irPara('alunos'))]),
+      [botao('Cobrança automática', () => irPara('cobranca'), 'botao secundario'),
+        botao('+ Novo aluno', () => irPara('alunos'))]),
 
     el('p', { classe: 'explicacao' }, [
       icone('alunos', 16),

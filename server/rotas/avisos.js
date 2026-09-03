@@ -17,7 +17,7 @@ const SELECT_AVISO = `
 `;
 
 /** Monta o filtro que decide quais avisos cada pessoa enxerga. */
-function filtroPorUsuario(usuario) {
+export function filtroPorUsuario(usuario) {
   if (usuario.papel !== 'aluno') return { clausula: '', params: {} };
 
   const aluno = um('SELECT * FROM alunos WHERE usuario_id = :id', { id: usuario.id });

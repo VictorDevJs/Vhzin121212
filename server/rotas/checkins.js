@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { todos, um, executar, transacao } from '../db.js';
 import { exigirPapel, EQUIPE } from '../auth.js';
 import { rota, ErroApi, inteiro, data, hoje, DIAS_SEMANA } from '../util.js';
+import { situacaoDePagamento } from '../cobranca.js';
 
 const roteador = Router();
 
@@ -127,6 +128,7 @@ roteador.get('/agora', exigirPapel('aluno'), rota((req, res) => {
     aluno: { id: aluno.id, nome: aluno.nome, status: aluno.status },
     aulas: aulasDeHojeDoAluno(aluno.id),
     totais: totaisDoAluno(aluno.id),
+    pagamento: situacaoDePagamento(aluno.id),
     hora: horaAtual(),
   });
 }));
@@ -136,6 +138,13 @@ roteador.post('/', exigirPapel('aluno'), rota((req, res) => {
   const aluno = alunoDoUsuario(req.usuario);
   if (aluno.status !== 'ativo') {
     throw new ErroApi('Sua matrícula ainda não está ativa. Fale com a recepção para liberar o check-in.', 403);
+  }
+
+  const pagamento = situacaoDePagamento(aluno.id);
+  if (pagamento.bloqueado) {
+    throw new ErroApi(
+      `Sua mensalidade está ${pagamento.dias_atraso} dia(s) em atraso. `
+      + 'Passe na recepção para liberar o treino.', 403);
   }
 
   const horarioId = inteiro(req.body?.horario_id);
@@ -167,6 +176,7 @@ roteador.post('/', exigirPapel('aluno'), rota((req, res) => {
     mensagem: `Check-in confirmado em ${aula.modalidade}. Bom treino!`,
     totais: totaisDoAluno(aluno.id),
     aulas: aulasDeHojeDoAluno(aluno.id),
+    pagamento: situacaoDePagamento(aluno.id),
   });
 }));
 

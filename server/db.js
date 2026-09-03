@@ -87,6 +87,8 @@ function migrar(banco) {
     ['graduacoes', 'descricao', 'TEXT'],
     ['graduacoes', 'faixa_etaria', `TEXT NOT NULL DEFAULT 'adulto'`],
     ['aluno_graduacoes', 'grau', 'INTEGER NOT NULL DEFAULT 0'],
+    ['matriculas', 'suspensa_em', 'TEXT'],
+    ['matriculas', 'suspensa_motivo', 'TEXT'],
   ];
   for (const [tabela, coluna, tipo] of novas) {
     const existentes = colunasDe(banco, tabela);
@@ -251,6 +253,8 @@ const ESQUEMA = `
       valor          REAL NOT NULL,
       dia_vencimento INTEGER NOT NULL DEFAULT 10 CHECK (dia_vencimento BETWEEN 1 AND 28),
       status         TEXT NOT NULL DEFAULT 'ativa' CHECK (status IN ('ativa','suspensa','encerrada')),
+      suspensa_em    TEXT,                        -- quando a cobranca automatica suspendeu
+      suspensa_motivo TEXT,                       -- 'inadimplencia' quando foi o sistema
       criado_em      TEXT NOT NULL DEFAULT (datetime('now','localtime'))
     );
 

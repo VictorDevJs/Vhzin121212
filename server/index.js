@@ -29,6 +29,7 @@ import rotasEquipes from './rotas/equipes.js';
 import rotasAuditoria from './rotas/auditoria.js';
 import rotasRegras from './rotas/regras.js';
 import rotasContas from './rotas/contas.js';
+import { garantirCobrancaDoDia } from './cobranca.js';
 
 const raiz = dirname(dirname(fileURLToPath(import.meta.url)));
 
@@ -39,6 +40,13 @@ export function criarApp() {
   const app = express();
   app.use(express.json({ limit: '8mb' })); // o limite maior atende o upload de certificados
   app.use(autenticacaoOpcional);
+
+  // A cobrança do dia roda sozinha, no máximo uma vez por dia: gera as
+  // mensalidades do mês, suspende quem passou do prazo e reativa quem pagou.
+  app.use('/api', (_req, _res, proximo) => {
+    try { garantirCobrancaDoDia(); } catch { /* a cobrança nunca derruba o atendimento */ }
+    proximo();
+  });
 
   app.get('/api/saude', (_req, res) => res.json({ ok: true, servico: 'atak' }));
 

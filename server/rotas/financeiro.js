@@ -4,6 +4,7 @@ import { exigirPapel, GESTAO } from '../auth.js';
 import {
   rota, ErroApi, exigirCampos, texto, numero, inteiro, data, hoje, competenciaAtual,
 } from '../util.js';
+import { rodarCobranca, gerarMensalidades, ajustesDeCobranca, situacaoDePagamento } from '../cobranca.js';
 
 const roteador = Router();
 
@@ -121,28 +122,64 @@ roteador.get('/mensalidades', exigirPapel(...GESTAO), rota((req, res) => {
 roteador.post('/mensalidades/gerar', exigirPapel(...GESTAO), rota((req, res) => {
   const competencia = texto(req.body?.competencia, competenciaAtual());
   if (!/^\d{4}-\d{2}$/.test(competencia)) throw new ErroApi('Competência inválida. Use AAAA-MM.');
-
-  const matriculas = todos(`SELECT * FROM matriculas WHERE status = 'ativa'`);
-  let criadas = 0;
-  transacao(() => {
-    for (const matricula of matriculas) {
-      const existe = um('SELECT id FROM mensalidades WHERE aluno_id = :a AND competencia = :c',
-        { a: matricula.aluno_id, c: competencia });
-      if (existe) continue;
-      executar(`
-        INSERT INTO mensalidades (matricula_id, aluno_id, competencia, vencimento, valor, status)
-        VALUES (:matricula_id, :aluno_id, :competencia, :vencimento, :valor, 'pendente')
-      `, {
-        matricula_id: matricula.id,
-        aluno_id: matricula.aluno_id,
-        competencia,
-        vencimento: `${competencia}-${String(matricula.dia_vencimento).padStart(2, '0')}`,
-        valor: matricula.valor,
-      });
-      criadas += 1;
-    }
+  const criadas = transacao(() => gerarMensalidades(competencia));
+  res.json({
+    competencia,
+    criadas: criadas.length,
+    mensagem: `${criadas.length} mensalidade(s) gerada(s) para ${competencia}.`,
   });
-  res.json({ mensagem: `${criadas} mensalidade(s) gerada(s) para ${competencia}.`, criadas, competencia });
+}));
+
+/**
+ * Retrato da cobrança automática: como está configurada, quando rodou pela
+ * última vez e quem está em cada situação de pagamento agora.
+ */
+roteador.get('/cobranca', exigirPapel(...GESTAO), rota((_req, res) => {
+  const ajustes = ajustesDeCobranca();
+  const alunos = todos(`
+    SELECT a.id, a.nome, a.telefone, a.categoria,
+           (SELECT m.nome FROM aluno_turmas at
+             JOIN turmas t ON t.id = at.turma_id
+             JOIN modalidades m ON m.id = t.modalidade_id
+            WHERE at.aluno_id = a.id ORDER BY m.ordem LIMIT 1) AS modalidade
+    FROM alunos a WHERE a.status != 'inativo' ORDER BY a.nome
+  `);
+
+  const situacoes = alunos.map((aluno) => ({ ...aluno, ...situacaoDePagamento(aluno.id, ajustes) }));
+  const por = (situacao) => situacoes.filter((s) => s.situacao === situacao);
+  const atrasados = por('atrasado');
+
+  res.json({
+    ajustes,
+    competencia: competenciaAtual(),
+    resumo: {
+      em_dia: por('em dia').length,
+      vence_em_breve: por('vence em breve').length,
+      atrasados: atrasados.length,
+      sem_plano: por('sem plano').length,
+      mes_nao_gerado: por('mês não gerado').length,
+      suspensos: situacoes.filter((s) => s.suspensa_por_atraso).length,
+      bloqueados: situacoes.filter((s) => s.bloqueado).length,
+      valor_atrasado: Math.round(atrasados.reduce((soma, s) => soma + s.valor_atrasado, 0) * 100) / 100,
+      valor_atualizado: Math.round(atrasados.reduce((soma, s) => soma + s.valor_atualizado, 0) * 100) / 100,
+    },
+    atrasados: atrasados.sort((a, b) => b.dias_atraso - a.dias_atraso),
+    a_vencer: por('vence em breve'),
+    sem_plano: por('sem plano'),
+  });
+}));
+
+/** Roda a cobrança na hora, sem esperar a virada do dia. */
+roteador.post('/cobranca/executar', exigirPapel('dono', 'recepcao'), rota((req, res) => {
+  const competencia = texto(req.body?.competencia, competenciaAtual());
+  if (!/^\d{4}-\d{2}$/.test(competencia)) throw new ErroApi('Competência inválida. Use AAAA-MM.');
+  const relatorio = rodarCobranca({ competencia });
+  res.json({
+    ...relatorio,
+    mensagem: `${relatorio.mensalidades_criadas} mensalidade(s) gerada(s), `
+      + `${relatorio.matriculas_suspensas.length} matrícula(s) suspensa(s) e `
+      + `${relatorio.matriculas_reativadas.length} reativada(s).`,
+  });
 }));
 
 roteador.post('/mensalidades', exigirPapel(...GESTAO), rota((req, res) => {

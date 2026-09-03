@@ -8,12 +8,74 @@ import { topo, irPara } from '../app.js';
 
 const COR_MEDALHA = { ouro: '#f5b301', prata: '#b9bec6', bronze: '#b06d3a', participacao: '#6b7280' };
 
+const SINAL_PAGAMENTO = {
+  'em dia': 'bom',
+  'vence em breve': 'atencao',
+  atrasado: 'critico',
+  'sem plano': 'atencao',
+  'mês não gerado': '',
+};
+
+/** Uma linha curta que explica o número do indicador de mensalidade. */
+function detalheDoPagamento(pagamento) {
+  if (!pagamento) return '';
+  if (pagamento.situacao === 'atrasado') {
+    return `${moeda(pagamento.valor_atualizado)} · ${pagamento.dias_atraso} dia(s) de atraso`;
+  }
+  if (pagamento.proximo_vencimento) {
+    return `vence em ${dataBr(pagamento.proximo_vencimento)}`;
+  }
+  if (pagamento.ultimo_pagamento) return `último pagamento em ${dataBr(pagamento.ultimo_pagamento)}`;
+  return 'fale com a recepção';
+}
+
+/** O recado sobre o plano, com o tom certo para cada situação. */
+function recadoDoPlano(pagamento, quantasAtrasadas) {
+  if (!pagamento) {
+    return quantasAtrasadas
+      ? el('div', { classe: 'mensagem-erro', texto: `Você tem ${quantasAtrasadas} mensalidade(s) em atraso. Procure a recepção.` })
+      : null;
+  }
+
+  if (pagamento.bloqueado) {
+    return el('div', { classe: 'mensagem-erro' }, [
+      el('strong', { texto: 'Treino bloqueado por atraso. ' }),
+      `São ${pagamento.dias_atraso} dia(s) desde o vencimento de `
+      + `${dataBr(pagamento.proximo_vencimento)}, ${moeda(pagamento.valor_atualizado)} com multa e juros. `
+      + 'Passe na recepção para acertar e voltar a treinar.',
+    ]);
+  }
+
+  if (pagamento.situacao === 'atrasado') {
+    return el('div', { classe: 'mensagem-alerta' }, [
+      el('strong', { texto: `${pagamento.atrasadas} mensalidade(s) em atraso. ` }),
+      `${moeda(pagamento.valor_atrasado)} desde ${dataBr(pagamento.proximo_vencimento)}`
+      + (pagamento.multa + pagamento.juros
+        ? ` (${moeda(pagamento.valor_atualizado)} com multa e juros)`
+        : '')
+      + '. '
+      + (pagamento.em_tolerancia
+        ? `Você continua treinando até ${dataBr(pagamento.tolerancia_ate)}.`
+        : 'Procure a recepção para acertar.'),
+    ]);
+  }
+
+  if (pagamento.situacao === 'vence em breve') {
+    return el('div', { classe: 'mensagem-ok' }, [
+      `Sua próxima mensalidade vence em ${dataBr(pagamento.proximo_vencimento)}`
+      + ` — daqui a ${pagamento.dias_para_vencer} dia(s).`,
+    ]);
+  }
+
+  return null;
+}
+
 /** Área do aluno: plano, horarios, mensalidades, graduacoes e frequencia. */
 export default async function paginaMinhaArea() {
   const dados = await api.obter('/minha-area');
   const {
     aluno, matricula, turmas, horarios, mensalidades, graduacoes, presencas, frequencia,
-    proxima_faixa: proximaFaixa, competicoes, equipes,
+    proxima_faixa: proximaFaixa, competicoes, equipes, pagamento,
   } = dados;
 
   const emAtraso = mensalidades.filter((m) => m.atrasada);
@@ -39,13 +101,16 @@ export default async function paginaMinhaArea() {
     aluno.status === 'pendente'
       ? el('div', { classe: 'mensagem-erro', texto: 'Seu cadastro esta aguardando a recepção confirmar a matrícula e liberar o plano.' })
       : null,
-    emAtraso.length
-      ? el('div', { classe: 'mensagem-erro', texto: `Você tem ${emAtraso.length} mensalidade(s) em atraso. Procure a recepcao.` })
-      : null,
+    recadoDoPlano(pagamento, emAtraso.length),
 
-    el('div', { classe: 'grade col-4', estilo: 'margin-bottom:1rem' }, [
+    el('div', { classe: 'grade-compacta', estilo: 'margin-bottom:1rem' }, [
       indicador({ rotulo: 'Situação', valor: aluno.status, tipo: aluno.status === 'ativo' ? 'ok' : 'alerta' }),
       indicador({ rotulo: 'Plano', valor: matricula?.plano ?? 'sem plano', detalhe: matricula ? moeda(matricula.valor) : 'fale com a recepção', tipo: 'info' }),
+      indicador({
+        rotulo: 'Mensalidade', valor: pagamento?.situacao ?? 'sem plano',
+        detalhe: detalheDoPagamento(pagamento),
+        tipo: SINAL_PAGAMENTO[pagamento?.situacao] ?? '',
+      }),
       indicador({ rotulo: 'Turmas', valor: turmas.length, detalhe: `${horarios.length} aula(s) por semana` }),
       indicador({
         rotulo: 'Frequência (30 dias)',
