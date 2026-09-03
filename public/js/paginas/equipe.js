@@ -244,7 +244,7 @@ export default async function paginaEquipe() {
       el('div', { classe: 'campo' }, [
         el('label', { texto: 'Manchete do site' }),
         el('input', { name: 'manchete', value: config.manchete || '',
-          placeholder: 'Formando lutador de verdade na Pechincha.' }),
+          placeholder: 'Formando lutador de verdade na Atak.' }),
         el('div', { classe: 'dica', texto:
           'É a frase grande que abre o site. Fale do que a academia entrega, não do nome dela.' }),
       ]),
