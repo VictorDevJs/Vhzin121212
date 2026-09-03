@@ -42,11 +42,12 @@
   --eixo: #33333b;
 
   /* Sombras em camadas: é o que dá volume aos blocos */
-  --sombra-1: 0 1px 2px rgba(0, 0, 0, .6), 0 2px 6px rgba(0, 0, 0, .35);
-  --sombra-2: 0 8px 20px rgba(0, 0, 0, .5), 0 2px 6px rgba(0, 0, 0, .4);
-  --sombra-3: 0 28px 70px rgba(0, 0, 0, .65), 0 8px 20px rgba(0, 0, 0, .5);
-  --luz-topo: inset 0 1px 0 rgba(255, 255, 255, .07);
-  --brilho-marca: 0 0 36px rgba(245, 179, 1, .28);
+  --sombra-1: 0 1px 2px rgba(0, 0, 0, .28);
+  --sombra-2: 0 4px 12px rgba(0, 0, 0, .3);
+  --sombra-3: 0 18px 44px rgba(0, 0, 0, .45);
+  /* O brilho no topo das superficies saiu: e o que mais dava ar de plastico. */
+  --luz-topo: 0 0 0 0 transparent;
+  --brilho-marca: 0 0 0 1px rgba(245, 179, 1, .3);
 
   /* ---- Estados (sempre com ícone ou texto junto) ---- */
   --bom: #2fbf5b;
@@ -79,11 +80,11 @@
     --tinta-3: #83807a;
     --grade: #e3e1dc;
     --eixo: #c9c6c0;
-    --sombra-1: 0 1px 2px rgba(24, 22, 18, .07), 0 2px 6px rgba(24, 22, 18, .05);
-    --sombra-2: 0 10px 24px rgba(24, 22, 18, .1), 0 2px 6px rgba(24, 22, 18, .06);
-    --sombra-3: 0 30px 70px rgba(24, 22, 18, .18), 0 8px 20px rgba(24, 22, 18, .1);
-    --luz-topo: inset 0 1px 0 rgba(255, 255, 255, .9);
-    --brilho-marca: 0 0 30px rgba(245, 179, 1, .35);
+    --sombra-1: 0 1px 2px rgba(24, 22, 18, .05);
+    --sombra-2: 0 4px 12px rgba(24, 22, 18, .07);
+    --sombra-3: 0 18px 44px rgba(24, 22, 18, .12);
+    --luz-topo: 0 0 0 0 transparent;
+    --brilho-marca: 0 0 0 1px rgba(245, 179, 1, .3);
     --bom-tinta: #17843c;
     --critico-tinta: #c02626;
     --serie-1: #2a78d6;  --serie-2: #eb6834;  --serie-3: #1baf7a;  --serie-4: #eda100;
@@ -106,11 +107,11 @@
   --tinta-3: #83807a;
   --grade: #e3e1dc;
   --eixo: #c9c6c0;
-  --sombra-1: 0 1px 2px rgba(24, 22, 18, .07), 0 2px 6px rgba(24, 22, 18, .05);
-  --sombra-2: 0 10px 24px rgba(24, 22, 18, .1), 0 2px 6px rgba(24, 22, 18, .06);
-  --sombra-3: 0 30px 70px rgba(24, 22, 18, .18), 0 8px 20px rgba(24, 22, 18, .1);
-  --luz-topo: inset 0 1px 0 rgba(255, 255, 255, .9);
-  --brilho-marca: 0 0 30px rgba(245, 179, 1, .35);
+  --sombra-1: 0 1px 2px rgba(24, 22, 18, .05);
+  --sombra-2: 0 4px 12px rgba(24, 22, 18, .07);
+  --sombra-3: 0 18px 44px rgba(24, 22, 18, .12);
+  --luz-topo: 0 0 0 0 transparent;
+  --brilho-marca: 0 0 0 1px rgba(245, 179, 1, .3);
   --bom-tinta: #17843c;
   --critico-tinta: #c02626;
   --serie-1: #2a78d6;  --serie-2: #eb6834;  --serie-3: #1baf7a;  --serie-4: #eda100;

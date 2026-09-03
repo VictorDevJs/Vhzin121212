@@ -26,13 +26,16 @@ export default async function paginaAlunos() {
     area.replaceChildren(cartao(
       `${lista.length} aluno(s)`,
       tabela(
-        ['Aluno', 'Categoria', 'Situação', 'Plano', 'Contato', 'Pagamento', 'Ações'],
+        ['Aluno', 'Situação', 'Plano', 'Contato', 'Pagamento', 'Ações'],
         lista.map((aluno) => [
+          // Categoria e idade moram junto do nome: uma coluna a menos na tabela.
           celula([
             el('strong', { texto: aluno.nome }),
-            aluno.data_nascimento ? el('div', { classe: 'dica', texto: `${idade(aluno.data_nascimento)} anos` }) : null,
+            el('div', { classe: 'dica' }, [
+              [aluno.categoria, aluno.data_nascimento ? `${idade(aluno.data_nascimento)} anos` : null]
+                .filter(Boolean).join(' · '),
+            ]),
           ]),
-          celula([etiqueta(aluno.categoria, aluno.categoria === 'kids' ? 'info' : 'neutra')]),
           celula([etiquetaStatus(aluno.status)]),
           aluno.plano || '-',
           aluno.telefone || aluno.email || '-',
@@ -56,7 +59,7 @@ export default async function paginaAlunos() {
           celula([
             botao('Ficha', () => abrirFicha(aluno.id), 'botao pequeno secundario'),
             podeGerir ? botao('Editar', () => formularioAluno(aluno), 'botao pequeno secundario') : null,
-            podeGerir ? botao('Matricular', () => formularioMatricula(aluno), 'botao pequeno') : null,
+            podeGerir ? botao('Matricular', () => formularioMatricula(aluno), 'botao pequeno secundario') : null,
           ].filter(Boolean), 'acoes-celula'),
         ]),
         'Nenhum aluno encontrado com esses filtros.',

@@ -25,10 +25,7 @@ body::before {
   position: fixed;
   inset: 0;
   z-index: -2;
-  background:
-    radial-gradient(60% 45% at 12% -5%, rgba(245, 179, 1, .10), transparent 65%),
-    radial-gradient(45% 40% at 95% 8%, rgba(224, 32, 32, .07), transparent 70%),
-    radial-gradient(70% 60% at 50% 110%, rgba(255, 212, 94, .05), transparent 70%);
+  background: radial-gradient(65% 45% at 12% -8%, rgba(245, 179, 1, .045), transparent 70%);
   pointer-events: none;
 }
 
@@ -66,7 +63,7 @@ a:hover { text-decoration: underline; }
 
 .lateral {
   width: 258px; flex: 0 0 258px;
-  background: linear-gradient(180deg, var(--superficie), var(--plano-2));
+  background: var(--superficie);
   border-right: 1px solid var(--borda);
   box-shadow: var(--luz-topo);
   padding: var(--esp-4) var(--esp-3) var(--esp-4);
@@ -75,7 +72,7 @@ a:hover { text-decoration: underline; }
 }
 
 .identidade { display: flex; align-items: center; gap: var(--esp-3); padding: var(--esp-2) var(--esp-2) var(--esp-5); }
-.identidade img { height: 38px; width: auto; max-width: 178px; filter: drop-shadow(0 4px 12px rgba(0, 0, 0, .45)); }
+.identidade img { height: 38px; width: auto; max-width: 178px; }
 .identidade .nome { font-family: var(--fonte-titulo); font-size: 1.4rem; letter-spacing: .06em; line-height: 1; }
 
 .grupo-menu {
@@ -100,12 +97,11 @@ a:hover { text-decoration: underline; }
 }
 .item-menu.ativo::before {
   content: ''; position: absolute; left: -1px; top: 20%; bottom: 20%;
-  width: 3px; border-radius: 0 4px 4px 0; background: var(--marca-gradiente);
-  box-shadow: var(--brilho-marca);
+  width: 3px; border-radius: 0 4px 4px 0; background: var(--marca-1);
 }
 .item-menu .icone { width: 20px; display: grid; place-items: center; flex: 0 0 20px; opacity: .9; }
 .item-menu .contador {
-  margin-left: auto; background: var(--marca-gradiente); color: var(--marca-contraste);
+  margin-left: auto; background: var(--marca-1); color: var(--marca-contraste);
   font-size: .7rem; font-weight: 800; padding: 0 .45rem; border-radius: var(--raio-pilula); min-width: 20px; text-align: center;
 }
 
@@ -113,9 +109,8 @@ a:hover { text-decoration: underline; }
 .cartao-usuario { display: flex; align-items: center; gap: var(--esp-3); padding: var(--esp-2); border-radius: var(--raio-2); }
 .avatar {
   width: 38px; height: 38px; border-radius: 12px; flex: 0 0 38px;
-  background: var(--marca-gradiente); color: var(--marca-contraste);
+  background: var(--marca-1); color: var(--marca-contraste);
   display: grid; place-items: center; font-weight: 800; font-size: .85rem;
-  box-shadow: var(--sombra-1), var(--luz-topo);
 }
 .cartao-usuario .dados { min-width: 0; }
 .cartao-usuario strong { display: block; font-size: .9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -160,7 +155,7 @@ a:hover { text-decoration: underline; }
   background: var(--superficie-2); color: var(--tinta-2); cursor: pointer;
   transition: all var(--mov-rapido);
 }
-.botao-icone:hover { color: var(--marca-1); border-color: var(--borda-forte); transform: translateY(-1px); }
+.botao-icone:hover { color: var(--marca-1); border-color: var(--borda-forte); }
 .menu-mobile { display: none; }
 
 .nav-inferior {
@@ -226,7 +221,7 @@ a:hover { text-decoration: underline; }
 .indicador.bom .faixa { background: var(--bom); }
 .indicador.atencao .faixa { background: var(--atencao); }
 .indicador.critico .faixa { background: var(--critico); }
-.indicador.destaque .faixa { background: var(--marca-gradiente); box-shadow: var(--brilho-marca); }
+.indicador.destaque .faixa { background: var(--marca-1); }
 .indicador .mini-grafico { margin-top: var(--esp-2); }
 .delta { display: inline-flex; align-items: center; gap: .25rem; font-size: .82rem; font-weight: 700; }
 .delta.sobe { color: var(--bom-tinta); }
@@ -235,20 +230,18 @@ a:hover { text-decoration: underline; }
 /* Botões */
 .botao {
   display: inline-flex; align-items: center; justify-content: center; gap: var(--esp-2);
-  background: var(--marca-gradiente); color: var(--marca-contraste);
+  background: var(--marca-1); color: var(--marca-contraste);
   border: none; padding: .62rem 1.15rem; border-radius: var(--raio-1); cursor: pointer;
   font: inherit; font-weight: 800; font-size: .9rem; white-space: nowrap;
-  box-shadow: 0 6px 16px rgba(245, 179, 1, .22), inset 0 1px 0 rgba(255, 255, 255, .45);
-  transition: transform var(--mov-rapido), box-shadow var(--mov-rapido), filter var(--mov-rapido);
+  transition: background var(--mov-rapido), border-color var(--mov-rapido), color var(--mov-rapido);
 }
-.botao:hover { transform: translateY(-2px); box-shadow: 0 12px 26px rgba(245, 179, 1, .3), inset 0 1px 0 rgba(255, 255, 255, .5); text-decoration: none; }
-.botao:active { transform: translateY(0) scale(.985); }
-.botao:disabled { opacity: .5; cursor: not-allowed; transform: none; box-shadow: none; }
+.botao:hover { background: var(--marca-2); text-decoration: none; }
+.botao:active { background: #d99f00; }
+.botao:disabled { opacity: .45; cursor: not-allowed; }
 .botao.secundario {
-  background: var(--superficie-2); color: var(--tinta); border: 1px solid var(--borda);
-  box-shadow: var(--luz-topo);
+  background: transparent; color: var(--tinta); border: 1px solid var(--borda-forte);
 }
-.botao.secundario:hover { border-color: var(--borda-forte); background: var(--superficie-3); box-shadow: var(--sombra-1); }
+.botao.secundario:hover { background: var(--superficie-2); }
 .botao.fantasma { background: transparent; color: var(--tinta-2); box-shadow: none; }
 .botao.fantasma:hover { background: var(--superficie-2); color: var(--tinta); }
 .botao.perigo {
@@ -285,9 +278,24 @@ textarea { min-height: 100px; resize: vertical; }
 .filtros .campo { margin: 0; min-width: 165px; }
 
 /* Tabelas */
-.rolagem { overflow-x: auto; border-radius: var(--raio-2); }
+/*
+ * Tabela larga rola de lado. A sombra nas beiradas avisa que tem mais
+ * conteúdo — sem ela o botão cortado parece defeito.
+ */
+.rolagem {
+  overflow-x: auto;
+  border-radius: var(--raio-2);
+  background:
+    linear-gradient(to right, var(--superficie) 30%, transparent),
+    linear-gradient(to left, var(--superficie) 30%, transparent) 100% 0,
+    linear-gradient(to right, rgba(0, 0, 0, .16), transparent 14px),
+    linear-gradient(to left, rgba(0, 0, 0, .16), transparent 14px) 100% 0;
+  background-repeat: no-repeat;
+  background-size: 42px 100%, 42px 100%, 14px 100%, 14px 100%;
+  background-attachment: local, local, scroll, scroll;
+}
 table { width: 100%; border-collapse: collapse; font-size: .9rem; }
-th, td { text-align: left; padding: .6rem .7rem; border-bottom: 1px solid var(--borda); white-space: nowrap; }
+th, td { text-align: left; padding: .55rem .6rem; border-bottom: 1px solid var(--borda); white-space: nowrap; }
 th {
   color: var(--tinta-3); font-size: .74rem; font-weight: 700;
   text-transform: uppercase; letter-spacing: .08em;
@@ -399,34 +407,10 @@ td.acoes-celula > * + * { margin-left: var(--esp-1); }
    ========================================================================= */
 
 /* Cartão que inclina seguindo o ponteiro. O JS escreve --rx e --ry. */
-.tilt {
-  transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateZ(0);
-  transform-style: preserve-3d;
-  transition: transform var(--mov-medio), box-shadow var(--mov-medio), border-color var(--mov-medio);
-  will-change: transform;
-}
-.tilt:hover { box-shadow: var(--sombra-3), var(--luz-topo); border-color: var(--borda-forte); }
-.tilt > * { transform: translateZ(18px); }
+/* Antes isto girava com o mouse. Ficava chamativo demais: agora só a borda responde. */
+.tilt { transition: border-color var(--mov-rapido), box-shadow var(--mov-rapido); }
+.tilt:hover { border-color: var(--borda-forte); box-shadow: var(--sombra-2); }
 
-/* Brasão giratório do topo da página pública. */
-.palco-3d { perspective: 1200px; display: grid; place-items: center; padding: var(--esp-4); }
-.brasao-3d {
-  position: relative; width: min(340px, 78vw); aspect-ratio: 1;
-  transform-style: preserve-3d;
-  animation: girar-brasao 18s linear infinite;
-}
-.brasao-3d img { width: 100%; height: 100%; filter: drop-shadow(0 30px 45px rgba(0, 0, 0, .55)); }
-.brasao-3d .anel {
-  position: absolute; inset: -7%; border-radius: 50%;
-  border: 2px solid rgba(245, 179, 1, .35);
-  transform: rotateX(74deg);
-  box-shadow: 0 0 40px rgba(245, 179, 1, .22);
-}
-.brasao-3d .anel.dois { inset: -16%; border-color: rgba(245, 179, 1, .16); transform: rotateX(74deg) rotateZ(40deg); }
-@keyframes girar-brasao {
-  0% { transform: rotateY(-14deg) rotateX(6deg); }
-  50% { transform: rotateY(14deg) rotateX(-4deg); }
-  100% { transform: rotateY(-14deg) rotateX(6deg); }
 }
 
 /* =========================================================================
@@ -632,25 +616,23 @@ td.acoes-celula > * + * { margin-left: var(--esp-1); }
 
 .checkin-agora {
   display: grid; grid-template-columns: auto 1fr; gap: var(--esp-5); align-items: center;
-  background: linear-gradient(140deg, rgba(245, 179, 1, .12), var(--superficie) 60%);
-  border: 1px solid rgba(245, 179, 1, .28);
-  border-radius: var(--raio-3); padding: var(--esp-5); margin-bottom: var(--esp-4);
-  box-shadow: var(--sombra-2), var(--luz-topo);
+  background: var(--superficie);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio-2); padding: var(--esp-5); margin-bottom: var(--esp-4);
 }
 .botao-checkin {
   position: relative; width: 132px; height: 132px; border-radius: 50%;
-  border: none; cursor: pointer; background: var(--marca-gradiente); color: var(--marca-contraste);
+  border: none; cursor: pointer; background: var(--marca-1); color: var(--marca-contraste);
   font-family: var(--fonte-titulo); font-size: 1.05rem; line-height: 1.1; text-transform: uppercase;
   display: grid; place-items: center; padding: 0 1rem;
-  box-shadow: 0 18px 40px rgba(245, 179, 1, .3), inset 0 2px 0 rgba(255, 255, 255, .5);
-  transition: transform var(--mov-rapido), box-shadow var(--mov-rapido);
+  transition: background var(--mov-rapido);
 }
 .botao-checkin::after {
   content: ''; position: absolute; inset: -10px; border-radius: 50%;
-  border: 2px solid rgba(245, 179, 1, .4); animation: pulsar 2.4s ease-out infinite;
+  border: 1px solid rgba(245, 179, 1, .35); animation: pulsar 3s ease-out infinite;
 }
-.botao-checkin:hover { transform: scale(1.04); }
-.botao-checkin:disabled { background: var(--superficie-2); color: var(--tinta-3); box-shadow: none; cursor: not-allowed; }
+.botao-checkin:hover { background: var(--marca-2); }
+.botao-checkin:disabled { background: var(--superficie-2); color: var(--tinta-3); cursor: not-allowed; }
 .botao-checkin:disabled::after { display: none; }
 .botao-checkin.feito { background: linear-gradient(140deg, #3ad46f, #1e9f4a); color: #04240f; }
 @keyframes pulsar {
@@ -662,7 +644,7 @@ td.acoes-celula > * + * { margin-left: var(--esp-1); }
 .sequencia i {
   width: 12px; height: 26px; border-radius: 3px; background: var(--superficie-3); display: block;
 }
-.sequencia i.feito { background: var(--marca-gradiente); box-shadow: 0 0 10px rgba(245, 179, 1, .5); }
+.sequencia i.feito { background: var(--marca-1); }
 
 /* =========================================================================
    Loja
@@ -920,7 +902,7 @@ td.acoes-celula > * + * { margin-left: var(--esp-1); }
   border-radius: 8px; cursor: pointer; font: inherit; font-weight: 700; font-size: .9rem;
   transition: all var(--mov-rapido);
 }
-.abas button.ativo { background: var(--marca-gradiente); color: var(--marca-contraste); box-shadow: var(--sombra-1); }
+.abas button.ativo { background: var(--marca-1); color: var(--marca-contraste); }
 
 .secao { padding: var(--esp-7) 0 0; }
 .secao > .titulo-secao { margin-bottom: var(--esp-5); }
@@ -932,7 +914,7 @@ td.acoes-celula > * + * { margin-left: var(--esp-1); }
 
 .cartao-modalidade {
   position: relative; overflow: hidden;
-  background: linear-gradient(165deg, var(--superficie), var(--plano-2));
+  background: var(--superficie);
   border: 1px solid var(--borda); border-radius: var(--raio-3); padding: var(--esp-5);
   box-shadow: var(--sombra-1), var(--luz-topo);
 }
@@ -944,12 +926,15 @@ td.acoes-celula > * + * { margin-left: var(--esp-1); }
 
 .cartao-plano {
   position: relative; display: flex; flex-direction: column; gap: var(--esp-2);
-  background: linear-gradient(165deg, var(--superficie), var(--plano-2));
+  background: var(--superficie);
   border: 1px solid var(--borda); border-radius: var(--raio-3); padding: var(--esp-5);
   box-shadow: var(--sombra-1), var(--luz-topo);
 }
-.cartao-plano.destaque { border-color: rgba(245, 179, 1, .45); box-shadow: var(--brilho-marca), var(--sombra-2); }
-.cartao-plano .preco { font-family: var(--fonte-titulo); font-size: 2.9rem; line-height: 1; }
+.cartao-plano.destaque { border-color: var(--marca-1); }
+/* Todos os botões na mesma linha, mesmo com descrições de tamanhos diferentes. */
+.cartao-plano .botao { margin-top: auto; }
+.cartao-plano .lista-beneficios { margin-bottom: var(--esp-3); }
+.cartao-plano .preco { font-family: var(--fonte-titulo); font-size: 2.2rem; line-height: 1; }
 .cartao-plano .preco small { font-family: var(--fonte-ui); font-size: .84rem; font-weight: 600; color: var(--tinta-3); }
 .lista-beneficios { list-style: none; padding: 0; margin: var(--esp-2) 0; display: grid; gap: .4rem; font-size: .88rem; color: var(--tinta-2); }
 .lista-beneficios li { display: flex; gap: var(--esp-2); align-items: flex-start; }
@@ -988,7 +973,6 @@ td.acoes-celula > * + * { margin-left: var(--esp-1); }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
-  .brasao-3d { animation: none; }
   .tilt { transform: none; }
 }
 
@@ -1006,14 +990,12 @@ td.acoes-celula > * + * { margin-left: var(--esp-1); }
   gap: .6rem;
   align-items: flex-start;
   margin: 0 0 1rem;
-  padding: .7rem .85rem;
-  border: 1px solid var(--borda);
-  border-left: 3px solid var(--marca-1);
-  border-radius: var(--raio-1);
-  background: linear-gradient(90deg, color-mix(in srgb, var(--marca-1) 7%, transparent), transparent 60%);
-  color: var(--tinta-2);
+  padding: 0 0 0 .8rem;
+  border-left: 2px solid var(--borda-forte);
+  color: var(--tinta-3);
   font-size: .82rem;
-  line-height: 1.55;
+  line-height: 1.6;
+  max-width: 92ch;
 }
 
 .explicacao svg {
@@ -1565,7 +1547,7 @@ td.acoes-celula > * + * { margin-left: var(--esp-1); }
   cursor: pointer;
 }
 .aba-dia.ativa {
-  background: var(--marca-gradiente);
+  background: var(--marca-1);
   border-color: transparent;
   color: var(--marca-contraste);
 }
