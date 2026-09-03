@@ -24,6 +24,8 @@ import paginaCompetidores from './paginas/competidores.js';
 import paginaGraduacoes from './paginas/graduacoes.js';
 import paginaAnalises from './paginas/analises.js';
 import paginaSeguranca from './paginas/seguranca.js';
+import paginaRegras from './paginas/regras.js';
+import paginaContas from './paginas/contas.js';
 
 const EQUIPE = ['dono', 'mestre', 'recepcao', 'competicoes'];
 const GESTAO = ['dono', 'recepcao'];
@@ -42,8 +44,10 @@ const ROTAS = [
 
   { caminho: 'competicoes', titulo: 'Competições', curto: 'Competir', icone: 'trofeu', grupo: 'Competição', papeis: [...EQUIPE, 'aluno'], render: paginaCompeticoes, principal: true },
   { caminho: 'competidores', titulo: 'Competidores', curto: 'Equipes', icone: 'escudo', grupo: 'Competição', papeis: [...EQUIPE, 'aluno'], render: paginaCompetidores },
+  { caminho: 'regras', titulo: 'Regras e pontuação', curto: 'Regras', icone: 'livro', grupo: 'Competição', papeis: [...EQUIPE, 'aluno'], render: paginaRegras },
 
   { caminho: 'alunos', titulo: 'Alunos', curto: 'Alunos', icone: 'alunos', grupo: 'Gestão', papeis: EQUIPE, render: paginaAlunos, principal: true },
+  { caminho: 'contas', titulo: 'Contas dos alunos', curto: 'Contas', icone: 'aluno', grupo: 'Gestão', papeis: GESTAO, render: paginaContas },
   { caminho: 'turmas', titulo: 'Turmas e modalidades', curto: 'Turmas', icone: 'luva', grupo: 'Gestão', papeis: EQUIPE, render: paginaTurmas },
   { caminho: 'graduacoes', titulo: 'Graduações', curto: 'Faixas', icone: 'faixa', grupo: 'Gestão', papeis: [...EQUIPE, 'aluno'], render: paginaGraduacoes },
   { caminho: 'certificados', titulo: 'Certificados', curto: 'Diplomas', icone: 'medalha', grupo: 'Gestão', papeis: [...EQUIPE, 'aluno'], render: paginaCertificados },

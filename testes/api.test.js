@@ -828,3 +828,101 @@ test('o aluno não se inscreve em competição de outra modalidade', async () =>
   assert.equal(status, 403);
   assert.match(dados.erro, /não treina/);
 });
+
+test('a aba de regras traz só as federações da arte de cada um', async () => {
+  const { status, dados } = await chamar('GET', '/api/regras', { token: estado.tokenAluno });
+  assert.equal(status, 200);
+  assert.ok(!dados.some((r) => r.modalidade_id === estado.modalidadeJiu),
+    'o regulamento de outra arte não aparece na lista do aluno');
+
+  const { dados: doDono } = await chamar('GET', '/api/regras', { token: estado.tokenDono });
+  assert.ok(doDono.length >= 9, 'o dono vê o regulamento de todas as artes');
+  assert.ok(doDono.every((r) => r.federacao && r.resumo), 'cada arte diz de qual federação são as regras');
+});
+
+test('o regulamento abre pelo nome e pelo id da arte', async () => {
+  const porId = await chamar('GET', `/api/regras/${estado.modalidadeJiu}`, { token: estado.tokenDono });
+  assert.equal(porId.status, 200);
+  assert.ok(porId.dados.pontuacao.length > 0, 'a tabela de pontuação vem preenchida');
+  assert.ok(porId.dados.federacao, 'a federação responsável é nomeada');
+
+  const porNome = await chamar('GET', '/api/regras/Jiu-Jitsu', { token: estado.tokenDono });
+  assert.equal(porNome.status, 200);
+  assert.equal(porNome.dados.modalidade_id, porId.dados.modalidade_id);
+});
+
+test('o aluno não abre o regulamento de outra arte', async () => {
+  const porId = await chamar('GET', `/api/regras/${estado.modalidadeJiu}`, { token: estado.tokenAluno });
+  assert.equal(porId.status, 403);
+
+  const porNome = await chamar('GET', '/api/regras/Jiu-Jitsu', { token: estado.tokenAluno });
+  assert.equal(porNome.status, 403, 'o nome não é um atalho para furar o recorte');
+});
+
+test('as contas dos alunos vêm divididas por modalidade', async () => {
+  const { status, dados } = await chamar('GET', '/api/contas', { token: estado.tokenDono });
+  assert.equal(status, 200);
+  assert.ok(dados.total > 0, 'existe pelo menos um aluno');
+  assert.ok(dados.grupos.length > 0, 'os alunos vêm agrupados');
+
+  for (const grupo of dados.grupos) {
+    for (const aluno of grupo.alunos) {
+      assert.ok(aluno.pagamento, `${aluno.nome} tem situação de pagamento calculada`);
+      assert.ok(grupo.id === null || aluno.modalidades.some((m) => m.id === grupo.id),
+        `${aluno.nome} está no grupo da arte que treina`);
+    }
+  }
+
+  const somaGrupos = dados.grupos.reduce((total, g) => total + g.alunos.length, 0);
+  assert.equal(somaGrupos, dados.total, 'ninguém aparece duas vezes nem some da conta');
+});
+
+test('a ficha completa do aluno abre para a gestão', async () => {
+  const { status, dados } = await chamar('GET', `/api/contas/${estado.alunoId}`, { token: estado.tokenRecepcao });
+  assert.equal(status, 200);
+  assert.equal(dados.aluno.id, estado.alunoId);
+  for (const parte of ['pagamento', 'mensalidades', 'horarios', 'graduacoes', 'frequencia', 'checkins']) {
+    assert.ok(dados[parte] !== undefined, `a ficha traz ${parte}`);
+  }
+  assert.ok(['em dia', 'vence em breve', 'atrasado', 'sem plano', 'mês não gerado']
+    .includes(dados.pagamento.situacao), `situação inesperada: ${dados.pagamento.situacao}`);
+});
+
+test('mestre e aluno não entram na central de contas', async () => {
+  const doMestre = await chamar('GET', '/api/contas', { token: estado.tokenMestreTeste });
+  assert.equal(doMestre.status, 403);
+
+  const doAluno = await chamar('GET', '/api/contas', { token: estado.tokenAluno });
+  assert.equal(doAluno.status, 403);
+
+  const fichaAlheia = await chamar('GET', `/api/contas/${estado.alunoId}`, { token: estado.tokenAluno });
+  assert.equal(fichaAlheia.status, 403);
+});
+
+test('a mensalidade vencida e não paga marca o aluno como atrasado', async () => {
+  const criado = await chamar('POST', '/api/alunos', {
+    token: estado.tokenDono,
+    corpo: { nome: 'Devedor de Teste', email: 'devedor@teste.com', categoria: 'adulto' },
+  });
+  assert.equal(criado.status, 201);
+
+  const matricula = await chamar('POST', '/api/matriculas', {
+    token: estado.tokenDono,
+    corpo: { aluno_id: criado.dados.id, plano_id: estado.planoId, dia_vencimento: 10 },
+  });
+  assert.equal(matricula.status, 201);
+
+  const cobranca = await chamar('POST', '/api/financeiro/mensalidades', {
+    token: estado.tokenDono,
+    corpo: {
+      aluno_id: criado.dados.id, competencia: '2020-01', valor: 150,
+      vencimento: '2020-01-10',
+    },
+  });
+  assert.equal(cobranca.status, 201);
+
+  const { dados } = await chamar('GET', `/api/contas/${criado.dados.id}`, { token: estado.tokenDono });
+  assert.equal(dados.pagamento.situacao, 'atrasado');
+  assert.equal(dados.pagamento.atrasadas, 1);
+  assert.equal(dados.pagamento.valor_atrasado, 150);
+});

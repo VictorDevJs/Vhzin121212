@@ -658,8 +658,10 @@ export function carregarDemonstracao() {
       for (let atras = mesesDeCasa; atras >= 0; atras -= 1) {
         const mes = somarMeses(hoje(), -atras).slice(0, 7);
         const mesAtual = mes === competencia;
-        // No mes corrente parte dos alunos ainda esta em aberto; o passado esta pago.
-        const pago = !mesAtual || indice % 3 !== 0;
+        // Academia de verdade tem inadimplente: um em cada sete deixa o mês
+        // anterior vencer, e parte do mês corrente ainda está em aberto.
+        const atrasaOMesPassado = atras === 1 && indice % 7 === 0;
+        const pago = atrasaOMesPassado ? false : (!mesAtual || indice % 3 !== 0);
         const pagoEm = mesAtual ? hoje() : `${mes}-08`;
         executar(`
           INSERT INTO mensalidades (matricula_id, aluno_id, competencia, vencimento, valor, status, pago_em, forma_pagamento)

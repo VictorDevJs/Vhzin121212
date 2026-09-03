@@ -296,7 +296,10 @@ tbody td { font-variant-numeric: tabular-nums; }
 tbody tr { transition: background var(--mov-rapido); }
 tbody tr:hover { background: var(--superficie-2); }
 tbody tr:last-child td { border-bottom: none; }
-td.acoes-celula { display: flex; gap: var(--esp-1); }
+/* Coluna de acoes: mantem a celula na grade da tabela para nao desalinhar a linha */
+td.acoes-celula { white-space: nowrap; }
+td.acoes-celula > * { vertical-align: middle; }
+td.acoes-celula > * + * { margin-left: var(--esp-1); }
 .num { font-variant-numeric: tabular-nums; text-align: right; }
 
 /* Etiquetas */
@@ -1348,3 +1351,168 @@ td.acoes-celula { display: flex; gap: var(--esp-1); }
 .dados-rede .dica { margin: 0; }
 .seta-rede { margin-left: auto; color: var(--tinta-3); flex: none; }
 .cartao.rede:hover .seta-rede { color: var(--marca-1); }
+
+/* =========================================================================
+   Regras de competição
+   ========================================================================= */
+
+.cabecalho-regra {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--esp-4);
+  flex-wrap: wrap;
+  margin-bottom: var(--esp-4);
+  padding: var(--esp-4) var(--esp-5);
+  border: 1px solid var(--borda);
+  border-left: 3px solid var(--cor-arte, var(--marca-1));
+  border-radius: var(--raio-2);
+  background: var(--superficie);
+}
+.olho-regra {
+  font-family: var(--fonte-rotulo);
+  font-size: .76rem;
+  font-weight: 600;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--cor-arte, var(--marca-1));
+}
+.cabecalho-regra h2 {
+  margin: .3rem 0 .4rem;
+  font-family: var(--fonte-titulo);
+  font-weight: 400;
+  font-size: 1.7rem;
+  text-transform: uppercase;
+  letter-spacing: .015em;
+}
+.resumo-regra { margin: 0; max-width: 62ch; color: var(--tinta-2); font-size: .9rem; line-height: 1.6; }
+
+.valor-ponto {
+  display: inline-grid;
+  place-items: center;
+  min-width: 2.1rem;
+  padding: .15rem .45rem;
+  border-radius: var(--raio-1);
+  background: var(--superficie-3);
+  color: var(--tinta);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.lista-regra { margin: 0; padding-left: 1.1rem; display: flex; flex-direction: column; gap: .5rem; }
+.lista-regra li { font-size: .87rem; line-height: 1.6; color: var(--tinta-2); }
+.lista-regra li::marker { color: var(--marca-1); }
+
+/* Tabelas de texto corrido (regras, descrições) quebram linha em vez de cortar */
+.tabela-texto table { table-layout: auto; }
+.tabela-texto td:last-child,
+.tabela-texto td.corre {
+  white-space: normal;
+  line-height: 1.5;
+  min-width: 18ch;
+}
+
+/* ---------------------------------------------- Contas por modalidade */
+
+.grupo-contas {
+  border: 1px solid var(--borda);
+  border-left: 3px solid var(--cor-grupo, var(--marca-1));
+  border-radius: var(--raio-2);
+  background: var(--superficie);
+  box-shadow: var(--sombra-1);
+  overflow: hidden;
+  margin-bottom: var(--esp-3);
+}
+
+.cabecalho-grupo {
+  display: flex;
+  align-items: center;
+  gap: var(--esp-2);
+  width: 100%;
+  padding: var(--esp-3);
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.cabecalho-grupo:hover { background: var(--superficie-2); }
+.cabecalho-grupo.aberto { border-bottom: 1px solid var(--borda); }
+.cabecalho-grupo strong { font-size: .98rem; }
+
+.ponto-grupo {
+  width: 10px; height: 10px; flex: none;
+  border-radius: 50%;
+  background: var(--cor-grupo, var(--marca-1));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--cor-grupo, var(--marca-1)) 22%, transparent);
+}
+
+.contagem-grupo { color: var(--tinta-3); font-size: .82rem; }
+.seta-grupo {
+  margin-left: auto;
+  width: 26px; height: 26px;
+  display: grid; place-items: center;
+  border-radius: 50%;
+  background: var(--superficie-3);
+  color: var(--tinta-2);
+  font-weight: 700; line-height: 1;
+}
+
+.grupo-contas .rolagem { border-radius: 0; }
+.grupo-contas .tabela-texto { padding: 0; }
+
+.linha-horario {
+  display: flex;
+  align-items: center;
+  gap: var(--esp-2);
+  flex-wrap: wrap;
+  padding: .5rem 0;
+  border-bottom: 1px dashed var(--borda);
+}
+.linha-horario:last-child { border-bottom: 0; }
+.linha-horario .dica { margin: 0; }
+
+.cabecalho-ficha {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--esp-3);
+  flex-wrap: wrap;
+  padding-bottom: var(--esp-3);
+  border-bottom: 1px solid var(--borda);
+}
+.cabecalho-ficha .acoes { display: flex; align-items: center; gap: var(--esp-2); flex-wrap: wrap; }
+
+@media (max-width: 720px) {
+  .cabecalho-grupo { flex-wrap: wrap; }
+  .contagem-grupo { width: 100%; order: 3; }
+}
+
+.grade-ficha {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--esp-3);
+  margin: var(--esp-3) 0;
+}
+.grade-ficha .indicador { padding: var(--esp-3); }
+.grade-ficha .indicador .valor { font-size: 1.35rem; }
+
+/* No celular os indicadores viram dois por linha: cabe mais informacao na tela */
+@media (max-width: 620px) {
+  .grade.col-3,
+  .grade.col-4,
+  .grade-ficha { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--esp-3); }
+  .grade.col-3 > .cartao,
+  .grade.col-4 > .cartao { grid-column: 1 / -1; }
+  .indicador { padding: var(--esp-3); }
+  .indicador .rotulo { font-size: .66rem; letter-spacing: .1em; }
+  .indicador .valor { font-size: 1.4rem; }
+  .indicador .detalhe { font-size: .72rem; }
+
+  /* Filtros lado a lado, com a busca ocupando a linha inteira */
+  .filtros { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--esp-3); }
+  .filtros .campo { min-width: 0; }
+  .filtros .campo:first-child { grid-column: 1 / -1; }
+  .filtros .botao { grid-column: 1 / -1; justify-content: center; }
+}
