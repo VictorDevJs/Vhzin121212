@@ -1175,3 +1175,50 @@ test('o dono apaga a foto e ela sai do site', async () => {
   const { dados } = await chamar('GET', '/api/publico/academia');
   assert.ok(!dados.fotos.some((f) => f.id === estado.fotoId));
 });
+
+test('o arquivo da foto sai do disco quando ninguém mais usa', async () => {
+  const enviado = await chamar('POST', '/api/arquivos', {
+    token: estado.tokenDono, corpo: { conteudo: PNG_MINIMO },
+  });
+  const url = enviado.dados.url;
+
+  const criada = await chamar('POST', '/api/fotos', {
+    token: estado.tokenDono,
+    corpo: { arquivo: url, categoria: 'estrutura', legenda: 'Recepção' },
+  });
+  assert.equal(criada.status, 201);
+
+  const { existsSync } = await import('node:fs');
+  const { join } = await import('node:path');
+  const { PASTA_ARQUIVOS } = await import('../server/rotas/arquivos.js');
+  const caminho = join(PASTA_ARQUIVOS, url.replace('/arquivos/', ''));
+  assert.ok(existsSync(caminho), 'o arquivo foi gravado');
+
+  await chamar('DELETE', `/api/fotos/${criada.dados.id}`, { token: estado.tokenDono });
+  assert.ok(!existsSync(caminho), 'o arquivo órfão foi apagado junto com a foto');
+});
+
+test('arquivo ainda usado por outra foto não é apagado', async () => {
+  const enviado = await chamar('POST', '/api/arquivos', {
+    token: estado.tokenDono, corpo: { conteudo: PNG_MINIMO },
+  });
+  const url = enviado.dados.url;
+
+  const primeira = await chamar('POST', '/api/fotos', {
+    token: estado.tokenDono, corpo: { arquivo: url, categoria: 'treino', modalidade_id: estado.modalidadeJiu },
+  });
+  const segunda = await chamar('POST', '/api/fotos', {
+    token: estado.tokenDono, corpo: { arquivo: url, categoria: 'turma', modalidade_id: estado.modalidadeJiu },
+  });
+
+  const { existsSync } = await import('node:fs');
+  const { join } = await import('node:path');
+  const { PASTA_ARQUIVOS } = await import('../server/rotas/arquivos.js');
+  const caminho = join(PASTA_ARQUIVOS, url.replace('/arquivos/', ''));
+
+  await chamar('DELETE', `/api/fotos/${primeira.dados.id}`, { token: estado.tokenDono });
+  assert.ok(existsSync(caminho), 'a segunda foto ainda usa o arquivo');
+
+  await chamar('DELETE', `/api/fotos/${segunda.dados.id}`, { token: estado.tokenDono });
+  assert.ok(!existsSync(caminho), 'sem ninguém usando, o arquivo sai');
+});

@@ -1,7 +1,8 @@
 import { Router } from 'express';
-import { writeFileSync, mkdirSync } from 'node:fs';
+import { writeFileSync, mkdirSync, rmSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
-import { resolve, join } from 'node:path';
+import { resolve, join, basename } from 'node:path';
+import { um } from '../db.js';
 import { exigirPapel, temCargo } from '../auth.js';
 import { rota, ErroApi, texto } from '../util.js';
 
@@ -48,5 +49,51 @@ roteador.post('/', exigirPapel('dono', 'recepcao', 'mestre', 'competicoes'), rot
 
   res.status(201).json({ url: `/arquivos/${nome}`, tamanho: dados.length, tipo });
 }));
+
+/* --------------------------------------------------- limpeza de arquivos */
+
+/** Toda coluna do banco que pode apontar para um arquivo enviado. */
+const REFERENCIAS = [
+  ['configuracoes', 'valor'],
+  ['fotos', 'arquivo'],
+  ['certificados', 'arquivo'],
+  ['modalidades', 'imagem'],
+  ['usuarios', 'foto'],
+  ['produtos', 'imagem'],
+  ['equipes', 'imagem'],
+  ['competicoes', 'cartaz'],
+];
+
+/** O arquivo ainda é usado por alguma parte do sistema? */
+export function arquivoEmUso(url) {
+  return REFERENCIAS.some(([tabela, coluna]) => {
+    try {
+      return !!um(`SELECT 1 AS usado FROM ${tabela} WHERE ${coluna} = :url LIMIT 1`, { url });
+    } catch {
+      return true; // na dúvida, o arquivo fica
+    }
+  });
+}
+
+/**
+ * Apaga o arquivo do disco quando nada mais aponta para ele.
+ * Sem isso, cada foto trocada deixaria lixo para sempre na pasta.
+ */
+export function apagarArquivoOrfao(url) {
+  const caminho = texto(url);
+  if (!caminho || !caminho.startsWith('/arquivos/')) return false;
+
+  // Só apaga um nome de arquivo simples dentro da pasta de uploads.
+  const nome = basename(caminho);
+  if (nome !== caminho.slice('/arquivos/'.length) || !/^[\w.-]+$/.test(nome)) return false;
+  if (arquivoEmUso(caminho)) return false;
+
+  try {
+    rmSync(join(PASTA_ARQUIVOS, nome), { force: true });
+    return true;
+  } catch {
+    return false; // arquivo já sumiu ou está em uso pelo sistema de arquivos
+  }
+}
 
 export default roteador;

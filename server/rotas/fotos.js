@@ -3,6 +3,7 @@ import { todos, um, executar, transacao } from '../db.js';
 import { exigirPapel, temCargo, registrar } from '../auth.js';
 import { rota, ErroApi, exigirCampos, texto, inteiro, booleano } from '../util.js';
 import { recorteDeModalidade, podeVerModalidade } from '../escopo.js';
+import { apagarArquivoOrfao } from './arquivos.js';
 
 const roteador = Router();
 
@@ -140,6 +141,8 @@ roteador.delete('/:id', exigirPapel('dono', 'mestre', 'recepcao', 'competicoes')
   exigirEscopo(req, atual.modalidade_id);
 
   executar('DELETE FROM fotos WHERE id = :id', { id });
+  // A foto saiu do banco: se ninguém mais usa o arquivo, ele sai do disco também.
+  apagarArquivoOrfao(atual.arquivo);
   registrar(req, { acao: 'removeu', area: 'fotos', alvo: 'foto', alvoId: id });
   res.status(204).end();
 }));
