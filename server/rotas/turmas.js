@@ -44,6 +44,13 @@ roteador.get('/', exigirPapel(...EQUIPE, 'aluno'), rota((req, res) => {
   if (req.query.mestre_id) { filtros.push('t.mestre_id = :mestre_id'); params.mestre_id = inteiro(req.query.mestre_id); }
   if (req.query.ativo !== undefined && req.query.ativo !== '') { filtros.push('t.ativo = :ativo'); params.ativo = booleano(req.query.ativo, 1); }
 
+  // Mesmo recorte da grade: o mestre de Judô não precisa da lista do Boxe.
+  // "todas=1" é para quem monta cadastro e precisa da academia inteira.
+  const recorte = texto(req.query.todas) === '1'
+    ? null
+    : recorteDeModalidade(req.usuario, 't.modalidade_id', { incluirGerais: false });
+  if (recorte) filtros.push(recorte);
+
   const onde = filtros.length ? `WHERE ${filtros.join(' AND ')}` : '';
   const lista = todos(`${SELECT_TURMA} ${onde} ORDER BY m.nome, t.nome`, params);
   res.json(lista.map(comHorarios));

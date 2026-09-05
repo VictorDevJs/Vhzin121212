@@ -1298,3 +1298,102 @@ test('o aluno não recebe a lista de trabalho da equipe', async () => {
   assert.equal(dados.ocupacao_turmas, undefined);
   assert.ok(dados.aluno, 'mas continua recebendo a própria ficha');
 });
+
+/* ==========================================================================
+   Chamada com contexto e recorte por modalidade
+   ========================================================================== */
+
+test('a lista de turmas do mestre traz só as artes dele', async () => {
+  const { dados: doMestre } = await chamar('GET', '/api/turmas', { token: estado.tokenMestreTeste });
+  const artes = new Set(doMestre.map((t) => t.modalidade));
+  assert.ok(!artes.has('Judo'), `o mestre de Jiu-Jitsu recebeu turma de outra arte: ${[...artes].join(', ')}`);
+
+  const { dados: doDono } = await chamar('GET', '/api/turmas', { token: estado.tokenDono });
+  assert.ok(doDono.length >= doMestre.length, 'o dono continua vendo a academia inteira');
+
+  const { dados: todas } = await chamar('GET', '/api/turmas?todas=1', { token: estado.tokenMestreTeste });
+  assert.ok(todas.length >= doMestre.length, 'quem monta cadastro pede a lista completa com todas=1');
+});
+
+test('o mestre não abre a chamada de uma turma de outra arte', async () => {
+  const { dados: todas } = await chamar('GET', '/api/turmas?todas=1', { token: estado.tokenDono });
+  const deOutraArte = todas.find((t) => t.modalidade === 'Judo');
+  assert.ok(deOutraArte, 'existe turma de Judo no banco de teste');
+
+  const { status, dados } = await chamar('GET', `/api/presencas?turma_id=${deOutraArte.id}`,
+    { token: estado.tokenMestreTeste });
+  assert.equal(status, 403);
+  assert.match(dados.erro, /não acompanha/);
+
+  const salvar = await chamar('POST', '/api/presencas', {
+    token: estado.tokenMestreTeste,
+    corpo: { turma_id: deOutraArte.id, presencas: [{ aluno_id: estado.alunoId, presente: 1 }] },
+  });
+  assert.equal(salvar.status, 403, 'nem salvar chamada de outra arte');
+});
+
+test('a chamada traz o contexto de cada aluno', async () => {
+  const { status, dados } = await chamar('GET', `/api/presencas?turma_id=${estado.turmaId}`,
+    { token: estado.tokenDono });
+  assert.equal(status, 200);
+  for (const parte of ['turma', 'aulas', 'historico', 'dia_nome', 'ja_registrada']) {
+    assert.ok(dados[parte] !== undefined, `a chamada traz ${parte}`);
+  }
+  for (const aluno of dados.alunos) {
+    assert.equal(typeof aluno.faltas_seguidas, 'number');
+    assert.equal(typeof aluno.presencas_30d, 'number');
+    assert.ok(['em dia', 'vence em breve', 'atrasado', 'sem plano', 'mês não gerado']
+      .includes(aluno.pagamento), `situação inesperada: ${aluno.pagamento}`);
+  }
+});
+
+test('falta com motivo fica registrada, e desmarcar apaga a linha', async () => {
+  const salvo = await chamar('POST', '/api/presencas', {
+    token: estado.tokenDono,
+    corpo: {
+      turma_id: estado.turmaId,
+      presencas: [{ aluno_id: estado.alunoId, presente: 0, observacao: 'Lesão no joelho' }],
+    },
+  });
+  assert.equal(salvo.status, 200);
+
+  const { dados: comFalta } = await chamar('GET', `/api/presencas?turma_id=${estado.turmaId}`,
+    { token: estado.tokenDono });
+  const marcado = comFalta.alunos.find((a) => a.id === estado.alunoId);
+  assert.equal(marcado.presente, 0);
+  assert.equal(marcado.observacao, 'Lesão no joelho');
+  assert.equal(marcado.origem, 'chamada');
+
+  // Desmarcar não pode virar falta silenciosa: a linha sai do banco.
+  await chamar('POST', '/api/presencas', {
+    token: estado.tokenDono,
+    corpo: { turma_id: estado.turmaId, presencas: [{ aluno_id: estado.alunoId, presente: null }] },
+  });
+  const { dados: limpo } = await chamar('GET', `/api/presencas?turma_id=${estado.turmaId}`,
+    { token: estado.tokenDono });
+  assert.equal(limpo.alunos.find((a) => a.id === estado.alunoId).presente, -1);
+});
+
+test('as aulas de hoje sem chamada aparecem para quem vai dar a aula', async () => {
+  const { status, dados } = await chamar('GET', '/api/presencas/pendentes', { token: estado.tokenDono });
+  assert.equal(status, 200);
+  assert.ok(Array.isArray(dados.aulas));
+  for (const aula of dados.aulas) {
+    assert.ok(aula.turma_id && aula.hora_inicio, 'cada aula sabe qual turma e que horas');
+    assert.ok([0, 1].includes(aula.encerrada), 'e se já terminou');
+  }
+
+  const { dados: doMestre } = await chamar('GET', '/api/presencas/pendentes',
+    { token: estado.tokenMestreTeste });
+  const artes = new Set(doMestre.aulas.map((a) => a.modalidade));
+  assert.ok(!artes.has('Judo'), 'o mestre só vê as aulas das artes dele');
+});
+
+test('o resumo de frequência calcula o aproveitamento de cada turma', async () => {
+  const { dados } = await chamar('GET', '/api/presencas/resumo', { token: estado.tokenDono });
+  for (const turma of dados.turmas) {
+    if (turma.aproveitamento === null) continue;
+    const esperado = Math.round((turma.presencas / (turma.presencas + turma.faltas)) * 100);
+    assert.equal(turma.aproveitamento, esperado, `aproveitamento errado em ${turma.turma}`);
+  }
+});

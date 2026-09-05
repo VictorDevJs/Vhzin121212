@@ -166,9 +166,10 @@ roteador.post('/', exigirPapel('aluno'), rota((req, res) => {
 
     // O check-in também alimenta a chamada, para o mestre não precisar repetir o trabalho.
     executar(`
-      INSERT INTO presencas (aluno_id, turma_id, data, presente, registrado_por)
-      VALUES (:aluno, :turma, :data, 1, :usuario)
-      ON CONFLICT (aluno_id, turma_id, data) DO UPDATE SET presente = 1
+      INSERT INTO presencas (aluno_id, turma_id, data, presente, origem, registrado_por)
+      VALUES (:aluno, :turma, :data, 1, 'checkin', :usuario)
+      ON CONFLICT (aluno_id, turma_id, data)
+      DO UPDATE SET presente = 1, origem = 'checkin'
     `, { aluno: aluno.id, turma: aula.turma_id, data: hojeISO, usuario: req.usuario.id });
   });
 

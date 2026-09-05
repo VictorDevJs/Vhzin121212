@@ -89,6 +89,8 @@ function migrar(banco) {
     ['aluno_graduacoes', 'grau', 'INTEGER NOT NULL DEFAULT 0'],
     ['matriculas', 'suspensa_em', 'TEXT'],
     ['matriculas', 'suspensa_motivo', 'TEXT'],
+    ['presencas', 'origem', `TEXT NOT NULL DEFAULT 'chamada'`],
+    ['presencas', 'observacao', 'TEXT'],
   ];
   for (const [tabela, coluna, tipo] of novas) {
     const existentes = colunasDe(banco, tabela);
@@ -322,6 +324,9 @@ const ESQUEMA = `
       turma_id       INTEGER NOT NULL REFERENCES turmas(id) ON DELETE CASCADE,
       data           TEXT NOT NULL,
       presente       INTEGER NOT NULL DEFAULT 1,
+      origem         TEXT NOT NULL DEFAULT 'chamada'
+                     CHECK (origem IN ('chamada','checkin')),
+      observacao     TEXT,                        -- lesao, viagem, atestado
       registrado_por INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
       criado_em      TEXT NOT NULL DEFAULT (datetime('now','localtime')),
       UNIQUE (aluno_id, turma_id, data)
