@@ -1,7 +1,14 @@
 import { randomBytes, scryptSync, timingSafeEqual, createHmac } from 'node:crypto';
 import { um, todos, executar } from './db.js';
+import { segredoDaInstalacao } from './segredo.js';
 
-const SEGREDO = process.env.APP_SEGREDO || 'academia-de-lutas-segredo-padrao-troque-em-producao';
+// Lida na primeira assinatura, não na importação: em teste o DB_ARQUIVO
+// é definido antes de carregar o servidor.
+let segredo = null;
+function chave() {
+  if (segredo === null) segredo = segredoDaInstalacao();
+  return segredo;
+}
 const VALIDADE_MS = 7 * 24 * 60 * 60 * 1000; // 7 dias
 
 /** Gera o hash da senha usando scrypt (sem dependencias externas). */
@@ -28,7 +35,7 @@ function base64url(dado) {
 }
 
 function assinar(conteudo) {
-  return createHmac('sha256', SEGREDO).update(conteudo).digest('base64url');
+  return createHmac('sha256', chave()).update(conteudo).digest('base64url');
 }
 
 /** Token de sessao assinado (formato parecido com JWT, porem minimo). */

@@ -35,17 +35,29 @@ export default async function paginaPublica() {
   const redes = academia.redes || [];
 
   return el('div', { classe: 'site' }, [
-    cabecalho(redes, fotos.length > 0),
-    heroi(academia, numeros, modalidades),
+    // O menu só aponta para o que existe: academia recém-instalada não pode
+    // ter link levando a lugar nenhum.
+    cabecalho({
+      modalidades: modalidades.length > 0,
+      galeria: fotos.length > 0,
+      horarios: grade.length > 0,
+      professores: mestres.length > 0,
+      graduacoes: modalidades.some((m) => (m.faixas || []).length),
+      competicoes: competicoes.length > 0,
+      redes: redes.length > 0,
+      planos: planos.length > 0,
+      loja: produtos.length > 0,
+    }),
+    heroi(academia, numeros, modalidades, grade.length > 0),
     el('div', { classe: 'envolucro' }, [
       academia.historia ? secaoHistoria(academia) : null,
-      secaoModalidades(modalidades),
+      modalidades.length ? secaoModalidades(modalidades) : null,
       fotos.length ? secaoGaleria(fotos) : null,
-      secaoHorarios(grade, modalidades),
+      grade.length ? secaoHorarios(grade, modalidades) : null,
       mestres.length ? secaoProfessores(mestres) : null,
       secaoGraduacoes(modalidades),
       competicoes.length ? secaoCompeticoes(competicoes, equipes, medalhas) : null,
-      secaoPlanos(planos, academia),
+      planos.length ? secaoPlanos(planos, academia) : null,
       produtos.length ? secaoLoja(produtos) : null,
       certificados.length ? secaoCertificados(certificados) : null,
       redes.length ? secaoRedes(redes, academia) : null,
@@ -66,20 +78,24 @@ function rolarAte(id) {
   };
 }
 
-function cabecalho(redes = [], temFotos = false) {
+const MENU_DO_SITE = [
+  ['modalidades', 'Modalidades'],
+  ['galeria', 'Fotos'],
+  ['horarios', 'Horários'],
+  ['professores', 'Professores'],
+  ['graduacoes', 'Graduações'],
+  ['competicoes', 'Competições'],
+  ['redes', 'Redes'],
+  ['planos', 'Planos'],
+  ['loja', 'Loja'],
+];
+
+function cabecalho(secoes = {}) {
   return el('header', { classe: 'site-topo' }, [
     el('div', { classe: 'identidade', estilo: 'padding:0' }, [logotipo(34)]),
-    el('nav', {}, [
-      el('a', { href: '#modalidades', texto: 'Modalidades', aoClicar: rolarAte('modalidades') }),
-      temFotos ? el('a', { href: '#galeria', texto: 'Fotos', aoClicar: rolarAte('galeria') }) : null,
-      el('a', { href: '#horarios', texto: 'Horários', aoClicar: rolarAte('horarios') }),
-      el('a', { href: '#professores', texto: 'Professores', aoClicar: rolarAte('professores') }),
-      el('a', { href: '#graduacoes', texto: 'Graduações', aoClicar: rolarAte('graduacoes') }),
-      el('a', { href: '#competicoes', texto: 'Competições', aoClicar: rolarAte('competicoes') }),
-      redes.length ? el('a', { href: '#redes', texto: 'Redes', aoClicar: rolarAte('redes') }) : null,
-      el('a', { href: '#planos', texto: 'Planos', aoClicar: rolarAte('planos') }),
-      el('a', { href: '#loja', texto: 'Loja', aoClicar: rolarAte('loja') }),
-    ]),
+    el('nav', {}, MENU_DO_SITE
+      .filter(([id]) => secoes[id])
+      .map(([id, rotulo]) => el('a', { href: `#${id}`, texto: rotulo, aoClicar: rolarAte(id) }))),
     el('div', { classe: 'acoes' }, [
       el('button', {
         classe: 'botao-icone', 'aria-label': 'Alternar tema claro e escuro',
@@ -100,7 +116,7 @@ function cabecalho(redes = [], temFotos = false) {
  * brasão gravado ao fundo; com a foto que o dono envia, ela assume e o texto
  * ganha um véu escuro por cima para continuar legível.
  */
-function heroi(academia, numeros, modalidades) {
+function heroi(academia, numeros, modalidades, temGrade = false) {
   const capa = academia.foto_capa;
   const fundo = el('div', { classe: 'heroi-fundo' });
   if (capa) {
@@ -131,10 +147,16 @@ function heroi(academia, numeros, modalidades) {
           classe: 'botao grande', texto: 'Fazer minha matrícula',
           aoClicar: () => abrirAcesso('criar'),
         }),
-        el('button', {
-          classe: 'botao vazado grande', texto: 'Ver horários das aulas',
-          aoClicar: rolarAte('horarios'),
-        }),
+        // Sem grade montada ainda, o segundo botão leva para as artes.
+        temGrade
+          ? el('button', {
+            classe: 'botao vazado grande', texto: 'Ver horários das aulas',
+            aoClicar: rolarAte('horarios'),
+          })
+          : el('button', {
+            classe: 'botao vazado grande', texto: 'Conhecer as modalidades',
+            aoClicar: rolarAte('modalidades'),
+          }),
       ]),
 
       modalidades.length

@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
 
 process.env.DB_ARQUIVO = ':memory:';
 process.env.DONO_EMAIL = 'dono@teste.com';
@@ -52,8 +53,10 @@ test('pagina publica da academia funciona sem login', async () => {
   const { status, dados } = await chamar('GET', '/api/publico/academia');
   assert.equal(status, 200);
   assert.ok(dados.modalidades.length >= 6, 'modalidades iniciais criadas');
-  assert.ok(dados.grade.length > 0, 'grade de horarios inicial');
-  assert.ok(dados.planos.length > 0, 'planos iniciais');
+  assert.ok(dados.academia.nome, 'os dados da academia aparecem');
+  // Grade e planos nascem vazios: são a montagem que cada academia faz.
+  assert.ok(Array.isArray(dados.grade));
+  assert.ok(Array.isArray(dados.planos));
 });
 
 test('aluno se cadastra sozinho e entra como pendente', async () => {
@@ -923,8 +926,14 @@ test('a mensalidade vencida e não paga marca o aluno como atrasado', async () =
 
   const { dados } = await chamar('GET', `/api/contas/${criado.dados.id}`, { token: estado.tokenDono });
   assert.equal(dados.pagamento.situacao, 'atrasado');
-  assert.equal(dados.pagamento.atrasadas, 1);
-  assert.equal(dados.pagamento.valor_atrasado, 150);
+  // A cobrança automática também gera a mensalidade do mês corrente, que
+  // pode estar vencida dependendo do dia de hoje — por isso a conta é
+  // "pelo menos esta", e não um número fixo.
+  assert.ok(dados.pagamento.atrasadas >= 1, 'a de 2020 conta como atraso');
+  assert.ok(dados.pagamento.valor_atrasado >= 150, 'e o valor dela entra no total');
+  assert.ok(dados.mensalidades.some((m) => m.competencia === '2020-01' && m.atrasada),
+    'a mensalidade de 2020 aparece marcada como atrasada na ficha');
+  estado.devedorId = criado.dados.id;
 });
 
 /* ==========================================================================
@@ -991,13 +1000,17 @@ test('a rotina suspende quem passou do prazo e devolve quem pagou', async () => 
   assert.equal(devedor.pagamento.suspensa_por_atraso, true);
   assert.equal(devedor.pagamento.bloqueado, true, 'com tolerância zero, o check-in fica bloqueado');
 
-  // Pagando a mensalidade, a matrícula volta sozinha na próxima rodada.
-  const { dados: mensalidades } = await chamar('GET', '/api/financeiro/mensalidades?competencia=2020-01',
+  // Pagando o que está em aberto, a matrícula volta sozinha na próxima rodada.
+  // Tem que quitar tudo: a cobrança automática já gerou a do mês corrente.
+  const { dados: fichaDoDevedor } = await chamar('GET', `/api/contas/${estado.devedorId}`,
     { token: estado.tokenDono });
-  const atrasada = mensalidades.mensalidades.find((m) => m.aluno === 'Devedor de Teste');
-  await chamar('POST', `/api/financeiro/mensalidades/${atrasada.id}/pagar`, {
-    token: estado.tokenDono, corpo: { forma_pagamento: 'pix' },
-  });
+  const emAberto = fichaDoDevedor.mensalidades.filter((m) => m.status === 'pendente');
+  assert.ok(emAberto.length >= 1, 'o devedor tem mensalidade em aberto');
+  for (const mensalidade of emAberto) {
+    await chamar('POST', `/api/financeiro/mensalidades/${mensalidade.id}/pagar`, {
+      token: estado.tokenDono, corpo: { forma_pagamento: 'pix' },
+    });
+  }
 
   const devolvida = await chamar('POST', '/api/financeiro/cobranca/executar', { token: estado.tokenDono });
   assert.ok(devolvida.dados.matriculas_reativadas.includes('Devedor de Teste'),
@@ -1396,4 +1409,69 @@ test('o resumo de frequência calcula o aproveitamento de cada turma', async () 
     const esperado = Math.round((turma.presencas / (turma.presencas + turma.faltas)) * 100);
     assert.equal(turma.aproveitamento, esperado, `aproveitamento errado em ${turma.turma}`);
   }
+});
+
+/* ==========================================================================
+   Producao: chave de sessao, senha do dono e freio de forca bruta
+   ========================================================================== */
+
+test('a chave que assina as sessões não é a mesma em toda instalação', async () => {
+  const { segredoDaInstalacao } = await import('../server/segredo.js');
+  const chave = segredoDaInstalacao();
+  assert.ok(chave.length >= 32, 'a chave tem tamanho de chave');
+  assert.ok(!/segredo-padrao|troque|academia-de-lutas/i.test(chave),
+    'não pode sobrar valor padrão escrito no código');
+});
+
+/**
+ * Estes dois rodam num processo separado: o banco deste arquivo é
+ * compartilhado com o servidor de teste, e trocá-lo no meio derruba os
+ * outros testes.
+ */
+function semearEmProcessoIsolado(env = {}) {
+  const script = `
+    import { abrirBanco, um, todos } from './server/db.js';
+    import { garantirDadosIniciais } from './server/seed.js';
+    abrirBanco();
+    const inicial = garantirDadosIniciais();
+    const conta = (t) => um('SELECT COUNT(*) AS total FROM ' + t).total;
+    console.log(JSON.stringify({
+      inicial,
+      contagens: Object.fromEntries(['usuarios', 'modalidades', 'graduacoes', 'turmas',
+        'horarios', 'planos', 'alunos', 'mensalidades', 'lancamentos']
+        .map((t) => [t, conta(t)])),
+      configuracoes: todos('SELECT chave FROM configuracoes').length,
+    }));
+  `;
+  const saida = execFileSync(process.execPath,
+    ['--disable-warning=ExperimentalWarning', '--input-type=module', '-e', script], {
+      encoding: 'utf8',
+      env: { ...process.env, DB_ARQUIVO: ':memory:', DONO_SENHA: '', ...env },
+    });
+  return JSON.parse(saida.trim().split('\n').pop());
+}
+
+test('sem DONO_SENHA o sistema sorteia uma senha em vez de usar admin123', () => {
+  const { inicial } = semearEmProcessoIsolado({ DONO_SENHA: '' });
+  assert.equal(inicial.criado, true);
+  assert.equal(inicial.senha_sorteada, true);
+  assert.notEqual(inicial.senha, 'admin123');
+  assert.ok(inicial.senha.length >= 12, `senha curta demais: ${inicial.senha}`);
+});
+
+test('o banco recém-criado não inventa plano, turma nem aluno', () => {
+  const { contagens, configuracoes } = semearEmProcessoIsolado();
+
+  assert.equal(contagens.alunos, 0, 'nenhum aluno de exemplo');
+  assert.equal(contagens.planos, 0, 'o preço é decisão do dono');
+  assert.equal(contagens.turmas, 0, 'a grade é decisão do dono');
+  assert.equal(contagens.horarios, 0);
+  assert.equal(contagens.mensalidades, 0);
+  assert.equal(contagens.lancamentos, 0);
+
+  // O que fica é o que não faz sentido digitar à mão.
+  assert.equal(contagens.usuarios, 1, 'só o dono');
+  assert.ok(contagens.modalidades >= 9, 'as artes marciais vêm prontas');
+  assert.ok(contagens.graduacoes >= 100, 'com a escala de faixas completa');
+  assert.ok(configuracoes > 0, 'e os dados da academia');
 });

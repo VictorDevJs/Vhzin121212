@@ -95,61 +95,143 @@ Requisitos: **Node.js 22.5 ou superior** (o SQLite já vem embutido no Node).
 
 ```bash
 npm install          # instala o Express (única dependência)
+npm run seed         # cria o banco e a conta do dono
 npm start            # sobe o servidor em http://localhost:3000
 ```
 
-Na primeira execução o sistema cria o banco em `dados/academia.db` já com as 5 modalidades,
-as faixas, os planos de exemplo, as turmas com horários e o usuário do dono.
+O `npm run seed` mostra o e-mail e a senha do dono **uma única vez**. Anote.
 
-**Login inicial do dono:**
+### Como a academia nasce
 
-```
-e-mail: dono@atak.com
-senha:  admin123
-```
+O banco novo vem com o **mínimo que não faz sentido digitar à mão**:
 
-> Troque essa senha no primeiro acesso (menu lateral → *Trocar senha*), ou defina
-> `DONO_EMAIL` / `DONO_SENHA` antes de subir o sistema pela primeira vez.
+| Vem pronto | Por quê |
+|---|---|
+| A conta do dono | É por onde tudo começa |
+| As 9 artes marciais | Com a **escala completa de faixas** de cada uma: 105 graduações, da branca à preta, com tempo mínimo e faixa etária |
+| Os dados da academia | Nome, endereço, telefone, WhatsApp, Instagram e horário de funcionamento |
 
-### Dados de demonstração (opcional)
+E **nada além disso**. Sem aluno, sem plano, sem turma, sem horário, sem mensalidade.
+Preço, grade e turmas são decisão de cada academia — o dono monta pelo sistema, em
+*Planos*, *Turmas e modalidades* e *Horários*.
 
-Para navegar com a academia "cheia" (alunos, mestres, mensalidades pagas e em aberto,
-despesas e avisos):
+### A ordem para o dono preencher
+
+1. **Equipe e academia** — confirma nome, endereço, contato, história e envia a logo e a foto de capa
+2. **Turmas e modalidades** — apaga as artes que a academia não ensina e cria as turmas
+3. **Horários** — monta a grade da semana clicando nos espaços vazios
+4. **Planos** — cria os planos com os valores reais, um por modalidade
+5. **Equipe** — cadastra os mestres e define quem ensina o quê
+6. **Alunos** — cadastra os alunos e matricula cada um num plano
+7. **Galeria** — sobe as fotos da academia
+
+A partir daí a cobrança roda sozinha e o painel começa a mostrar o que precisa de atenção.
+
+### Dados de demonstração (opcional, nunca em produção)
+
+Para navegar com a academia "cheia" antes de usar de verdade:
 
 ```bash
-npm run seed -- --demo
+npm run demo
 ```
 
-Logins criados pela demonstração:
+Cria 36 alunos, 5 mestres, 18 turmas, 6 meses de mensalidades, competições e avaliações.
+Logins: `ricardo@atak.com` / `mestre123` · `recepcao@atak.com` / `recepcao123` ·
+`renata21@email.com` / `aluno123`.
 
-| Perfil | E-mail | Senha |
-|---|---|---|
-| Mestre | `ricardo@atak.com` | `mestre123` |
-| Recepção | `recepcao@atak.com` | `recepcao123` |
-| Aluno | `lucas0@email.com` | `aluno123` |
-
-A demonstração já vem com 24 alunos, 6 meses de mensalidades, avaliações (aprovadas e na fila)
-e certificados publicados.
+> **Nunca rode isso no sistema da academia.** Use num banco separado
+> (`DB_ARQUIVO=./dados/teste.db npm run demo`) ou apague o banco antes de valer.
 
 ### Outros comandos
 
 ```bash
-npm run dev    # sobe com recarregamento automático ao salvar arquivos
-npm test       # testes automatizados da API (20 casos)
+npm run dev      # sobe com recarregamento automático ao salvar arquivos
+npm test         # testes automatizados da API
+npm run backup   # grava uma cópia consistente do banco em dados/backups/
 ```
 
-### Configuração
+---
 
-Copie `.env.example` para `.env` (ou exporte as variáveis no ambiente):
+## Colocar no ar
+
+### 1. Variáveis
+
+Copie `.env.example` para `.env`:
 
 | Variável | Para que serve | Padrão |
 |---|---|---|
 | `PORT` | Porta do servidor | `3000` |
-| `APP_SEGREDO` | Chave que assina os tokens de sessão — **troque em produção** | valor de desenvolvimento |
+| `APP_SEGREDO` | Chave que assina as sessões | **gerada sozinha** na primeira execução, em `dados/chave-de-sessao` |
 | `DB_ARQUIVO` | Caminho do banco SQLite | `./dados/academia.db` |
-| `DONO_EMAIL` / `DONO_SENHA` / `DONO_NOME` | Primeiro usuário dono criado automaticamente | `dono@atak.com` / `admin123` |
+| `DONO_EMAIL` / `DONO_SENHA` / `DONO_NOME` | Primeiro usuário dono | e-mail `dono@atak.com`; **senha sorteada** e mostrada uma vez |
+| `ATRAS_DE_PROXY` | `1` quando roda atrás de nginx/Caddy | `0` |
+| `BACKUP_PASTA` | Onde o `npm run backup` grava | `./dados/backups` |
 
-**Backup:** todo o sistema vive no arquivo `dados/academia.db`. Copiar esse arquivo é o backup completo.
+Não é obrigatório definir `APP_SEGREDO`: sem ela, o sistema sorteia uma chave na primeira
+execução e guarda em `dados/chave-de-sessao` (permissão 600). Cada instalação tem a sua.
+**Esse arquivo entra no backup** — perdê-lo desconecta todo mundo, mas não perde dado nenhum.
+
+### 2. HTTPS é obrigatório
+
+O token de sessão viaja no cabeçalho de cada requisição. Sem TLS, quem estiver na mesma
+rede consegue capturá-lo e entrar como a pessoa. Ponha um **Caddy** na frente — ele
+resolve o certificado sozinho:
+
+```caddy
+atak.seudominio.com.br {
+    reverse_proxy localhost:3000
+}
+```
+
+E suba o sistema com `ATRAS_DE_PROXY=1`, para o freio de tentativas de login enxergar o
+endereço de quem está tentando, e não o do proxy.
+
+### 3. Manter no ar
+
+Com systemd, para o sistema voltar sozinho depois de reiniciar o servidor:
+
+```ini
+[Unit]
+Description=Sistema da Atak
+After=network.target
+
+[Service]
+WorkingDirectory=/opt/atak
+EnvironmentFile=/opt/atak/.env
+ExecStart=/usr/bin/node --disable-warning=ExperimentalWarning server/index.js
+Restart=always
+User=atak
+
+[Install]
+WantedBy=multi-user.target
+```
+
+### 4. Backup
+
+```bash
+npm run backup
+```
+
+Grava uma cópia consistente em `dados/backups/`. **Não copie o `academia.db` direto**:
+o banco roda em modo WAL e parte do que foi gravado ainda está no arquivo `-wal`, então a
+cópia sai incompleta — e você só descobre no dia em que precisar dela.
+
+Para rodar todo dia de madrugada:
+
+```cron
+0 3 * * * cd /opt/atak && npm run backup
+```
+
+Leve os backups **para fora do servidor** (nuvem, outro disco). Junto deles, guarde o
+`dados/chave-de-sessao` e a pasta `dados/arquivos/` (fotos, logos e certificados enviados).
+
+### 5. Antes de entregar aos alunos
+
+- [ ] Trocar a senha do dono no primeiro acesso (menu lateral → *Trocar senha*)
+- [ ] Substituir a logo pelo arquivo original da Atak (ver *Identidade visual*)
+- [ ] Conferir os dados da academia em *Equipe e academia*
+- [ ] Montar turmas, horários e planos
+- [ ] Testar o cadastro de aluno pelo site, no celular
 
 ---
 
@@ -242,9 +324,21 @@ Todas as rotas ficam sob `/api` e usam `Authorization: Bearer <token>`, exceto a
 
 - Senhas guardadas com **scrypt** + sal aleatório (nunca em texto puro).
 - Sessão por **token assinado com HMAC-SHA256**, com validade de 7 dias.
+- **A chave que assina as sessões é sorteada por instalação**, nunca um valor escrito no
+  código — senão quem tivesse o código conseguiria fabricar um token de dono.
+- **A senha inicial do dono é sorteada** e mostrada uma vez só, em vez de um padrão conhecido.
+- **Freio de força bruta no login**: depois de 5 erros a espera começa em 20 segundos e
+  dobra a cada nova tentativa, até 10 minutos. A conta nunca trava de vez — as tentativas
+  são esquecidas em 15 minutos, senão bastaria errar de propósito para trancar o dono
+  para fora da própria academia.
 - Permissão verificada **no servidor** em cada rota — esconder um botão no navegador não libera acesso.
+- **Recorte por modalidade também no servidor**: quem ensina Judô não lê, não edita e não
+  apaga nada de Jiu-Jitsu, mesmo chamando a API direto.
 - A interface monta todo conteúdo com `textContent`, sem `innerHTML`, evitando injeção de script
   através de dados cadastrados.
+
+O que **não** está no sistema e depende de quem instala: **HTTPS** (ver *Colocar no ar*) e
+**backup fora do servidor**.
 
 ## Como adaptar para a sua academia
 

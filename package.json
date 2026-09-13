@@ -8,7 +8,9 @@
     "start": "node --disable-warning=ExperimentalWarning server/index.js",
     "dev": "node --disable-warning=ExperimentalWarning --watch server/index.js",
     "seed": "node --disable-warning=ExperimentalWarning server/seed.js",
-    "test": "node --disable-warning=ExperimentalWarning --test testes/*.test.js"
+    "test": "node --disable-warning=ExperimentalWarning --test testes/*.test.js",
+    "backup": "node --disable-warning=ExperimentalWarning server/backup.js",
+    "demo": "node --disable-warning=ExperimentalWarning server/seed.js --demo"
   },
   "engines": {
     "node": ">=22.5.0"

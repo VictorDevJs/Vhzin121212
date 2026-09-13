@@ -39,6 +39,9 @@ export function criarApp() {
   garantirDadosIniciais();
 
   const app = express();
+  // Atrás de um nginx/Caddy, req.ip precisa ser o do visitante e não o do
+  // proxy — senão o freio de força bruta contaria todo mundo como um só.
+  app.set('trust proxy', process.env.ATRAS_DE_PROXY === '1' ? 1 : false);
   app.use(express.json({ limit: '8mb' })); // o limite maior atende o upload de certificados
   app.use(autenticacaoOpcional);
 

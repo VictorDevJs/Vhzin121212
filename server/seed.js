@@ -1,9 +1,62 @@
+import { randomInt } from 'node:crypto';
 import { abrirBanco, todos, um, executar, transacao } from './db.js';
 import { gerarHashSenha } from './auth.js';
 import { hoje, competenciaAtual, somarMeses } from './util.js';
 import { aplicarGraduacoes, GRADUACOES_PADRAO } from './graduacoes-padrao.js';
 
 /** Modalidades e faixas que ja vem prontas na primeira execucao. */
+/** Planos e grade de exemplo — só a demonstração usa. */
+function criarPlanosETurmasDeExemplo() {
+  if (um('SELECT COUNT(*) AS total FROM turmas').total > 0) return;
+
+  transacao(() => {
+    for (const plano of PLANOS) {
+      const criado = executar(`INSERT INTO planos (nome, descricao, valor, periodicidade, aulas_semana)
+                VALUES (:nome, :descricao, :valor, 'mensal', :aulas_semana)`, {
+        nome: plano.nome,
+        descricao: plano.descricao,
+        valor: plano.valor,
+        aulas_semana: plano.aulas_semana,
+      });
+      if (plano.modalidade) {
+        executar(`INSERT INTO plano_modalidades (plano_id, modalidade_id)
+                  SELECT :plano, id FROM modalidades WHERE nome = :modalidade`,
+          { plano: Number(criado.lastInsertRowid), modalidade: plano.modalidade });
+      }
+    }
+
+    for (const [modalidade, nomeTurma, categoria, nivel, horarios] of TURMAS) {
+      const m = um('SELECT id FROM modalidades WHERE nome = :nome', { nome: modalidade });
+      if (!m) continue;
+      // Turma kids trabalha em grupo menor; feminino e adulto cabem mais.
+      const capacidade = { kids: 16, feminino: 20, adulto: 24, misto: 24 }[categoria] || 24;
+      const turma = executar(`INSERT INTO turmas (modalidade_id, nome, categoria, nivel, capacidade, local)
+                              VALUES (:m, :nome, :categoria, :nivel, :capacidade, 'Tatame principal')`,
+        { m: m.id, nome: nomeTurma, categoria, nivel, capacidade });
+      const turmaId = Number(turma.lastInsertRowid);
+      for (const [dia, inicio, fim, rotulo = null] of horarios) {
+        executar(`INSERT INTO horarios (turma_id, dia_semana, hora_inicio, hora_fim, rotulo)
+                  VALUES (:t, :dia, :inicio, :fim, :rotulo)`, { t: turmaId, dia, inicio, fim, rotulo });
+      }
+    }
+  });
+}
+
+/**
+ * Senha inicial do dono quando ninguém definiu DONO_SENHA.
+ * Palavras em vez de caracteres aleatórios: é mais fácil de ditar por
+ * telefone na hora de entregar o sistema, e continua difícil de adivinhar.
+ */
+function senhaForte() {
+  const palavras = [
+    'tatame', 'kimono', 'faixa', 'guarda', 'raspagem', 'montada', 'berimbau',
+    'jabe', 'clinch', 'queda', 'ippon', 'ginga', 'cotovelada', 'joelhada',
+    'escudo', 'pedal', 'martelo', 'aranha', 'triangulo', 'armlock',
+  ];
+  const sorteia = () => palavras[randomInt(palavras.length)];
+  return `${sorteia()}-${sorteia()}-${randomInt(1000, 10000)}`;
+}
+
 const MODALIDADES = [
   {
     nome: 'Jiu-Jitsu', sigla: 'JJ', destaque: 'Kids, adulto e competição · No-Gi e Gi', cor: '#2a78d6',
@@ -129,8 +182,11 @@ export function garantirDadosIniciais() {
   if (existeUsuario.total > 0) return { criado: false };
 
   const email = process.env.DONO_EMAIL || 'dono@atak.com';
-  const senha = process.env.DONO_SENHA || 'admin123';
   const nome = process.env.DONO_NOME || 'Dono da Atak';
+  // Sem DONO_SENHA definida, o sistema sorteia uma e mostra uma vez só.
+  // Antes caía em "admin123", que é senha pública para a conta que controla tudo.
+  const senhaSorteada = !process.env.DONO_SENHA;
+  const senha = process.env.DONO_SENHA || senhaForte();
 
   transacao(() => {
     executar(`INSERT INTO usuarios (nome, email, senha_hash, papel) VALUES (:nome, :email, :hash, 'dono')`,
@@ -156,46 +212,9 @@ export function garantirDadosIniciais() {
       aplicarGraduacoes(executar, todos, Number(criada.lastInsertRowid), modalidade.nome);
     });
 
-    for (const plano of PLANOS) {
-      const criado = executar(`INSERT INTO planos (nome, descricao, valor, periodicidade, aulas_semana)
-                VALUES (:nome, :descricao, :valor, 'mensal', :aulas_semana)`, {
-        nome: plano.nome,
-        descricao: plano.descricao,
-        valor: plano.valor,
-        aulas_semana: plano.aulas_semana,
-      });
-      if (plano.modalidade) {
-        executar(`INSERT INTO plano_modalidades (plano_id, modalidade_id)
-                  SELECT :plano, id FROM modalidades WHERE nome = :modalidade`,
-          { plano: Number(criado.lastInsertRowid), modalidade: plano.modalidade });
-      }
-    }
-
-    for (const [modalidade, nomeTurma, categoria, nivel, horarios] of TURMAS) {
-      const m = um('SELECT id FROM modalidades WHERE nome = :nome', { nome: modalidade });
-      // Turma kids trabalha em grupo menor; feminino e adulto cabem mais.
-      const capacidade = { kids: 16, feminino: 20, adulto: 24, misto: 24 }[categoria] || 24;
-      const turma = executar(`INSERT INTO turmas (modalidade_id, nome, categoria, nivel, capacidade, local)
-                              VALUES (:m, :nome, :categoria, :nivel, :capacidade, 'Tatame principal')`,
-        { m: m.id, nome: nomeTurma, categoria, nivel, capacidade });
-      const turmaId = Number(turma.lastInsertRowid);
-      for (const [dia, inicio, fim, rotulo = null] of horarios) {
-        executar(`INSERT INTO horarios (turma_id, dia_semana, hora_inicio, hora_fim, rotulo)
-                  VALUES (:t, :dia, :inicio, :fim, :rotulo)`, { t: turmaId, dia, inicio, fim, rotulo });
-      }
-    }
-
-    executar(`
-      INSERT INTO avisos (titulo, mensagem, tipo, publico, fixado, autor_id)
-      VALUES (:titulo, :mensagem, 'geral', 'todos', 1,
-              (SELECT id FROM usuarios WHERE papel = 'dono' LIMIT 1))
-    `, {
-      titulo: 'Bem-vindo ao sistema da Atak',
-      mensagem: 'Aqui você acompanha os horários das aulas, avisos de campeonatos, cancelamentos e a sua mensalidade.',
-    });
   });
 
-  return { criado: true, email, senha };
+  return { criado: true, email, senha, senha_sorteada: senhaSorteada };
 }
 
 /**
@@ -485,6 +504,10 @@ function gerarCheckins() {
 
 /** Dados de demonstração: alunos, matrículas, mensalidades, caixa, avisos e chamada. */
 export function carregarDemonstracao() {
+  // Planos e turmas fazem parte da demonstração, não do banco inicial: preço
+  // e grade de horários são decisão de cada academia.
+  criarPlanosETurmasDeExemplo();
+
   // Turma de cada aluno define a categoria (kids ou adulto) e onde ele aparece na chamada.
   const TURMAS_KIDS = ['Jiu-Jitsu Kids', 'Muay Thai Kids', 'Karatê Kids', 'Judô Kids', 'Capoeira Kids', 'Taekwondo Kids'];
   const TURMAS_ADULTO = [
@@ -839,9 +862,19 @@ if (executadoDireto) {
   abrirBanco();
   const inicial = garantirDadosIniciais();
   if (inicial.criado) {
-    console.log(`Dados iniciais criados. Login do dono: ${inicial.email} / ${inicial.senha}`);
+    console.log('');
+    console.log('  Academia criada. Este é o acesso do dono:');
+    console.log('');
+    console.log(`    E-mail: ${inicial.email}`);
+    console.log(`    Senha:  ${inicial.senha}`);
+    console.log('');
+    if (inicial.senha_sorteada) {
+      console.log('  Esta senha foi sorteada agora e NÃO aparece de novo.');
+      console.log('  Anote, entregue ao dono e troque no primeiro acesso.');
+      console.log('');
+    }
   } else {
-    console.log('Banco já inicializado.');
+    console.log('Banco já inicializado. Nada foi alterado.');
   }
   if (process.argv.includes('--demo')) {
     console.log(carregarDemonstracao().mensagem);

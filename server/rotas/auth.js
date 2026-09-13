@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { um, executar, transacao } from '../db.js';
 import { gerarHashSenha, conferirSenha, gerarToken, exigirLogin, cargosDe, registrar } from '../auth.js';
 import { rota, ErroApi, exigirCampos, texto, emailValido, hoje } from '../util.js';
+import { chaveDaTentativa, esperaRestante, registrarErro, limparTentativas } from '../tentativas.js';
 
 const roteador = Router();
 
@@ -75,10 +76,22 @@ roteador.post('/login', rota((req, res) => {
   const { email, senha } = req.body || {};
   exigirCampos(req.body, ['email', 'senha']);
 
+  // Freio de força bruta antes de olhar o banco.
+  const chave = chaveDaTentativa(req, email);
+  const espera = esperaRestante(chave);
+  if (espera > 0) {
+    const segundos = Math.ceil(espera / 1000);
+    throw new ErroApi(
+      `Muitas tentativas. Espere ${segundos < 60 ? `${segundos} segundos` : `${Math.ceil(segundos / 60)} minutos`} `
+      + 'e tente de novo.', 429);
+  }
+
   const usuario = um('SELECT * FROM usuarios WHERE email = :email', { email: texto(email) });
   if (!usuario || !conferirSenha(String(senha), usuario.senha_hash)) {
+    registrarErro(chave);
     throw new ErroApi('E-mail ou senha incorretos.', 401);
   }
+  limparTentativas(chave);
   if (!usuario.ativo) throw new ErroApi('Sua conta esta desativada. Fale com a recepção.', 403);
 
   // Guardar o ultimo acesso alimenta o painel de segurança do dono.

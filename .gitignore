@@ -7,3 +7,6 @@ dados/*.db-shm
 .env
 .DS_Store
 npm-debug.log*
+dados/backups/
+# A chave que assina as sessoes e segredo da instalacao: nunca vai para o repositorio.
+dados/chave-de-sessao
