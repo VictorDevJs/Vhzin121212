@@ -1,0 +1,4 @@
+# Troque pelo domínio da academia. O Caddy pega o certificado sozinho.
+atak.seudominio.com.br {
+    reverse_proxy atak:3000
+}

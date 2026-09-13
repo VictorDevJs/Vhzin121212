@@ -36,7 +36,25 @@ const raiz = dirname(dirname(fileURLToPath(import.meta.url)));
 
 export function criarApp() {
   abrirBanco();
-  garantirDadosIniciais();
+  const inicial = garantirDadosIniciais();
+
+  // Num container ninguém roda o seed à mão: se a academia nasceu agora, o
+  // acesso do dono aparece no log do serviço. É a única vez que ele aparece.
+  if (inicial.criado) {
+    console.log('');
+    console.log('  ========================================================');
+    console.log('   Academia criada. Acesso do dono:');
+    console.log('');
+    console.log(`     E-mail: ${inicial.email}`);
+    console.log(`     Senha:  ${inicial.senha}`);
+    console.log('');
+    if (inicial.senha_sorteada) {
+      console.log('   Senha sorteada agora. Anote: não aparece de novo.');
+      console.log('   Troque no primeiro acesso.');
+    }
+    console.log('  ========================================================');
+    console.log('');
+  }
 
   const app = express();
   // Atrás de um nginx/Caddy, req.ip precisa ser o do visitante e não o do

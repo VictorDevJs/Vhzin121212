@@ -1,0 +1,30 @@
+# Para subir num VPS próprio (Hostinger, Contabo, DigitalOcean, uma máquina
+# na própria academia). Traz o Caddy junto, que resolve o certificado HTTPS
+# sozinho — é só apontar o domínio para o servidor.
+services:
+  atak:
+    build: .
+    restart: always
+    environment:
+      DONO_EMAIL: dono@atak.com
+      DONO_NOME: Dono da Atak
+      # Sem DONO_SENHA o sistema sorteia uma e mostra no log:
+      #   docker compose logs atak
+    volumes:
+      - dados:/dados          # a academia inteira vive aqui
+
+  caddy:
+    image: caddy:2-alpine
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-dados:/data
+    depends_on:
+      - atak
+
+volumes:
+  dados:
+  caddy-dados:

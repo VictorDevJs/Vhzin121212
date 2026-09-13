@@ -1,0 +1,31 @@
+# Deploy no Render — é o mais parecido com a simplicidade do Netlify,
+# só que com disco de verdade, que é o que este sistema precisa.
+#
+# Como usar: suba o repositório no GitHub, entre em render.com,
+# "New" > "Blueprint", aponte para o repositório. Ele lê este arquivo.
+services:
+  - type: web
+    name: atak
+    runtime: docker
+    plan: starter          # o plano gratuito NÃO tem disco: os dados sumiriam
+    region: oregon
+    healthCheckPath: /api/saude
+    envVars:
+      - key: ATRAS_DE_PROXY
+        value: "1"
+      - key: DB_ARQUIVO
+        value: /dados/academia.db
+      - key: ARQUIVOS_PASTA
+        value: /dados/arquivos
+      - key: BACKUP_PASTA
+        value: /dados/backups
+      # Deixe o e-mail do dono aqui. A senha o sistema sorteia e mostra
+      # uma vez no log do primeiro deploy — vá em "Logs" e anote.
+      - key: DONO_EMAIL
+        value: dono@atak.com
+      - key: DONO_NOME
+        value: Dono da Atak
+    disk:
+      name: dados
+      mountPath: /dados    # sem isto, cada deploy zera a academia
+      sizeGB: 2

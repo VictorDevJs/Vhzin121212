@@ -171,45 +171,57 @@ Não é obrigatório definir `APP_SEGREDO`: sem ela, o sistema sorteia uma chave
 execução e guarda em `dados/chave-de-sessao` (permissão 600). Cada instalação tem a sua.
 **Esse arquivo entra no backup** — perdê-lo desconecta todo mundo, mas não perde dado nenhum.
 
-### 2. HTTPS é obrigatório
+### 2. Onde hospedar
+
+O sistema é um **servidor que fica ligado** e guarda tudo em arquivo: o banco
+(`academia.db`) e os uploads (fotos, logo, certificados). Então ele precisa de duas
+coisas do serviço de hospedagem:
+
+- **Processo que não morre** entre uma visita e outra
+- **Disco que sobrevive** a reinício e a novo deploy
+
+> **Netlify, Vercel e GitHub Pages não servem.** Eles rodam funções sem estado, com disco
+> temporário: a recepção cadastraria um aluno, a função morreria minutos depois e levaria o
+> arquivo junto — sem erro na tela. Eles são feitos para site de conteúdo fixo ou que fala
+> com um banco externo; aqui o sistema **é** o próprio banco.
+
+Servem, do mais simples ao mais barato:
+
+| Onde | Como | Observação |
+|---|---|---|
+| **Render** | `render.yaml` já está pronto: New → Blueprint → aponte para o repositório | O mais parecido com a simplicidade do Netlify. **O plano gratuito não tem disco** — use o Starter |
+| **Fly.io** | `fly volumes create dados --size 2` e `fly deploy` | Região `gru` (São Paulo), boa latência no Rio |
+| **Railway** | Conecta no repositório, adiciona um volume em `/dados` | Lê o `Dockerfile` sozinho |
+| **VPS próprio** | `docker compose up -d` | `docker-compose.yml` já traz o Caddy com HTTPS automático |
+
+Em todos, o disco precisa estar montado em **`/dados`**. É onde ficam o banco, a chave de
+sessão e os arquivos enviados. Sem o volume, cada deploy zera a academia.
+
+No primeiro deploy o sistema cria a academia e **mostra a senha do dono no log do serviço**.
+Abra os logs e anote — ela não aparece de novo.
+
+### 3. HTTPS é obrigatório
 
 O token de sessão viaja no cabeçalho de cada requisição. Sem TLS, quem estiver na mesma
-rede consegue capturá-lo e entrar como a pessoa. Ponha um **Caddy** na frente — ele
-resolve o certificado sozinho:
+rede consegue capturá-lo e entrar como a pessoa.
+
+Render, Fly e Railway já entregam HTTPS. Em VPS, o `docker-compose.yml` sobe um **Caddy**
+que resolve o certificado sozinho — basta pôr o domínio no `Caddyfile`:
 
 ```caddy
 atak.seudominio.com.br {
-    reverse_proxy localhost:3000
+    reverse_proxy atak:3000
 }
 ```
 
-E suba o sistema com `ATRAS_DE_PROXY=1`, para o freio de tentativas de login enxergar o
-endereço de quem está tentando, e não o do proxy.
-
-### 3. Manter no ar
-
-Com systemd, para o sistema voltar sozinho depois de reiniciar o servidor:
-
-```ini
-[Unit]
-Description=Sistema da Atak
-After=network.target
-
-[Service]
-WorkingDirectory=/opt/atak
-EnvironmentFile=/opt/atak/.env
-ExecStart=/usr/bin/node --disable-warning=ExperimentalWarning server/index.js
-Restart=always
-User=atak
-
-[Install]
-WantedBy=multi-user.target
-```
+Em qualquer um deles, suba com `ATRAS_DE_PROXY=1` (já vem assim nos arquivos prontos), para
+o freio de tentativas de login enxergar o endereço de quem está tentando, e não o do proxy.
 
 ### 4. Backup
 
 ```bash
-npm run backup
+npm run backup                       # direto na máquina
+docker compose exec atak npm run backup   # em container
 ```
 
 Grava uma cópia consistente em `dados/backups/`. **Não copie o `academia.db` direto**:
